@@ -11,6 +11,7 @@ interface Props {
   canon: Canon;
   selectedBookId: string | null;
   todayBookIds: string[];
+  edgeThreshold: number;
   onSelectBook: (id: string | null) => void;
   onHover: (book: BibleBook | null, x: number, y: number) => void;
 }
@@ -28,6 +29,7 @@ export default function ForceGraph({
   canon,
   selectedBookId,
   todayBookIds,
+  edgeThreshold,
   onSelectBook,
   onHover,
 }: Props) {
@@ -135,9 +137,9 @@ export default function ForceGraph({
     (svg as unknown as d3.Selection<SVGSVGElement, unknown, null, undefined>).call(zoom.transform, initialTransform);
 
     // ─── EDGES ───────────────────────────────────────
-    // Render edges with weight >= 2 for denser visualization
-    // (weaker edges still influence the force layout)
-    const visibleLinks = links.filter((d) => d.weight >= 2);
+    // Only render edges above the user-controlled threshold
+    // (all edges still influence the force layout for stable positioning)
+    const visibleLinks = links.filter((d) => d.weight >= edgeThreshold);
     const linkGroup = container.append("g").attr("class", "edges");
     const linkElements = linkGroup
       .selectAll("line")
@@ -263,14 +265,14 @@ export default function ForceGraph({
         d3
           .forceLink<SimNode, SimLink>(links)
           .id((d) => d.id)
-          .distance((d) => 220 - d.weight * 16)
-          .strength((d) => 0.05 + (d.weight / 10) * 0.35)
+          .distance((d) => 260 - d.weight * 18)
+          .strength((d) => 0.02 + (d.weight / 10) * 0.28)
       )
-      .force("charge", d3.forceManyBody().strength(-180).distanceMax(600))
-      .force("center", d3.forceCenter(width / 2, height / 2).strength(0.04))
+      .force("charge", d3.forceManyBody().strength(-300).distanceMax(800))
+      .force("center", d3.forceCenter(width / 2, height / 2).strength(0.03))
       .force(
         "collide",
-        d3.forceCollide<SimNode>().radius((d) => d.radius + 10)
+        d3.forceCollide<SimNode>().radius((d) => d.radius + 16)
       )
       .force("x", d3.forceX(width / 2).strength(0.015))
       .force("y", d3.forceY(height / 2).strength(0.015))
@@ -322,7 +324,7 @@ export default function ForceGraph({
         return 0.015;
       });
     }
-  }, [canon, selectedBookId, todayBookIds, onSelectBook, onHover]);
+  }, [canon, selectedBookId, todayBookIds, edgeThreshold, onSelectBook, onHover]);
 
   useEffect(() => {
     buildGraph();

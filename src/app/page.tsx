@@ -25,6 +25,7 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
   const [canon, setCanon] = useState<Canon>("catholic");
   const [translation, setTranslation] = useState("web");
+  const [edgeThreshold, setEdgeThreshold] = useState(5);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [hoveredBook, setHoveredBook] = useState<{
     book: BibleBook;
@@ -72,6 +73,7 @@ export default function Home() {
           canon={canon}
           selectedBookId={selectedBookId}
           todayBookIds={todayBookIds}
+          edgeThreshold={edgeThreshold}
           onSelectBook={handleSelectBook}
           onHover={handleHover}
         />
@@ -85,28 +87,44 @@ export default function Home() {
 
       <CanonFilter canon={canon} onChange={setCanon} />
 
-      {/* View mode toggle */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-1 bg-white/[0.06] backdrop-blur-sm rounded-full p-1 border border-white/[0.08]">
-        <button
-          onClick={() => setViewMode("graph")}
-          className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${
-            viewMode === "graph"
-              ? "bg-white/15 text-white/90"
-              : "text-white/40 hover:text-white/60"
-          }`}
-        >
-          Graph
-        </button>
-        <button
-          onClick={() => setViewMode("arcs")}
-          className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${
-            viewMode === "arcs"
-              ? "bg-white/15 text-white/90"
-              : "text-white/40 hover:text-white/60"
-          }`}
-        >
-          Arcs
-        </button>
+      {/* View mode toggle + edge threshold slider */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3">
+        <div className="flex gap-1 bg-white/[0.06] backdrop-blur-sm rounded-full p-1 border border-white/[0.08]">
+          <button
+            onClick={() => setViewMode("graph")}
+            className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${
+              viewMode === "graph"
+                ? "bg-white/15 text-white/90"
+                : "text-white/40 hover:text-white/60"
+            }`}
+          >
+            Graph
+          </button>
+          <button
+            onClick={() => setViewMode("arcs")}
+            className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${
+              viewMode === "arcs"
+                ? "bg-white/15 text-white/90"
+                : "text-white/40 hover:text-white/60"
+            }`}
+          >
+            Arcs
+          </button>
+        </div>
+        {viewMode === "graph" && (
+          <div className="flex items-center gap-2 bg-white/[0.06] backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/[0.08]">
+            <span className="text-[10px] text-white/40 whitespace-nowrap">Edges</span>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={edgeThreshold}
+              onChange={(e) => setEdgeThreshold(Number(e.target.value))}
+              className="w-16 h-1 accent-white/60 cursor-pointer"
+            />
+            <span className="text-[10px] text-white/50 w-4 text-center">{edgeThreshold}</span>
+          </div>
+        )}
       </div>
       <TranslationSelector translation={translation} onChange={setTranslation} />
 
