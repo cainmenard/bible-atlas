@@ -8,8 +8,9 @@ import DetailPanel from "@/components/DetailPanel";
 import ReadingsCard from "@/components/ReadingsCard";
 import CanonFilter from "@/components/CanonFilter";
 import TranslationSelector from "@/components/TranslationSelector";
-import { BibleBook, Canon, DailyReadingsData, LiturgicalSeason } from "@/lib/types";
+import { BibleBook, Canon, LiturgicalSeason } from "@/lib/types";
 import { LITURGICAL_COLORS } from "@/lib/colors";
+import { getDailyReadings } from "@/lib/readings";
 import Link from "next/link";
 
 const ForceGraph = dynamic(() => import("@/components/ForceGraph"), {
@@ -25,21 +26,12 @@ export default function Home() {
     x: number;
     y: number;
   } | null>(null);
-  const [readings, setReadings] = useState<DailyReadingsData | null>(null);
-  const [todayBookIds, setTodayBookIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    fetch("/api/readings")
-      .then((r) => r.json())
-      .then((data: DailyReadingsData) => {
-        setReadings(data);
-        const ids = data.readings
-          .map((r) => r.bookId)
-          .filter((id): id is string => !!id);
-        setTodayBookIds(ids);
-      })
-      .catch(() => {});
-  }, []);
+  const [readings] = useState(() => getDailyReadings());
+  const [todayBookIds] = useState(() =>
+    getDailyReadings()
+      .readings.map((r) => r.bookId)
+      .filter((id): id is string => !!id)
+  );
 
   const handleHover = useCallback(
     (book: BibleBook | null, x: number, y: number) => {

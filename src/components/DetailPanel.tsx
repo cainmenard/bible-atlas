@@ -117,14 +117,27 @@ export default function DetailPanel({
 
     setLoading(true);
     const ref = FEATURED_VERSES[bookId];
-    fetch(`/api/verse?ref=${encodeURIComponent(ref)}&translation=${translation}`)
+    const url = `https://bible-api.com/${encodeURIComponent(ref)}?translation=${translation}`;
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
         if (data.text) {
           setVerse({ reference: data.reference || ref, text: data.text });
         }
       })
-      .catch(() => setVerse(null))
+      .catch(() => {
+        // Fallback to WEB if other translation fails
+        if (translation !== "web") {
+          fetch(`https://bible-api.com/${encodeURIComponent(ref)}?translation=web`)
+            .then((r) => r.json())
+            .then((data) => {
+              if (data.text) setVerse({ reference: data.reference || ref, text: data.text });
+            })
+            .catch(() => setVerse(null));
+        } else {
+          setVerse(null);
+        }
+      })
       .finally(() => setLoading(false));
   }, [bookId, translation]);
 
