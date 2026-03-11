@@ -29,6 +29,13 @@ export interface CrossRefEdge {
   source: string;
   target: string;
   weight: number; // 1-10
+  count: number; // number of verse-level cross-references
+}
+
+export interface VerseCrossRef {
+  from: string; // e.g. "GEN.1.1"
+  to: string; // e.g. "ISA.45.18"
+  votes: number;
 }
 
 export interface SimNode extends d3.SimulationNodeDatum {
