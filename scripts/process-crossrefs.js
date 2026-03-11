@@ -75,7 +75,7 @@ for (let i = 1; i < lines.length; i++) {
   if (cols.length < 3) continue;
 
   const votes = parseInt(cols[2], 10);
-  if (isNaN(votes) || votes < 10) continue;
+  if (isNaN(votes) || votes < 2) continue;
 
   const from = convertRef(cols[0]);
   const to = convertRef(cols[1]);
@@ -119,19 +119,130 @@ pairs.sort((a, b) => b.count - a.count);
 // --- Write outputs ---
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
+// Write master crossrefs.json
 fs.writeFileSync(
   path.join(OUT_DIR, 'crossrefs.json'),
   JSON.stringify(crossrefs, null, 2)
 );
 
+// Write book-edges.json
 fs.writeFileSync(
   path.join(OUT_DIR, 'book-edges.json'),
   JSON.stringify(pairs, null, 2)
 );
 
+// --- Write per-book crossref files to public/crossrefs/ ---
+const CROSSREFS_DIR = path.join(__dirname, '..', 'public', 'crossrefs');
+fs.mkdirSync(CROSSREFS_DIR, { recursive: true });
+
+const byBook = {};
+for (const cr of crossrefs) {
+  const book = getBook(cr.from);
+  if (!byBook[book]) byBook[book] = [];
+  byBook[book].push(cr);
+}
+
+for (const [bookId, refs] of Object.entries(byBook)) {
+  fs.writeFileSync(
+    path.join(CROSSREFS_DIR, `${bookId}.json`),
+    JSON.stringify(refs)
+  );
+}
+
+// --- Build arc-diagram data ---
+// Book order and verse counts for computing linear verse indices
+const BOOK_ORDER = [
+  'GEN','EXO','LEV','NUM','DEU','JOS','JDG','RUT','1SA','2SA','1KI','2KI',
+  '1CH','2CH','EZR','NEH','EST','JOB','PSA','PRO','ECC','SNG',
+  'ISA','JER','LAM','EZK','DAN','HOS','JOL','AMO','OBA','JON','MIC','NAH',
+  'HAB','ZEP','HAG','ZEC','MAL',
+  'MAT','MRK','LUK','JHN','ACT',
+  'ROM','1CO','2CO','GAL','EPH','PHP','COL','1TH','2TH','1TI','2TI','TIT','PHM','HEB',
+  'JAS','1PE','2PE','1JN','2JN','3JN','JUD','REV'
+];
+const BOOK_VERSES = {
+  GEN:1533,EXO:1213,LEV:859,NUM:1288,DEU:959,JOS:658,JDG:618,RUT:85,
+  '1SA':810,'2SA':695,'1KI':816,'2KI':719,'1CH':942,'2CH':822,EZR:280,NEH:406,
+  EST:167,JOB:1070,PSA:2461,PRO:915,ECC:222,SNG:117,
+  ISA:1292,JER:1364,LAM:154,EZK:1273,DAN:357,HOS:197,JOL:73,AMO:146,OBA:21,JON:48,
+  MIC:105,NAH:47,HAB:56,ZEP:53,HAG:38,ZEC:211,MAL:55,
+  MAT:1071,MRK:678,LUK:1151,JHN:879,ACT:1007,
+  ROM:433,'1CO':437,'2CO':257,GAL:149,EPH:155,PHP:104,COL:95,
+  '1TH':89,'2TH':47,'1TI':113,'2TI':83,TIT:46,PHM:25,HEB:303,
+  JAS:108,'1PE':105,'2PE':61,'1JN':105,'2JN':13,'3JN':15,JUD:25,REV:404
+};
+
+// Build cumulative offset for each book
+const bookOffset = {};
+let cumulative = 0;
+for (const b of BOOK_ORDER) {
+  bookOffset[b] = cumulative;
+  cumulative += BOOK_VERSES[b];
+}
+const totalVerses = cumulative;
+
+// Genre mapping for coloring
+const BOOK_GENRE = {};
+const genreList = [
+  ['Torah', ['GEN','EXO','LEV','NUM','DEU']],
+  ['History', ['JOS','JDG','RUT','1SA','2SA','1KI','2KI','1CH','2CH','EZR','NEH','EST']],
+  ['Wisdom', ['JOB','PSA','PRO','ECC','SNG']],
+  ['Major Prophets', ['ISA','JER','LAM','EZK','DAN']],
+  ['Minor Prophets', ['HOS','JOL','AMO','OBA','JON','MIC','NAH','HAB','ZEP','HAG','ZEC','MAL']],
+  ['Gospels', ['MAT','MRK','LUK','JHN']],
+  ['NT History', ['ACT']],
+  ['Pauline Epistles', ['ROM','1CO','2CO','GAL','EPH','PHP','COL','1TH','2TH','1TI','2TI','TIT','PHM','HEB']],
+  ['General Epistles', ['JAS','1PE','2PE','1JN','2JN','3JN','JUD']],
+  ['Apocalyptic', ['REV']],
+];
+for (const [genre, ids] of genreList) {
+  for (const id of ids) BOOK_GENRE[id] = genre;
+}
+
+function refToIndex(ref) {
+  const parts = ref.split('.');
+  const bookId = parts[0];
+  if (!bookOffset.hasOwnProperty(bookId)) return -1;
+  // Use chapter and verse to estimate a position within the book
+  const chapter = parseInt(parts[1], 10) || 1;
+  const verse = parseInt(parts[2], 10) || 1;
+  // Approximate: use verse number relative to total verses in book
+  // Since we don't have per-chapter verse counts, estimate linearly
+  const bookVerses = BOOK_VERSES[bookId];
+  const approxIndex = Math.min(bookVerses - 1, Math.max(0, verse + (chapter - 1) * 25 - 1));
+  return bookOffset[bookId] + Math.min(approxIndex, bookVerses - 1);
+}
+
+// Build arc data: [fromIndex, toIndex, genreIndex]
+const genreNames = genreList.map(g => g[0]);
+const arcData = [];
+for (const cr of crossrefs) {
+  const fromIdx = refToIndex(cr.from);
+  const toIdx = refToIndex(cr.to);
+  if (fromIdx < 0 || toIdx < 0) continue;
+  const srcBook = getBook(cr.from);
+  const genreIdx = genreNames.indexOf(BOOK_GENRE[srcBook] || 'History');
+  arcData.push([fromIdx, toIdx, genreIdx]);
+}
+
+// Write arc data as compact JSON
+const ARC_DIR = path.join(__dirname, '..', 'public');
+const arcOutput = {
+  totalVerses,
+  genres: genreNames,
+  books: BOOK_ORDER.map(b => ({ id: b, offset: bookOffset[b], verses: BOOK_VERSES[b], genre: genreNames.indexOf(BOOK_GENRE[b]) })),
+  arcs: arcData
+};
+fs.writeFileSync(
+  path.join(ARC_DIR, 'arc-crossrefs.json'),
+  JSON.stringify(arcOutput)
+);
+
 console.log(`crossrefs.json: ${crossrefs.length} entries`);
 console.log(`book-edges.json: ${pairs.length} edges`);
 console.log(`Max book-pair count: ${maxCount}`);
+console.log(`Per-book files: ${Object.keys(byBook).length} books`);
+console.log(`arc-crossrefs.json: ${arcData.length} arcs across ${totalVerses} verse positions`);
 console.log('\nFirst 5 crossrefs:');
 crossrefs.slice(0, 5).forEach(c => console.log(`  ${c.from} → ${c.to} (${c.votes} votes)`));
 console.log('\nFirst 5 book edges:');

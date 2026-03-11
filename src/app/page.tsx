@@ -8,7 +8,7 @@ import DetailPanel from "@/components/DetailPanel";
 import ReadingsCard from "@/components/ReadingsCard";
 import CanonFilter from "@/components/CanonFilter";
 import TranslationSelector from "@/components/TranslationSelector";
-import { BibleBook, Canon, LiturgicalSeason } from "@/lib/types";
+import { BibleBook, Canon, LiturgicalSeason, ViewMode } from "@/lib/types";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
 import Link from "next/link";
@@ -17,7 +17,12 @@ const ForceGraph = dynamic(() => import("@/components/ForceGraph"), {
   ssr: false,
 });
 
+const ArcDiagram = dynamic(() => import("@/components/ArcDiagram"), {
+  ssr: false,
+});
+
 export default function Home() {
+  const [viewMode, setViewMode] = useState<ViewMode>("graph");
   const [canon, setCanon] = useState<Canon>("catholic");
   const [translation, setTranslation] = useState("web");
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
@@ -62,15 +67,47 @@ export default function Home() {
 
       <StarBackground />
 
-      <ForceGraph
-        canon={canon}
-        selectedBookId={selectedBookId}
-        todayBookIds={todayBookIds}
-        onSelectBook={handleSelectBook}
-        onHover={handleHover}
-      />
+      {viewMode === "graph" ? (
+        <ForceGraph
+          canon={canon}
+          selectedBookId={selectedBookId}
+          todayBookIds={todayBookIds}
+          onSelectBook={handleSelectBook}
+          onHover={handleHover}
+        />
+      ) : (
+        <ArcDiagram
+          canon={canon}
+          selectedBookId={selectedBookId}
+          onSelectBook={handleSelectBook}
+        />
+      )}
 
       <CanonFilter canon={canon} onChange={setCanon} />
+
+      {/* View mode toggle */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-1 bg-white/[0.06] backdrop-blur-sm rounded-full p-1 border border-white/[0.08]">
+        <button
+          onClick={() => setViewMode("graph")}
+          className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${
+            viewMode === "graph"
+              ? "bg-white/15 text-white/90"
+              : "text-white/40 hover:text-white/60"
+          }`}
+        >
+          Graph
+        </button>
+        <button
+          onClick={() => setViewMode("arcs")}
+          className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${
+            viewMode === "arcs"
+              ? "bg-white/15 text-white/90"
+              : "text-white/40 hover:text-white/60"
+          }`}
+        >
+          Arcs
+        </button>
+      </div>
       <TranslationSelector translation={translation} onChange={setTranslation} />
 
       <Tooltip

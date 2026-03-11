@@ -135,9 +135,9 @@ export default function ForceGraph({
     (svg as unknown as d3.Selection<SVGSVGElement, unknown, null, undefined>).call(zoom.transform, initialTransform);
 
     // ─── EDGES ───────────────────────────────────────
-    // Only render edges with weight >= 4 to avoid visual clutter
+    // Render edges with weight >= 2 for denser visualization
     // (weaker edges still influence the force layout)
-    const visibleLinks = links.filter((d) => d.weight >= 4);
+    const visibleLinks = links.filter((d) => d.weight >= 2);
     const linkGroup = container.append("g").attr("class", "edges");
     const linkElements = linkGroup
       .selectAll("line")
@@ -149,7 +149,7 @@ export default function ForceGraph({
         const book = bookMap.get(sourceId);
         return book ? GENRE_COLORS[book.genre] : "#ffffff";
       })
-      .attr("stroke-opacity", (d) => 0.03 + (d.weight / 10) * 0.2)
+      .attr("stroke-opacity", (d) => 0.02 + (d.weight / 10) * 0.18)
       .attr("stroke-width", (d) => 0.2 + (d.weight / 10) * 2.0);
 
     // ─── NODES ───────────────────────────────────────

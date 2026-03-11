@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# large intermediate data file (per-book files in public/crossrefs/ are committed instead)
+src/data/crossrefs.json
