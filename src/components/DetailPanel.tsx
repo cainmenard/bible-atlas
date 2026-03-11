@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { bookMap } from "@/data/books";
 import { edges } from "@/data/edges";
 import { GENRE_COLORS, ACCENT } from "@/lib/colors";
-import { BibleBook, Canon } from "@/lib/types";
+import { BibleBook, Canon, VerseCrossRef } from "@/lib/types";
 
 interface Props {
   bookId: string | null;
@@ -75,6 +75,18 @@ const FEATURED_VERSES: Record<string, string> = {
   "1MA": "1 Maccabees 2:51", "2MA": "2 Maccabees 7:28",
 };
 
+/** Format "GEN.1.1" → "Genesis 1:1" */
+function formatRef(ref: string): string {
+  const parts = ref.split(".");
+  const bookId = parts[0];
+  const bookName = BIBLE_API_NAMES[bookId] || bookMap.get(bookId)?.name || bookId;
+  if (parts.length >= 3) {
+    const rest = parts.slice(1).join(":");
+    return `${bookName} ${rest}`;
+  }
+  return `${bookName} ${parts.slice(1).join(".")}`;
+}
+
 function getConnections(bookId: string, canon: Canon) {
   const activeBooks = new Set(
     Array.from(bookMap.values())
@@ -82,20 +94,22 @@ function getConnections(bookId: string, canon: Canon) {
       .map((b) => b.id)
   );
 
-  const connections: { book: BibleBook; weight: number }[] = [];
+  const connections: { book: BibleBook; weight: number; count: number }[] = [];
   edges.forEach((e) => {
     if (e.source === bookId && activeBooks.has(e.target)) {
       const b = bookMap.get(e.target);
-      if (b) connections.push({ book: b, weight: e.weight });
+      if (b) connections.push({ book: b, weight: e.weight, count: e.count });
     } else if (e.target === bookId && activeBooks.has(e.source)) {
       const b = bookMap.get(e.source);
-      if (b) connections.push({ book: b, weight: e.weight });
+      if (b) connections.push({ book: b, weight: e.weight, count: e.count });
     }
   });
 
-  connections.sort((a, b) => b.weight - a.weight);
+  connections.sort((a, b) => b.count - a.count);
   return connections;
 }
+
+const CROSSREFS_PER_PAGE = 20;
 
 export default function DetailPanel({
   bookId,
@@ -106,9 +120,15 @@ export default function DetailPanel({
 }: Props) {
   const [verse, setVerse] = useState<VerseData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [crossRefs, setCrossRefs] = useState<VerseCrossRef[]>([]);
+  const [crossRefsLoading, setCrossRefsLoading] = useState(false);
+  const [showCrossRefs, setShowCrossRefs] = useState(false);
+  const [crossRefPage, setCrossRefPage] = useState(1);
+  const [filterBook, setFilterBook] = useState<string | null>(null);
 
   const book = bookId ? bookMap.get(bookId) : null;
 
+  // Load featured verse
   useEffect(() => {
     if (!bookId || !FEATURED_VERSES[bookId]) {
       setVerse(null);
@@ -126,7 +146,6 @@ export default function DetailPanel({
         }
       })
       .catch(() => {
-        // Fallback to WEB if other translation fails
         if (translation !== "web") {
           fetch(`https://bible-api.com/${encodeURIComponent(ref)}?translation=web`)
             .then((r) => r.json())
@@ -141,14 +160,52 @@ export default function DetailPanel({
       .finally(() => setLoading(false));
   }, [bookId, translation]);
 
+  // Load verse-level cross-references from per-book JSON
+  useEffect(() => {
+    if (!bookId) {
+      setCrossRefs([]);
+      setShowCrossRefs(false);
+      setCrossRefPage(1);
+      setFilterBook(null);
+      return;
+    }
+
+    setCrossRefsLoading(true);
+    fetch(`/crossrefs/${bookId}.json`)
+      .then((r) => {
+        if (!r.ok) throw new Error("Not found");
+        return r.json();
+      })
+      .then((data: VerseCrossRef[]) => {
+        setCrossRefs(data);
+      })
+      .catch(() => {
+        setCrossRefs([]);
+      })
+      .finally(() => setCrossRefsLoading(false));
+  }, [bookId]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCrossRefPage(1);
+  }, [filterBook]);
+
   if (!book || !bookId) {
     return null;
   }
 
   const connections = getConnections(bookId, canon);
+  const totalCrossRefs = crossRefs.length;
   const color = GENRE_COLORS[book.genre];
   const apiName = BIBLE_API_NAMES[bookId] || book.name;
   const bgUrl = `https://www.biblegateway.com/passage/?search=${encodeURIComponent(apiName)}+1&version=RSVCE`;
+
+  // Filter cross-refs by target book if selected
+  const filteredRefs = filterBook
+    ? crossRefs.filter((r) => r.to.startsWith(filterBook + "."))
+    : crossRefs;
+  const pagedRefs = filteredRefs.slice(0, crossRefPage * CROSSREFS_PER_PAGE);
+  const hasMore = pagedRefs.length < filteredRefs.length;
 
   return (
     <div
@@ -196,8 +253,8 @@ export default function DetailPanel({
             <div className="text-white/30">Verses</div>
           </div>
           <div className="text-center">
-            <div className="text-white/80 font-semibold text-lg">{connections.length}</div>
-            <div className="text-white/30">Connections</div>
+            <div className="text-white/80 font-semibold text-lg">{totalCrossRefs.toLocaleString()}</div>
+            <div className="text-white/30">Cross-refs</div>
           </div>
         </div>
 
@@ -222,23 +279,26 @@ export default function DetailPanel({
           </div>
         )}
 
-        {/* Connections */}
+        {/* Book-level Connections */}
         <h3 className="text-xs text-white/30 uppercase tracking-wider mb-3">
-          Connections ({connections.length})
+          Connected Books ({connections.length})
         </h3>
         <div className="space-y-1 mb-6">
-          {connections.map(({ book: conn, weight }) => (
+          {connections.slice(0, 15).map(({ book: conn, weight, count }) => (
             <button
               key={conn.id}
               onClick={() => onSelectBook(conn.id)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 transition-colors text-left group"
             >
               <span
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ background: GENRE_COLORS[conn.genre] }}
               />
               <span className="text-sm text-white/70 flex-1">{conn.name}</span>
-              <div className="w-16">
+              <span className="text-[10px] text-white/25 group-hover:text-white/40">
+                {count} refs
+              </span>
+              <div className="w-12">
                 <div className="strength-bar">
                   <div
                     className="strength-fill"
@@ -251,7 +311,89 @@ export default function DetailPanel({
               </div>
             </button>
           ))}
+          {connections.length > 15 && !showCrossRefs && (
+            <div className="text-[10px] text-white/20 px-3 pt-1">
+              +{connections.length - 15} more
+            </div>
+          )}
         </div>
+
+        {/* Verse Cross-References */}
+        {totalCrossRefs > 0 && (
+          <>
+            <button
+              onClick={() => setShowCrossRefs(!showCrossRefs)}
+              className="w-full flex items-center justify-between text-xs text-white/30 uppercase tracking-wider mb-3 hover:text-white/50 transition-colors"
+            >
+              <span>
+                Verse Cross-References ({filterBook ? `${filteredRefs.length} to ${BIBLE_API_NAMES[filterBook] || filterBook}` : totalCrossRefs.toLocaleString()})
+              </span>
+              <span className="text-white/20">{showCrossRefs ? "▲" : "▼"}</span>
+            </button>
+
+            {showCrossRefs && (
+              <>
+                {/* Filter by target book */}
+                {filterBook && (
+                  <button
+                    onClick={() => setFilterBook(null)}
+                    className="text-[10px] px-2 py-1 rounded mb-2 inline-block"
+                    style={{ background: color + "15", color: color }}
+                  >
+                    Showing refs to {BIBLE_API_NAMES[filterBook] || filterBook} &times;
+                  </button>
+                )}
+
+                {crossRefsLoading ? (
+                  <div className="text-white/30 text-xs py-2">Loading cross-references...</div>
+                ) : (
+                  <div className="space-y-0.5 mb-4">
+                    {pagedRefs.map((ref, i) => {
+                      const targetBookId = ref.to.split(".")[0];
+                      const targetBook = bookMap.get(targetBookId);
+                      const targetColor = targetBook ? GENRE_COLORS[targetBook.genre] : "#888";
+                      return (
+                        <div
+                          key={`${ref.from}-${ref.to}-${i}`}
+                          className="flex items-start gap-2 px-2 py-1.5 rounded hover:bg-white/5 text-[11px] leading-tight"
+                        >
+                          <span className="text-white/50 shrink-0 font-mono">
+                            {formatRef(ref.from)}
+                          </span>
+                          <span className="text-white/20 shrink-0">&rarr;</span>
+                          <button
+                            onClick={() => {
+                              if (targetBook) onSelectBook(targetBookId);
+                            }}
+                            className="text-left shrink-0 hover:underline font-mono"
+                            style={{ color: targetColor + "cc" }}
+                          >
+                            {formatRef(ref.to)}
+                          </button>
+                          <span
+                            className="ml-auto text-[9px] shrink-0 opacity-40"
+                            title={`${ref.votes} community votes`}
+                          >
+                            {ref.votes > 0 ? `+${ref.votes}` : ref.votes}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {hasMore && (
+                      <button
+                        onClick={() => setCrossRefPage((p) => p + 1)}
+                        className="w-full text-center text-[10px] py-2 text-white/30 hover:text-white/50 transition-colors"
+                      >
+                        Show more ({filteredRefs.length - pagedRefs.length} remaining)
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
 
         {/* Read more link */}
         <a

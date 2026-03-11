@@ -1,0 +1,5726 @@
+[
+  {
+    "source": "ISA",
+    "target": "PSA",
+    "count": 822,
+    "weight": 10
+  },
+  {
+    "source": "LUK",
+    "target": "MAT",
+    "count": 654,
+    "weight": 10
+  },
+  {
+    "source": "PRO",
+    "target": "PSA",
+    "count": 452,
+    "weight": 10
+  },
+  {
+    "source": "MAT",
+    "target": "PSA",
+    "count": 352,
+    "weight": 9
+  },
+  {
+    "source": "JHN",
+    "target": "MAT",
+    "count": 352,
+    "weight": 9
+  },
+  {
+    "source": "1JN",
+    "target": "JHN",
+    "count": 344,
+    "weight": 9
+  },
+  {
+    "source": "MAT",
+    "target": "MRK",
+    "count": 338,
+    "weight": 9
+  },
+  {
+    "source": "ISA",
+    "target": "MAT",
+    "count": 294,
+    "weight": 9
+  },
+  {
+    "source": "LUK",
+    "target": "PSA",
+    "count": 276,
+    "weight": 9
+  },
+  {
+    "source": "JHN",
+    "target": "PSA",
+    "count": 271,
+    "weight": 9
+  },
+  {
+    "source": "JER",
+    "target": "PSA",
+    "count": 266,
+    "weight": 9
+  },
+  {
+    "source": "ISA",
+    "target": "JER",
+    "count": 252,
+    "weight": 9
+  },
+  {
+    "source": "ISA",
+    "target": "JHN",
+    "count": 252,
+    "weight": 9
+  },
+  {
+    "source": "HEB",
+    "target": "PSA",
+    "count": 250,
+    "weight": 9
+  },
+  {
+    "source": "JHN",
+    "target": "LUK",
+    "count": 249,
+    "weight": 9
+  },
+  {
+    "source": "PSA",
+    "target": "ROM",
+    "count": 245,
+    "weight": 9
+  },
+  {
+    "source": "JOB",
+    "target": "PSA",
+    "count": 244,
+    "weight": 9
+  },
+  {
+    "source": "JHN",
+    "target": "ROM",
+    "count": 234,
+    "weight": 9
+  },
+  {
+    "source": "GAL",
+    "target": "ROM",
+    "count": 233,
+    "weight": 9
+  },
+  {
+    "source": "1CO",
+    "target": "ROM",
+    "count": 221,
+    "weight": 9
+  },
+  {
+    "source": "ISA",
+    "target": "LUK",
+    "count": 215,
+    "weight": 9
+  },
+  {
+    "source": "EPH",
+    "target": "ROM",
+    "count": 215,
+    "weight": 9
+  },
+  {
+    "source": "COL",
+    "target": "EPH",
+    "count": 214,
+    "weight": 9
+  },
+  {
+    "source": "GEN",
+    "target": "PSA",
+    "count": 211,
+    "weight": 9
+  },
+  {
+    "source": "ISA",
+    "target": "REV",
+    "count": 204,
+    "weight": 9
+  },
+  {
+    "source": "MAT",
+    "target": "REV",
+    "count": 187,
+    "weight": 9
+  },
+  {
+    "source": "ACT",
+    "target": "MAT",
+    "count": 186,
+    "weight": 9
+  },
+  {
+    "source": "1PE",
+    "target": "ROM",
+    "count": 184,
+    "weight": 8
+  },
+  {
+    "source": "PSA",
+    "target": "REV",
+    "count": 180,
+    "weight": 8
+  },
+  {
+    "source": "LUK",
+    "target": "MRK",
+    "count": 176,
+    "weight": 8
+  },
+  {
+    "source": "2CO",
+    "target": "ROM",
+    "count": 176,
+    "weight": 8
+  },
+  {
+    "source": "ACT",
+    "target": "JHN",
+    "count": 172,
+    "weight": 8
+  },
+  {
+    "source": "DEU",
+    "target": "PSA",
+    "count": 169,
+    "weight": 8
+  },
+  {
+    "source": "HEB",
+    "target": "JHN",
+    "count": 168,
+    "weight": 8
+  },
+  {
+    "source": "JHN",
+    "target": "REV",
+    "count": 167,
+    "weight": 8
+  },
+  {
+    "source": "DEU",
+    "target": "EXO",
+    "count": 166,
+    "weight": 8
+  },
+  {
+    "source": "ISA",
+    "target": "ROM",
+    "count": 165,
+    "weight": 8
+  },
+  {
+    "source": "MAT",
+    "target": "ROM",
+    "count": 164,
+    "weight": 8
+  },
+  {
+    "source": "HEB",
+    "target": "MAT",
+    "count": 157,
+    "weight": 8
+  },
+  {
+    "source": "EXO",
+    "target": "PSA",
+    "count": 153,
+    "weight": 8
+  },
+  {
+    "source": "HEB",
+    "target": "ROM",
+    "count": 146,
+    "weight": 8
+  },
+  {
+    "source": "EPH",
+    "target": "JHN",
+    "count": 142,
+    "weight": 8
+  },
+  {
+    "source": "JAS",
+    "target": "MAT",
+    "count": 135,
+    "weight": 8
+  },
+  {
+    "source": "HEB",
+    "target": "ISA",
+    "count": 133,
+    "weight": 8
+  },
+  {
+    "source": "1CO",
+    "target": "MAT",
+    "count": 128,
+    "weight": 8
+  },
+  {
+    "source": "EPH",
+    "target": "PSA",
+    "count": 126,
+    "weight": 8
+  },
+  {
+    "source": "ISA",
+    "target": "PRO",
+    "count": 125,
+    "weight": 8
+  },
+  {
+    "source": "MAT",
+    "target": "PRO",
+    "count": 124,
+    "weight": 8
+  },
+  {
+    "source": "ACT",
+    "target": "PSA",
+    "count": 123,
+    "weight": 8
+  },
+  {
+    "source": "COL",
+    "target": "ROM",
+    "count": 123,
+    "weight": 8
+  },
+  {
+    "source": "2CO",
+    "target": "PSA",
+    "count": 122,
+    "weight": 8
+  },
+  {
+    "source": "DEU",
+    "target": "ISA",
+    "count": 122,
+    "weight": 8
+  },
+  {
+    "source": "PHP",
+    "target": "ROM",
+    "count": 121,
+    "weight": 8
+  },
+  {
+    "source": "ACT",
+    "target": "ISA",
+    "count": 120,
+    "weight": 8
+  },
+  {
+    "source": "JAS",
+    "target": "PSA",
+    "count": 116,
+    "weight": 8
+  },
+  {
+    "source": "1CO",
+    "target": "EPH",
+    "count": 114,
+    "weight": 8
+  },
+  {
+    "source": "1PE",
+    "target": "PSA",
+    "count": 110,
+    "weight": 8
+  },
+  {
+    "source": "1CO",
+    "target": "JHN",
+    "count": 110,
+    "weight": 8
+  },
+  {
+    "source": "1CO",
+    "target": "2CO",
+    "count": 110,
+    "weight": 8
+  },
+  {
+    "source": "1PE",
+    "target": "EPH",
+    "count": 109,
+    "weight": 8
+  },
+  {
+    "source": "1PE",
+    "target": "MAT",
+    "count": 108,
+    "weight": 8
+  },
+  {
+    "source": "ACT",
+    "target": "LUK",
+    "count": 107,
+    "weight": 8
+  },
+  {
+    "source": "JAS",
+    "target": "PRO",
+    "count": 106,
+    "weight": 8
+  },
+  {
+    "source": "1JN",
+    "target": "ROM",
+    "count": 103,
+    "weight": 8
+  },
+  {
+    "source": "1PE",
+    "target": "HEB",
+    "count": 103,
+    "weight": 8
+  },
+  {
+    "source": "2CO",
+    "target": "EPH",
+    "count": 101,
+    "weight": 8
+  },
+  {
+    "source": "EPH",
+    "target": "MAT",
+    "count": 100,
+    "weight": 8
+  },
+  {
+    "source": "EPH",
+    "target": "ISA",
+    "count": 100,
+    "weight": 8
+  },
+  {
+    "source": "JHN",
+    "target": "MRK",
+    "count": 98,
+    "weight": 8
+  },
+  {
+    "source": "1CO",
+    "target": "GAL",
+    "count": 98,
+    "weight": 8
+  },
+  {
+    "source": "LUK",
+    "target": "ROM",
+    "count": 97,
+    "weight": 8
+  },
+  {
+    "source": "1SA",
+    "target": "PSA",
+    "count": 97,
+    "weight": 8
+  },
+  {
+    "source": "EZK",
+    "target": "ISA",
+    "count": 96,
+    "weight": 8
+  },
+  {
+    "source": "2CO",
+    "target": "JHN",
+    "count": 96,
+    "weight": 8
+  },
+  {
+    "source": "ACT",
+    "target": "ROM",
+    "count": 96,
+    "weight": 8
+  },
+  {
+    "source": "1PE",
+    "target": "ISA",
+    "count": 96,
+    "weight": 8
+  },
+  {
+    "source": "EZK",
+    "target": "JER",
+    "count": 95,
+    "weight": 8
+  },
+  {
+    "source": "1JN",
+    "target": "MAT",
+    "count": 94,
+    "weight": 8
+  },
+  {
+    "source": "ISA",
+    "target": "ZEC",
+    "count": 94,
+    "weight": 8
+  },
+  {
+    "source": "1CO",
+    "target": "HEB",
+    "count": 94,
+    "weight": 8
+  },
+  {
+    "source": "EXO",
+    "target": "ISA",
+    "count": 94,
+    "weight": 8
+  },
+  {
+    "source": "JOB",
+    "target": "PRO",
+    "count": 93,
+    "weight": 8
+  },
+  {
+    "source": "COL",
+    "target": "JHN",
+    "count": 92,
+    "weight": 8
+  },
+  {
+    "source": "1CO",
+    "target": "1PE",
+    "count": 90,
+    "weight": 8
+  },
+  {
+    "source": "1CO",
+    "target": "PSA",
+    "count": 86,
+    "weight": 7
+  },
+  {
+    "source": "GEN",
+    "target": "ISA",
+    "count": 85,
+    "weight": 7
+  },
+  {
+    "source": "HEB",
+    "target": "LUK",
+    "count": 82,
+    "weight": 7
+  },
+  {
+    "source": "1JN",
+    "target": "PSA",
+    "count": 81,
+    "weight": 7
+  },
+  {
+    "source": "1PE",
+    "target": "JHN",
+    "count": 80,
+    "weight": 7
+  },
+  {
+    "source": "GAL",
+    "target": "JHN",
+    "count": 79,
+    "weight": 7
+  },
+  {
+    "source": "PHP",
+    "target": "PSA",
+    "count": 79,
+    "weight": 7
+  },
+  {
+    "source": "2CO",
+    "target": "ISA",
+    "count": 79,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "PHP",
+    "count": 79,
+    "weight": 7
+  },
+  {
+    "source": "JHN",
+    "target": "PHP",
+    "count": 79,
+    "weight": 7
+  },
+  {
+    "source": "2CO",
+    "target": "HEB",
+    "count": 79,
+    "weight": 7
+  },
+  {
+    "source": "LUK",
+    "target": "PRO",
+    "count": 79,
+    "weight": 7
+  },
+  {
+    "source": "1CH",
+    "target": "PSA",
+    "count": 79,
+    "weight": 7
+  },
+  {
+    "source": "LAM",
+    "target": "PSA",
+    "count": 78,
+    "weight": 7
+  },
+  {
+    "source": "COL",
+    "target": "MAT",
+    "count": 78,
+    "weight": 7
+  },
+  {
+    "source": "ECC",
+    "target": "PRO",
+    "count": 78,
+    "weight": 7
+  },
+  {
+    "source": "JAS",
+    "target": "LUK",
+    "count": 77,
+    "weight": 7
+  },
+  {
+    "source": "JAS",
+    "target": "ROM",
+    "count": 77,
+    "weight": 7
+  },
+  {
+    "source": "JER",
+    "target": "MAT",
+    "count": 76,
+    "weight": 7
+  },
+  {
+    "source": "HEB",
+    "target": "PHP",
+    "count": 76,
+    "weight": 7
+  },
+  {
+    "source": "2CO",
+    "target": "MAT",
+    "count": 75,
+    "weight": 7
+  },
+  {
+    "source": "DAN",
+    "target": "REV",
+    "count": 75,
+    "weight": 7
+  },
+  {
+    "source": "1PE",
+    "target": "JAS",
+    "count": 74,
+    "weight": 7
+  },
+  {
+    "source": "EPH",
+    "target": "GAL",
+    "count": 73,
+    "weight": 7
+  },
+  {
+    "source": "1TI",
+    "target": "2TI",
+    "count": 72,
+    "weight": 7
+  },
+  {
+    "source": "ACT",
+    "target": "MRK",
+    "count": 71,
+    "weight": 7
+  },
+  {
+    "source": "MAT",
+    "target": "PHP",
+    "count": 71,
+    "weight": 7
+  },
+  {
+    "source": "2CO",
+    "target": "PHP",
+    "count": 70,
+    "weight": 7
+  },
+  {
+    "source": "LUK",
+    "target": "REV",
+    "count": 70,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "1JN",
+    "count": 70,
+    "weight": 7
+  },
+  {
+    "source": "DEU",
+    "target": "PRO",
+    "count": 70,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "REV",
+    "count": 69,
+    "weight": 7
+  },
+  {
+    "source": "ISA",
+    "target": "JOB",
+    "count": 69,
+    "weight": 7
+  },
+  {
+    "source": "2TI",
+    "target": "ROM",
+    "count": 69,
+    "weight": 7
+  },
+  {
+    "source": "HEB",
+    "target": "REV",
+    "count": 69,
+    "weight": 7
+  },
+  {
+    "source": "ECC",
+    "target": "PSA",
+    "count": 68,
+    "weight": 7
+  },
+  {
+    "source": "GEN",
+    "target": "HEB",
+    "count": 68,
+    "weight": 7
+  },
+  {
+    "source": "EPH",
+    "target": "HEB",
+    "count": 68,
+    "weight": 7
+  },
+  {
+    "source": "1TH",
+    "target": "ROM",
+    "count": 67,
+    "weight": 7
+  },
+  {
+    "source": "EPH",
+    "target": "PHP",
+    "count": 66,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "COL",
+    "count": 66,
+    "weight": 7
+  },
+  {
+    "source": "MIC",
+    "target": "PSA",
+    "count": 66,
+    "weight": 7
+  },
+  {
+    "source": "JER",
+    "target": "ROM",
+    "count": 65,
+    "weight": 7
+  },
+  {
+    "source": "ACT",
+    "target": "EPH",
+    "count": 64,
+    "weight": 7
+  },
+  {
+    "source": "DAN",
+    "target": "PSA",
+    "count": 64,
+    "weight": 7
+  },
+  {
+    "source": "GAL",
+    "target": "MAT",
+    "count": 63,
+    "weight": 7
+  },
+  {
+    "source": "EPH",
+    "target": "PRO",
+    "count": 63,
+    "weight": 7
+  },
+  {
+    "source": "REV",
+    "target": "ROM",
+    "count": 63,
+    "weight": 7
+  },
+  {
+    "source": "PRO",
+    "target": "ROM",
+    "count": 63,
+    "weight": 7
+  },
+  {
+    "source": "COL",
+    "target": "HEB",
+    "count": 62,
+    "weight": 7
+  },
+  {
+    "source": "ACT",
+    "target": "HEB",
+    "count": 62,
+    "weight": 7
+  },
+  {
+    "source": "2CH",
+    "target": "PSA",
+    "count": 62,
+    "weight": 7
+  },
+  {
+    "source": "DEU",
+    "target": "JOS",
+    "count": 61,
+    "weight": 7
+  },
+  {
+    "source": "ISA",
+    "target": "MRK",
+    "count": 61,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "ISA",
+    "count": 61,
+    "weight": 7
+  },
+  {
+    "source": "DEU",
+    "target": "JER",
+    "count": 61,
+    "weight": 7
+  },
+  {
+    "source": "JER",
+    "target": "PRO",
+    "count": 60,
+    "weight": 7
+  },
+  {
+    "source": "1PE",
+    "target": "PHP",
+    "count": 60,
+    "weight": 7
+  },
+  {
+    "source": "COL",
+    "target": "PSA",
+    "count": 60,
+    "weight": 7
+  },
+  {
+    "source": "1JN",
+    "target": "EPH",
+    "count": 60,
+    "weight": 7
+  },
+  {
+    "source": "EXO",
+    "target": "GEN",
+    "count": 60,
+    "weight": 7
+  },
+  {
+    "source": "GEN",
+    "target": "ROM",
+    "count": 59,
+    "weight": 7
+  },
+  {
+    "source": "HOS",
+    "target": "ISA",
+    "count": 59,
+    "weight": 7
+  },
+  {
+    "source": "HEB",
+    "target": "PRO",
+    "count": 58,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "LUK",
+    "count": 57,
+    "weight": 7
+  },
+  {
+    "source": "EPH",
+    "target": "LUK",
+    "count": 56,
+    "weight": 7
+  },
+  {
+    "source": "JHN",
+    "target": "PRO",
+    "count": 56,
+    "weight": 7
+  },
+  {
+    "source": "1PE",
+    "target": "LUK",
+    "count": 56,
+    "weight": 7
+  },
+  {
+    "source": "2SA",
+    "target": "PSA",
+    "count": 55,
+    "weight": 7
+  },
+  {
+    "source": "DEU",
+    "target": "MAT",
+    "count": 55,
+    "weight": 7
+  },
+  {
+    "source": "EZK",
+    "target": "PSA",
+    "count": 55,
+    "weight": 7
+  },
+  {
+    "source": "1PE",
+    "target": "COL",
+    "count": 55,
+    "weight": 7
+  },
+  {
+    "source": "JER",
+    "target": "JHN",
+    "count": 55,
+    "weight": 7
+  },
+  {
+    "source": "MRK",
+    "target": "PSA",
+    "count": 55,
+    "weight": 7
+  },
+  {
+    "source": "2CO",
+    "target": "PRO",
+    "count": 55,
+    "weight": 7
+  },
+  {
+    "source": "GEN",
+    "target": "PRO",
+    "count": 54,
+    "weight": 7
+  },
+  {
+    "source": "2TI",
+    "target": "MAT",
+    "count": 54,
+    "weight": 7
+  },
+  {
+    "source": "ISA",
+    "target": "MIC",
+    "count": 54,
+    "weight": 7
+  },
+  {
+    "source": "HEB",
+    "target": "JER",
+    "count": 54,
+    "weight": 7
+  },
+  {
+    "source": "GAL",
+    "target": "HEB",
+    "count": 54,
+    "weight": 7
+  },
+  {
+    "source": "ROM",
+    "target": "TIT",
+    "count": 53,
+    "weight": 7
+  },
+  {
+    "source": "NUM",
+    "target": "PSA",
+    "count": 53,
+    "weight": 7
+  },
+  {
+    "source": "2CO",
+    "target": "GAL",
+    "count": 53,
+    "weight": 7
+  },
+  {
+    "source": "HEB",
+    "target": "JAS",
+    "count": 52,
+    "weight": 7
+  },
+  {
+    "source": "GEN",
+    "target": "MAT",
+    "count": 52,
+    "weight": 7
+  },
+  {
+    "source": "GEN",
+    "target": "LUK",
+    "count": 51,
+    "weight": 7
+  },
+  {
+    "source": "JER",
+    "target": "LUK",
+    "count": 51,
+    "weight": 7
+  },
+  {
+    "source": "1JN",
+    "target": "REV",
+    "count": 51,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "1TH",
+    "count": 51,
+    "weight": 7
+  },
+  {
+    "source": "ISA",
+    "target": "PHP",
+    "count": 50,
+    "weight": 7
+  },
+  {
+    "source": "EPH",
+    "target": "REV",
+    "count": 50,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "ACT",
+    "count": 50,
+    "weight": 7
+  },
+  {
+    "source": "2TI",
+    "target": "PSA",
+    "count": 50,
+    "weight": 7
+  },
+  {
+    "source": "1JN",
+    "target": "1PE",
+    "count": 50,
+    "weight": 7
+  },
+  {
+    "source": "JAS",
+    "target": "JHN",
+    "count": 50,
+    "weight": 7
+  },
+  {
+    "source": "PSA",
+    "target": "ZEC",
+    "count": 49,
+    "weight": 7
+  },
+  {
+    "source": "ISA",
+    "target": "MAL",
+    "count": 49,
+    "weight": 7
+  },
+  {
+    "source": "1PE",
+    "target": "2CO",
+    "count": 48,
+    "weight": 7
+  },
+  {
+    "source": "GEN",
+    "target": "JHN",
+    "count": 48,
+    "weight": 7
+  },
+  {
+    "source": "1TI",
+    "target": "MAT",
+    "count": 48,
+    "weight": 7
+  },
+  {
+    "source": "COL",
+    "target": "PHP",
+    "count": 48,
+    "weight": 7
+  },
+  {
+    "source": "COL",
+    "target": "GAL",
+    "count": 48,
+    "weight": 7
+  },
+  {
+    "source": "2CO",
+    "target": "COL",
+    "count": 48,
+    "weight": 7
+  },
+  {
+    "source": "GEN",
+    "target": "JOB",
+    "count": 48,
+    "weight": 7
+  },
+  {
+    "source": "1JN",
+    "target": "LUK",
+    "count": 47,
+    "weight": 7
+  },
+  {
+    "source": "1TH",
+    "target": "EPH",
+    "count": 47,
+    "weight": 7
+  },
+  {
+    "source": "DEU",
+    "target": "JHN",
+    "count": 47,
+    "weight": 7
+  },
+  {
+    "source": "1JN",
+    "target": "HEB",
+    "count": 47,
+    "weight": 7
+  },
+  {
+    "source": "HAB",
+    "target": "PSA",
+    "count": 46,
+    "weight": 7
+  },
+  {
+    "source": "1JN",
+    "target": "JAS",
+    "count": 46,
+    "weight": 7
+  },
+  {
+    "source": "EZK",
+    "target": "REV",
+    "count": 46,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "PRO",
+    "count": 46,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "2TI",
+    "count": 46,
+    "weight": 7
+  },
+  {
+    "source": "EXO",
+    "target": "MAT",
+    "count": 46,
+    "weight": 7
+  },
+  {
+    "source": "1CO",
+    "target": "JAS",
+    "count": 46,
+    "weight": 7
+  },
+  {
+    "source": "JER",
+    "target": "REV",
+    "count": 45,
+    "weight": 7
+  },
+  {
+    "source": "LUK",
+    "target": "PHP",
+    "count": 44,
+    "weight": 7
+  },
+  {
+    "source": "2TI",
+    "target": "EPH",
+    "count": 44,
+    "weight": 7
+  },
+  {
+    "source": "DEU",
+    "target": "ROM",
+    "count": 44,
+    "weight": 7
+  },
+  {
+    "source": "1JN",
+    "target": "2CO",
+    "count": 44,
+    "weight": 7
+  },
+  {
+    "source": "1PE",
+    "target": "ACT",
+    "count": 44,
+    "weight": 7
+  },
+  {
+    "source": "EZK",
+    "target": "MAT",
+    "count": 43,
+    "weight": 7
+  },
+  {
+    "source": "2CO",
+    "target": "ACT",
+    "count": 43,
+    "weight": 7
+  },
+  {
+    "source": "HOS",
+    "target": "PSA",
+    "count": 42,
+    "weight": 7
+  },
+  {
+    "source": "1TH",
+    "target": "MAT",
+    "count": 42,
+    "weight": 7
+  },
+  {
+    "source": "2PE",
+    "target": "JHN",
+    "count": 42,
+    "weight": 7
+  },
+  {
+    "source": "1TI",
+    "target": "TIT",
+    "count": 42,
+    "weight": 7
+  },
+  {
+    "source": "2CH",
+    "target": "ISA",
+    "count": 42,
+    "weight": 7
+  },
+  {
+    "source": "DAN",
+    "target": "MAT",
+    "count": 41,
+    "weight": 6
+  },
+  {
+    "source": "DEU",
+    "target": "GEN",
+    "count": 41,
+    "weight": 6
+  },
+  {
+    "source": "1PE",
+    "target": "PRO",
+    "count": 41,
+    "weight": 6
+  },
+  {
+    "source": "MAL",
+    "target": "PSA",
+    "count": 41,
+    "weight": 6
+  },
+  {
+    "source": "DAN",
+    "target": "ISA",
+    "count": 41,
+    "weight": 6
+  },
+  {
+    "source": "DEU",
+    "target": "LUK",
+    "count": 41,
+    "weight": 6
+  },
+  {
+    "source": "JAS",
+    "target": "JOB",
+    "count": 41,
+    "weight": 6
+  },
+  {
+    "source": "1JN",
+    "target": "GAL",
+    "count": 41,
+    "weight": 6
+  },
+  {
+    "source": "MRK",
+    "target": "ROM",
+    "count": 40,
+    "weight": 6
+  },
+  {
+    "source": "1PE",
+    "target": "REV",
+    "count": 40,
+    "weight": 6
+  },
+  {
+    "source": "GAL",
+    "target": "JAS",
+    "count": 40,
+    "weight": 6
+  },
+  {
+    "source": "2CO",
+    "target": "REV",
+    "count": 40,
+    "weight": 6
+  },
+  {
+    "source": "COL",
+    "target": "LUK",
+    "count": 40,
+    "weight": 6
+  },
+  {
+    "source": "GEN",
+    "target": "JER",
+    "count": 39,
+    "weight": 6
+  },
+  {
+    "source": "EPH",
+    "target": "TIT",
+    "count": 39,
+    "weight": 6
+  },
+  {
+    "source": "1PE",
+    "target": "TIT",
+    "count": 39,
+    "weight": 6
+  },
+  {
+    "source": "EZK",
+    "target": "JHN",
+    "count": 39,
+    "weight": 6
+  },
+  {
+    "source": "1PE",
+    "target": "1TH",
+    "count": 39,
+    "weight": 6
+  },
+  {
+    "source": "1PE",
+    "target": "2TI",
+    "count": 39,
+    "weight": 6
+  },
+  {
+    "source": "ISA",
+    "target": "JAS",
+    "count": 39,
+    "weight": 6
+  },
+  {
+    "source": "EPH",
+    "target": "GEN",
+    "count": 39,
+    "weight": 6
+  },
+  {
+    "source": "DEU",
+    "target": "LEV",
+    "count": 39,
+    "weight": 6
+  },
+  {
+    "source": "1TI",
+    "target": "ROM",
+    "count": 39,
+    "weight": 6
+  },
+  {
+    "source": "2TI",
+    "target": "JHN",
+    "count": 38,
+    "weight": 6
+  },
+  {
+    "source": "2CO",
+    "target": "LUK",
+    "count": 38,
+    "weight": 6
+  },
+  {
+    "source": "GEN",
+    "target": "REV",
+    "count": 37,
+    "weight": 6
+  },
+  {
+    "source": "REV",
+    "target": "ZEC",
+    "count": 37,
+    "weight": 6
+  },
+  {
+    "source": "2PE",
+    "target": "MAT",
+    "count": 37,
+    "weight": 6
+  },
+  {
+    "source": "2PE",
+    "target": "HEB",
+    "count": 37,
+    "weight": 6
+  },
+  {
+    "source": "GAL",
+    "target": "PHP",
+    "count": 37,
+    "weight": 6
+  },
+  {
+    "source": "2TI",
+    "target": "ACT",
+    "count": 36,
+    "weight": 6
+  },
+  {
+    "source": "EXO",
+    "target": "REV",
+    "count": 36,
+    "weight": 6
+  },
+  {
+    "source": "1TH",
+    "target": "PHP",
+    "count": 36,
+    "weight": 6
+  },
+  {
+    "source": "EZK",
+    "target": "LUK",
+    "count": 36,
+    "weight": 6
+  },
+  {
+    "source": "GAL",
+    "target": "PSA",
+    "count": 36,
+    "weight": 6
+  },
+  {
+    "source": "EXO",
+    "target": "JOS",
+    "count": 35,
+    "weight": 6
+  },
+  {
+    "source": "JON",
+    "target": "PSA",
+    "count": 35,
+    "weight": 6
+  },
+  {
+    "source": "2KI",
+    "target": "PSA",
+    "count": 35,
+    "weight": 6
+  },
+  {
+    "source": "1PE",
+    "target": "GAL",
+    "count": 34,
+    "weight": 6
+  },
+  {
+    "source": "1TH",
+    "target": "HEB",
+    "count": 34,
+    "weight": 6
+  },
+  {
+    "source": "JOS",
+    "target": "PSA",
+    "count": 34,
+    "weight": 6
+  },
+  {
+    "source": "EXO",
+    "target": "JER",
+    "count": 34,
+    "weight": 6
+  },
+  {
+    "source": "EXO",
+    "target": "HEB",
+    "count": 34,
+    "weight": 6
+  },
+  {
+    "source": "JER",
+    "target": "ZEC",
+    "count": 34,
+    "weight": 6
+  },
+  {
+    "source": "EPH",
+    "target": "JAS",
+    "count": 34,
+    "weight": 6
+  },
+  {
+    "source": "2PE",
+    "target": "REV",
+    "count": 34,
+    "weight": 6
+  },
+  {
+    "source": "1JN",
+    "target": "ISA",
+    "count": 33,
+    "weight": 6
+  },
+  {
+    "source": "1SA",
+    "target": "PRO",
+    "count": 33,
+    "weight": 6
+  },
+  {
+    "source": "HEB",
+    "target": "MRK",
+    "count": 33,
+    "weight": 6
+  },
+  {
+    "source": "2PE",
+    "target": "LUK",
+    "count": 33,
+    "weight": 6
+  },
+  {
+    "source": "EXO",
+    "target": "LEV",
+    "count": 33,
+    "weight": 6
+  },
+  {
+    "source": "ACT",
+    "target": "JER",
+    "count": 33,
+    "weight": 6
+  },
+  {
+    "source": "DEU",
+    "target": "HEB",
+    "count": 33,
+    "weight": 6
+  },
+  {
+    "source": "2TI",
+    "target": "TIT",
+    "count": 33,
+    "weight": 6
+  },
+  {
+    "source": "ACT",
+    "target": "GEN",
+    "count": 32,
+    "weight": 6
+  },
+  {
+    "source": "ISA",
+    "target": "ZEP",
+    "count": 32,
+    "weight": 6
+  },
+  {
+    "source": "1CO",
+    "target": "1TI",
+    "count": 32,
+    "weight": 6
+  },
+  {
+    "source": "PRO",
+    "target": "REV",
+    "count": 32,
+    "weight": 6
+  },
+  {
+    "source": "ACT",
+    "target": "COL",
+    "count": 32,
+    "weight": 6
+  },
+  {
+    "source": "HOS",
+    "target": "JER",
+    "count": 32,
+    "weight": 6
+  },
+  {
+    "source": "GAL",
+    "target": "REV",
+    "count": 31,
+    "weight": 6
+  },
+  {
+    "source": "MAT",
+    "target": "ZEC",
+    "count": 31,
+    "weight": 6
+  },
+  {
+    "source": "1TH",
+    "target": "JHN",
+    "count": 31,
+    "weight": 6
+  },
+  {
+    "source": "1JN",
+    "target": "COL",
+    "count": 31,
+    "weight": 6
+  },
+  {
+    "source": "JOB",
+    "target": "MAT",
+    "count": 31,
+    "weight": 6
+  },
+  {
+    "source": "1TI",
+    "target": "HEB",
+    "count": 31,
+    "weight": 6
+  },
+  {
+    "source": "2TI",
+    "target": "HEB",
+    "count": 30,
+    "weight": 6
+  },
+  {
+    "source": "1TI",
+    "target": "EPH",
+    "count": 30,
+    "weight": 6
+  },
+  {
+    "source": "PHP",
+    "target": "PRO",
+    "count": 30,
+    "weight": 6
+  },
+  {
+    "source": "JAS",
+    "target": "MRK",
+    "count": 30,
+    "weight": 6
+  },
+  {
+    "source": "MAL",
+    "target": "MAT",
+    "count": 30,
+    "weight": 6
+  },
+  {
+    "source": "2PE",
+    "target": "ISA",
+    "count": 30,
+    "weight": 6
+  },
+  {
+    "source": "1CO",
+    "target": "DEU",
+    "count": 30,
+    "weight": 6
+  },
+  {
+    "source": "ACT",
+    "target": "PHP",
+    "count": 30,
+    "weight": 6
+  },
+  {
+    "source": "1TI",
+    "target": "JHN",
+    "count": 29,
+    "weight": 6
+  },
+  {
+    "source": "2TI",
+    "target": "LUK",
+    "count": 29,
+    "weight": 6
+  },
+  {
+    "source": "2PE",
+    "target": "JUD",
+    "count": 29,
+    "weight": 6
+  },
+  {
+    "source": "AMO",
+    "target": "ISA",
+    "count": 29,
+    "weight": 6
+  },
+  {
+    "source": "ECC",
+    "target": "JOB",
+    "count": 29,
+    "weight": 6
+  },
+  {
+    "source": "ECC",
+    "target": "MAT",
+    "count": 29,
+    "weight": 6
+  },
+  {
+    "source": "COL",
+    "target": "PRO",
+    "count": 28,
+    "weight": 6
+  },
+  {
+    "source": "JOB",
+    "target": "ROM",
+    "count": 28,
+    "weight": 6
+  },
+  {
+    "source": "ACT",
+    "target": "REV",
+    "count": 28,
+    "weight": 6
+  },
+  {
+    "source": "1TI",
+    "target": "LUK",
+    "count": 28,
+    "weight": 6
+  },
+  {
+    "source": "JHN",
+    "target": "JOB",
+    "count": 28,
+    "weight": 6
+  },
+  {
+    "source": "2CH",
+    "target": "MAT",
+    "count": 28,
+    "weight": 6
+  },
+  {
+    "source": "1CO",
+    "target": "GEN",
+    "count": 27,
+    "weight": 6
+  },
+  {
+    "source": "1TH",
+    "target": "COL",
+    "count": 27,
+    "weight": 6
+  },
+  {
+    "source": "2TH",
+    "target": "MAT",
+    "count": 27,
+    "weight": 6
+  },
+  {
+    "source": "NAH",
+    "target": "PSA",
+    "count": 27,
+    "weight": 6
+  },
+  {
+    "source": "2PE",
+    "target": "ROM",
+    "count": 27,
+    "weight": 6
+  },
+  {
+    "source": "1JN",
+    "target": "PRO",
+    "count": 27,
+    "weight": 6
+  },
+  {
+    "source": "1TI",
+    "target": "PRO",
+    "count": 27,
+    "weight": 6
+  },
+  {
+    "source": "2TI",
+    "target": "REV",
+    "count": 27,
+    "weight": 6
+  },
+  {
+    "source": "2CH",
+    "target": "DEU",
+    "count": 27,
+    "weight": 6
+  },
+  {
+    "source": "LEV",
+    "target": "MAT",
+    "count": 26,
+    "weight": 6
+  },
+  {
+    "source": "1SA",
+    "target": "ISA",
+    "count": 26,
+    "weight": 6
+  },
+  {
+    "source": "2PE",
+    "target": "PHP",
+    "count": 26,
+    "weight": 6
+  },
+  {
+    "source": "DAN",
+    "target": "LUK",
+    "count": 26,
+    "weight": 6
+  },
+  {
+    "source": "EXO",
+    "target": "ROM",
+    "count": 26,
+    "weight": 6
+  },
+  {
+    "source": "2CO",
+    "target": "JAS",
+    "count": 26,
+    "weight": 6
+  },
+  {
+    "source": "JER",
+    "target": "MIC",
+    "count": 26,
+    "weight": 6
+  },
+  {
+    "source": "1CO",
+    "target": "JER",
+    "count": 26,
+    "weight": 6
+  },
+  {
+    "source": "ACT",
+    "target": "GAL",
+    "count": 26,
+    "weight": 6
+  },
+  {
+    "source": "GEN",
+    "target": "JAS",
+    "count": 26,
+    "weight": 6
+  },
+  {
+    "source": "COL",
+    "target": "ISA",
+    "count": 25,
+    "weight": 6
+  },
+  {
+    "source": "1CO",
+    "target": "MRK",
+    "count": 25,
+    "weight": 6
+  },
+  {
+    "source": "PHP",
+    "target": "REV",
+    "count": 25,
+    "weight": 6
+  },
+  {
+    "source": "HAB",
+    "target": "ISA",
+    "count": 25,
+    "weight": 6
+  },
+  {
+    "source": "ECC",
+    "target": "ROM",
+    "count": 25,
+    "weight": 6
+  },
+  {
+    "source": "1PE",
+    "target": "1TI",
+    "count": 25,
+    "weight": 6
+  },
+  {
+    "source": "GEN",
+    "target": "NUM",
+    "count": 25,
+    "weight": 6
+  },
+  {
+    "source": "1SA",
+    "target": "LUK",
+    "count": 25,
+    "weight": 6
+  },
+  {
+    "source": "COL",
+    "target": "JAS",
+    "count": 25,
+    "weight": 6
+  },
+  {
+    "source": "1TH",
+    "target": "ACT",
+    "count": 25,
+    "weight": 6
+  },
+  {
+    "source": "1KI",
+    "target": "PSA",
+    "count": 24,
+    "weight": 6
+  },
+  {
+    "source": "2TH",
+    "target": "ROM",
+    "count": 24,
+    "weight": 6
+  },
+  {
+    "source": "1CO",
+    "target": "2TH",
+    "count": 24,
+    "weight": 6
+  },
+  {
+    "source": "MAT",
+    "target": "MIC",
+    "count": 24,
+    "weight": 6
+  },
+  {
+    "source": "GAL",
+    "target": "GEN",
+    "count": 24,
+    "weight": 6
+  },
+  {
+    "source": "JHN",
+    "target": "ZEC",
+    "count": 24,
+    "weight": 6
+  },
+  {
+    "source": "1TH",
+    "target": "REV",
+    "count": 24,
+    "weight": 6
+  },
+  {
+    "source": "1JN",
+    "target": "1TI",
+    "count": 24,
+    "weight": 6
+  },
+  {
+    "source": "GAL",
+    "target": "LUK",
+    "count": 24,
+    "weight": 6
+  },
+  {
+    "source": "EXO",
+    "target": "LUK",
+    "count": 24,
+    "weight": 6
+  },
+  {
+    "source": "JAS",
+    "target": "PHP",
+    "count": 23,
+    "weight": 6
+  },
+  {
+    "source": "1KI",
+    "target": "MAT",
+    "count": 23,
+    "weight": 6
+  },
+  {
+    "source": "1TI",
+    "target": "PSA",
+    "count": 23,
+    "weight": 6
+  },
+  {
+    "source": "EXO",
+    "target": "JHN",
+    "count": 23,
+    "weight": 6
+  },
+  {
+    "source": "2PE",
+    "target": "PSA",
+    "count": 23,
+    "weight": 6
+  },
+  {
+    "source": "EXO",
+    "target": "PRO",
+    "count": 23,
+    "weight": 6
+  },
+  {
+    "source": "1CO",
+    "target": "2PE",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "2CO",
+    "target": "2TI",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "ACT",
+    "target": "PRO",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "2CO",
+    "target": "GEN",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "DEU",
+    "target": "EPH",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "1JN",
+    "target": "2PE",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "1SA",
+    "target": "GEN",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "ISA",
+    "target": "JOL",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "1PE",
+    "target": "2PE",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "1JN",
+    "target": "ACT",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "EPH",
+    "target": "MRK",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "1JN",
+    "target": "MRK",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "1CH",
+    "target": "ISA",
+    "count": 22,
+    "weight": 6
+  },
+  {
+    "source": "EXO",
+    "target": "NUM",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "EZK",
+    "target": "ROM",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "2CO",
+    "target": "EZK",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "MAT",
+    "target": "NUM",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "DAN",
+    "target": "PRO",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "NEH",
+    "target": "PSA",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "EPH",
+    "target": "JER",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "JAS",
+    "target": "REV",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "GAL",
+    "target": "ISA",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "MRK",
+    "target": "REV",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "ISA",
+    "target": "LAM",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "1TI",
+    "target": "ISA",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "2CO",
+    "target": "DEU",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "JER",
+    "target": "JOB",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "1TI",
+    "target": "PHP",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "1TI",
+    "target": "COL",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "HEB",
+    "target": "NUM",
+    "count": 21,
+    "weight": 6
+  },
+  {
+    "source": "MAT",
+    "target": "TIT",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "2CO",
+    "target": "EXO",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "JOB",
+    "target": "LUK",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "2TH",
+    "target": "JHN",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "EZK",
+    "target": "ZEC",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "ECC",
+    "target": "LUK",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "ACT",
+    "target": "DEU",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "DAN",
+    "target": "JER",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "ACT",
+    "target": "DAN",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "2CO",
+    "target": "JER",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "2TI",
+    "target": "PRO",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "LUK",
+    "target": "MAL",
+    "count": 20,
+    "weight": 6
+  },
+  {
+    "source": "ECC",
+    "target": "ISA",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "1TI",
+    "target": "GEN",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "1TI",
+    "target": "JAS",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "2JN",
+    "target": "JHN",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "ACT",
+    "target": "JAS",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "DAN",
+    "target": "JHN",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "2TI",
+    "target": "ISA",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "ECC",
+    "target": "GEN",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "DEU",
+    "target": "JOB",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "1JN",
+    "target": "2JN",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "ACT",
+    "target": "EXO",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "DEU",
+    "target": "NUM",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "EZR",
+    "target": "PSA",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "2TI",
+    "target": "PHP",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "1TH",
+    "target": "PSA",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "GAL",
+    "target": "PRO",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "ISA",
+    "target": "NUM",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "COL",
+    "target": "REV",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "1CO",
+    "target": "NUM",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "2PE",
+    "target": "EPH",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "HEB",
+    "target": "JOB",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "JOL",
+    "target": "PSA",
+    "count": 19,
+    "weight": 5
+  },
+  {
+    "source": "2TH",
+    "target": "EPH",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "2CH",
+    "target": "JER",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "1JN",
+    "target": "JER",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "1TI",
+    "target": "ACT",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "1JN",
+    "target": "1TH",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "DEU",
+    "target": "NEH",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "1TH",
+    "target": "ISA",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "1TH",
+    "target": "2CO",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "DEU",
+    "target": "JAS",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "JHN",
+    "target": "NUM",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "1TI",
+    "target": "GAL",
+    "count": 18,
+    "weight": 5
+  },
+  {
+    "source": "JHN",
+    "target": "TIT",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "JAS",
+    "target": "JER",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "1JN",
+    "target": "PHP",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "ISA",
+    "target": "TIT",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "ACT",
+    "target": "JOL",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "2PE",
+    "target": "2TI",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "1TH",
+    "target": "2TI",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "ISA",
+    "target": "JOS",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "JER",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "1TH",
+    "target": "GAL",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "1TH",
+    "target": "LUK",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "1PE",
+    "target": "MRK",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "1TH",
+    "target": "2TH",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "DEU",
+    "target": "REV",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "2CO",
+    "target": "2PE",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "1TI",
+    "target": "2CO",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "1TI",
+    "target": "REV",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "DAN",
+    "target": "JOB",
+    "count": 17,
+    "weight": 5
+  },
+  {
+    "source": "EZK",
+    "target": "HEB",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "PSA",
+    "target": "RUT",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "ACT",
+    "target": "TIT",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "1CH",
+    "target": "JER",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "PSA",
+    "target": "TIT",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "1JN",
+    "target": "TIT",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "HEB",
+    "target": "LEV",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "DAN",
+    "target": "EPH",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "DAN",
+    "target": "MRK",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "EZK",
+    "target": "GEN",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "1CH",
+    "target": "GEN",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "EXO",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "JUD",
+    "target": "ROM",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "2PE",
+    "target": "COL",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "ACT",
+    "target": "EZK",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "JER",
+    "target": "JOL",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "HOS",
+    "target": "PRO",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "2TI",
+    "target": "COL",
+    "count": 16,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "DEU",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "ECC",
+    "target": "JAS",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "EXO",
+    "target": "JAS",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "HEB",
+    "target": "TIT",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "ECC",
+    "target": "JHN",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "LUK",
+    "target": "ZEC",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "GAL",
+    "target": "MRK",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "COL",
+    "target": "TIT",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "2KI",
+    "target": "ISA",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "JUD",
+    "target": "REV",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "DEU",
+    "target": "EZK",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "GEN",
+    "target": "MRK",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "1TI",
+    "target": "2PE",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "DAN",
+    "target": "JAS",
+    "count": 15,
+    "weight": 5
+  },
+  {
+    "source": "JER",
+    "target": "ZEP",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "HOS",
+    "target": "REV",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "1PE",
+    "target": "JOB",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "2CH",
+    "target": "EXO",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "LEV",
+    "target": "ROM",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "1KI",
+    "target": "DEU",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "1CO",
+    "target": "DAN",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "COL",
+    "target": "MRK",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "1TH",
+    "target": "2PE",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "DAN",
+    "target": "HEB",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "PSA",
+    "target": "ZEP",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "JHN",
+    "target": "MAL",
+    "count": 14,
+    "weight": 5
+  },
+  {
+    "source": "PHP",
+    "target": "TIT",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "2SA",
+    "target": "PRO",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "DEU",
+    "target": "MAL",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "1CO",
+    "target": "TIT",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "1CO",
+    "target": "EXO",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "AMO",
+    "target": "JER",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "1CH",
+    "target": "DEU",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "2TH",
+    "target": "PSA",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "ECC",
+    "target": "HEB",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "1PE",
+    "target": "DEU",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "HEB",
+    "target": "JUD",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "MAT",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "HOS",
+    "target": "MAT",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "GAL",
+    "target": "JER",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "2TI",
+    "target": "JUD",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "1CO",
+    "target": "JUD",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "1CO",
+    "target": "JOB",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "1JN",
+    "target": "DEU",
+    "count": 13,
+    "weight": 5
+  },
+  {
+    "source": "2TH",
+    "target": "PHP",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "1CH",
+    "target": "2SA",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "1PE",
+    "target": "2TH",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "JDG",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "1KI",
+    "target": "EXO",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "1CO",
+    "target": "ECC",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "2KI",
+    "target": "MAT",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "2CH",
+    "target": "JAS",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "2PE",
+    "target": "PRO",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "ACT",
+    "target": "JOB",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "1PE",
+    "target": "LEV",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "AMO",
+    "target": "PSA",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "2CO",
+    "target": "ECC",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "DEU",
+    "target": "MRK",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "DEU",
+    "target": "GAL",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "ECC",
+    "target": "EPH",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "EPH",
+    "target": "EXO",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "LUK",
+    "target": "MIC",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "GAL",
+    "target": "TIT",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "1PE",
+    "target": "JER",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "2SA",
+    "target": "ISA",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "ACT",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "ISA",
+    "target": "NAH",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "2KI",
+    "target": "EXO",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "EXO",
+    "target": "EZK",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "JOS",
+    "target": "MAT",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "LUK",
+    "target": "NUM",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "EPH",
+    "target": "JOB",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "EPH",
+    "target": "EZK",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "ISA",
+    "target": "NEH",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "EZK",
+    "target": "PRO",
+    "count": 12,
+    "weight": 5
+  },
+  {
+    "source": "1JN",
+    "target": "GEN",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "HEB",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "AMO",
+    "target": "MAT",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "MAL",
+    "target": "REV",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1JN",
+    "target": "2TI",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "JOB",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "2TI",
+    "target": "MRK",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "EPH",
+    "target": "JUD",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1CH",
+    "target": "JHN",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "GEN",
+    "target": "JOS",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "JOS",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "2CO",
+    "target": "JOB",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1PE",
+    "target": "ZEC",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "DAN",
+    "target": "ROM",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "NUM",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "EZK",
+    "target": "NUM",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1KI",
+    "target": "2CH",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "JER",
+    "target": "MRK",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1CH",
+    "target": "2CH",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "MAL",
+    "target": "PRO",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1KI",
+    "target": "JOS",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "MAL",
+    "target": "ROM",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "2PE",
+    "target": "EZK",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1TH",
+    "target": "1TI",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "JUD",
+    "target": "MAT",
+    "count": 11,
+    "weight": 5
+  },
+  {
+    "source": "1PE",
+    "target": "EZK",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "LEV",
+    "target": "PSA",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "JDG",
+    "target": "PSA",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "2TH",
+    "target": "ISA",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "LEV",
+    "target": "LUK",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "JHN",
+    "target": "JUD",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1JN",
+    "target": "JOB",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "2KI",
+    "target": "LUK",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1CO",
+    "target": "ZEC",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "2CH",
+    "target": "PRO",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "2TI",
+    "target": "JAS",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1KI",
+    "target": "JAS",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "JHN",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "MRK",
+    "target": "PHP",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "2SA",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1CH",
+    "target": "EPH",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "COL",
+    "target": "DEU",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "2TH",
+    "target": "COL",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1JN",
+    "target": "JUD",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "JDG",
+    "target": "JOS",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1CH",
+    "target": "HEB",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "HOS",
+    "target": "ROM",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1SA",
+    "target": "ROM",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1TI",
+    "target": "DEU",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "1TI",
+    "target": "JUD",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "GEN",
+    "target": "LEV",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "GEN",
+    "target": "MAL",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "JER",
+    "target": "LEV",
+    "count": 10,
+    "weight": 5
+  },
+  {
+    "source": "COL",
+    "target": "GEN",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "DEU",
+    "target": "ECC",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "PSA",
+    "target": "SNG",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "HOS",
+    "target": "JHN",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "EZK",
+    "target": "JOL",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "COL",
+    "target": "ECC",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "JOL",
+    "target": "ZEC",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "JUD",
+    "target": "PSA",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "1CH",
+    "target": "REV",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "JOB",
+    "target": "ZEC",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "EXO",
+    "target": "MAL",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "DEU",
+    "target": "MIC",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "HEB",
+    "target": "JOS",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "1CH",
+    "target": "PRO",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "2SA",
+    "target": "MAT",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "HAB",
+    "target": "LUK",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "1KI",
+    "target": "PRO",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "PRO",
+    "target": "ZEC",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "JOB",
+    "target": "REV",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "2TH",
+    "target": "REV",
+    "count": 9,
+    "weight": 4
+  },
+  {
+    "source": "2TH",
+    "target": "HEB",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "2PE",
+    "target": "JAS",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "2CO",
+    "target": "2TH",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "1PE",
+    "target": "2CH",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "JOS",
+    "target": "ROM",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "JOS",
+    "target": "PRO",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "1CH",
+    "target": "1KI",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "2PE",
+    "target": "GEN",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "COL",
+    "target": "JER",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "LEV",
+    "target": "MRK",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "EZK",
+    "target": "JAS",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "ECC",
+    "target": "JER",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "JER",
+    "target": "MAL",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "EZK",
+    "target": "TIT",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "2TH",
+    "target": "PRO",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "HOS",
+    "target": "JOB",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "GEN",
+    "target": "ZEP",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "MAL",
+    "target": "MRK",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "1PE",
+    "target": "EXO",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "2TH",
+    "target": "2TI",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "1TI",
+    "target": "EZK",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "2SA",
+    "target": "DEU",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "2TI",
+    "target": "JER",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "2CH",
+    "target": "ROM",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "EXO",
+    "target": "MRK",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "1CH",
+    "target": "JOS",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "JOS",
+    "target": "NUM",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "1JN",
+    "target": "EXO",
+    "count": 8,
+    "weight": 4
+  },
+  {
+    "source": "MRK",
+    "target": "PRO",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "2TI",
+    "target": "GAL",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1TH",
+    "target": "PRO",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "EXO",
+    "target": "NEH",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "DAN",
+    "target": "DEU",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "NUM",
+    "target": "ROM",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1SA",
+    "target": "2CO",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "GAL",
+    "target": "JUD",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "JON",
+    "target": "LUK",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "EPH",
+    "target": "ZEC",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "2CO",
+    "target": "TIT",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "DAN",
+    "target": "HAB",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "JHN",
+    "target": "MIC",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "NEH",
+    "target": "PRO",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "JON",
+    "target": "MAT",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "HAG",
+    "target": "PSA",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "2CH",
+    "target": "ECC",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "JOL",
+    "target": "REV",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1SA",
+    "target": "HOS",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "JHN",
+    "target": "JOS",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "2CO",
+    "target": "HOS",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1PE",
+    "target": "1SA",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "JAS",
+    "target": "MAL",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "DEU",
+    "target": "HOS",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "2CO",
+    "target": "MAL",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1KI",
+    "target": "ISA",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1KI",
+    "target": "1SA",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "EZK",
+    "target": "JOB",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "GEN",
+    "target": "MIC",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1JN",
+    "target": "LEV",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1CO",
+    "target": "HOS",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1CH",
+    "target": "JOB",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "2SA",
+    "target": "HEB",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "HOS",
+    "target": "ZEC",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1CH",
+    "target": "2CO",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1TI",
+    "target": "2TH",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "GEN",
+    "target": "RUT",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "HOS",
+    "target": "LUK",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1TI",
+    "target": "MRK",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "DEU",
+    "target": "JDG",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "GEN",
+    "target": "JDG",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "GEN",
+    "target": "HOS",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "EPH",
+    "target": "LEV",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "1KI",
+    "target": "2KI",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "HOS",
+    "target": "MAL",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "DAN",
+    "target": "GEN",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "2PE",
+    "target": "TIT",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "NEH",
+    "target": "PHP",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "MIC",
+    "target": "ROM",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "MIC",
+    "target": "ZEC",
+    "count": 7,
+    "weight": 4
+  },
+  {
+    "source": "2CO",
+    "target": "ZEC",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "JER",
+    "target": "PHP",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "HEB",
+    "target": "MAL",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "GAL",
+    "target": "JOB",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "1KI",
+    "target": "JER",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "ACT",
+    "target": "ECC",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "MAL",
+    "target": "NEH",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "ACT",
+    "target": "ZEC",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "2CH",
+    "target": "HEB",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "EXO",
+    "target": "HOS",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "2KI",
+    "target": "JER",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "EXO",
+    "target": "JOB",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "2CO",
+    "target": "DAN",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "DEU",
+    "target": "HAB",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "JAS",
+    "target": "TIT",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "HAG",
+    "target": "PRO",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "DAN",
+    "target": "NEH",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "1PE",
+    "target": "JUD",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "EZR",
+    "target": "ISA",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "1KI",
+    "target": "LUK",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "JER",
+    "target": "LAM",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "1CH",
+    "target": "MAT",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "2CO",
+    "target": "JOS",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "HEB",
+    "target": "ZEC",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "1CH",
+    "target": "1SA",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "EXO",
+    "target": "MIC",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "2KI",
+    "target": "EZK",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "DEU",
+    "target": "ZEC",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "JOL",
+    "target": "MAT",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "2SA",
+    "target": "LUK",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "1KI",
+    "target": "JOB",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "AMO",
+    "target": "JOL",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "EZK",
+    "target": "LEV",
+    "count": 6,
+    "weight": 4
+  },
+  {
+    "source": "EZK",
+    "target": "MRK",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "HEB",
+    "target": "MIC",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "2PE",
+    "target": "MRK",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "JHN",
+    "target": "LEV",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "HEB",
+    "target": "LAM",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "JAS",
+    "target": "NUM",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "1KI",
+    "target": "EPH",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "ZEC",
+    "target": "ZEP",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "JER",
+    "target": "NEH",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "1KI",
+    "target": "ACT",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "1CH",
+    "target": "1CO",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "2CH",
+    "target": "ACT",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "MIC",
+    "target": "PRO",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "HEB",
+    "target": "HOS",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "1CO",
+    "target": "2CH",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "ISA",
+    "target": "SNG",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "2SA",
+    "target": "GEN",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "ECC",
+    "target": "NEH",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "EZR",
+    "target": "PRO",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "1JN",
+    "target": "ECC",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "2CH",
+    "target": "2KI",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "1TH",
+    "target": "JAS",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "2CO",
+    "target": "MRK",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "NUM",
+    "target": "PRO",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "LEV",
+    "target": "PRO",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "JAS",
+    "target": "LEV",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "1SA",
+    "target": "2CH",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "1KI",
+    "target": "GEN",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "HAB",
+    "target": "REV",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "JOB",
+    "target": "NUM",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "MAT",
+    "target": "NEH",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "2TH",
+    "target": "LUK",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "COL",
+    "target": "EZK",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "1PE",
+    "target": "HOS",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "ACT",
+    "target": "MAL",
+    "count": 5,
+    "weight": 4
+  },
+  {
+    "source": "2TH",
+    "target": "GAL",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1SA",
+    "target": "ECC",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "MRK",
+    "target": "TIT",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "EZR",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1SA",
+    "target": "2TI",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "GEN",
+    "target": "NEH",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "GAL",
+    "target": "HOS",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1CH",
+    "target": "COL",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "ROM",
+    "target": "ZEC",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "GAL",
+    "target": "LEV",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "ACT",
+    "target": "AMO",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2TI",
+    "target": "MIC",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "GEN",
+    "target": "ZEC",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "DEU",
+    "target": "PHP",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "EZK",
+    "target": "MIC",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "PHP",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2PE",
+    "target": "GAL",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "GEN",
+    "target": "PHP",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2CO",
+    "target": "LEV",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "LEV",
+    "target": "MAL",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1CO",
+    "target": "LAM",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "JOS",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1CO",
+    "target": "LEV",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2PE",
+    "target": "EXO",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "HOS",
+    "target": "JOL",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "HOS",
+    "target": "JAS",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1CO",
+    "target": "2JN",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "LAM",
+    "target": "MAT",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "EZR",
+    "target": "JER",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1PE",
+    "target": "GEN",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "JHN",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1TH",
+    "target": "JUD",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "EXO",
+    "target": "JDG",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "AMO",
+    "target": "MIC",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "ACT",
+    "target": "MIC",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "DAN",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "AMO",
+    "target": "EZK",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "PHM",
+    "target": "PHP",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1CH",
+    "target": "ACT",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "JOL",
+    "target": "ZEP",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "HAB",
+    "target": "MIC",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2CO",
+    "target": "NUM",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1PE",
+    "target": "MAL",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "EZK",
+    "target": "LAM",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "JDG",
+    "target": "LUK",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "DAN",
+    "target": "EZK",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1KI",
+    "target": "2CO",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1TH",
+    "target": "LEV",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1TH",
+    "target": "TIT",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "REV",
+    "target": "TIT",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1SA",
+    "target": "2KI",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "DEU",
+    "target": "JOL",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "JER",
+    "target": "NUM",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "JER",
+    "target": "TIT",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "1TH",
+    "target": "3JN",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "HAG",
+    "target": "MAL",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "EPH",
+    "target": "MAL",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "JDG",
+    "target": "PRO",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "EST",
+    "target": "PRO",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "MIC",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "DEU",
+    "target": "JUD",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "REV",
+    "target": "ZEP",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "NUM",
+    "target": "REV",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "HAB",
+    "target": "JER",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "LEV",
+    "target": "NUM",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "HAB",
+    "target": "PRO",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "EST",
+    "target": "ISA",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "GEN",
+    "target": "JUD",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "EZK",
+    "target": "HOS",
+    "count": 4,
+    "weight": 3
+  },
+  {
+    "source": "JOS",
+    "target": "LEV",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1CO",
+    "target": "JOS",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "ZEC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JOL",
+    "target": "ROM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2TI",
+    "target": "ZEC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "EZK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "LEV",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "HOS",
+    "target": "MIC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1SA",
+    "target": "MIC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1SA",
+    "target": "PHP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "DEU",
+    "target": "HAG",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "EZK",
+    "target": "ZEP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2TI",
+    "target": "NUM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JUD",
+    "target": "PHP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2TI",
+    "target": "ECC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ECC",
+    "target": "MRK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ECC",
+    "target": "LAM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1CH",
+    "target": "EZR",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "AMO",
+    "target": "GEN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "LUK",
+    "target": "TIT",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2TI",
+    "target": "DEU",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1SA",
+    "target": "AMO",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "HAG",
+    "target": "MAT",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JAS",
+    "target": "JOL",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2CO",
+    "target": "HAG",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "EPH",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "GAL",
+    "target": "HAB",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "NAH",
+    "target": "ROM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "LAM",
+    "target": "MIC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2KI",
+    "target": "DEU",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ACT",
+    "target": "JOS",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "AMO",
+    "target": "REV",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1CH",
+    "target": "DAN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JOB",
+    "target": "LAM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "NUM",
+    "target": "PHP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "HAB",
+    "target": "ZEC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JER",
+    "target": "JOS",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JOB",
+    "target": "MRK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JOB",
+    "target": "PHP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "AMO",
+    "target": "DAN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1CH",
+    "target": "2KI",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "HAB",
+    "target": "PHP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "MRK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "AMO",
+    "target": "LUK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "GEN",
+    "target": "TIT",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "MIC",
+    "target": "NUM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "DAN",
+    "target": "PHP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "AMO",
+    "target": "HOS",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "EXO",
+    "target": "JON",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1KI",
+    "target": "REV",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1JN",
+    "target": "EZK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1CO",
+    "target": "1KI",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1TI",
+    "target": "LEV",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "LUK",
+    "target": "ZEP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2JN",
+    "target": "COL",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "PRO",
+    "target": "RUT",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "MRK",
+    "target": "ZEC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2CO",
+    "target": "EZR",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ECC",
+    "target": "NUM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ECC",
+    "target": "REV",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "3JN",
+    "target": "PSA",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1TI",
+    "target": "ECC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1PE",
+    "target": "ECC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JER",
+    "target": "JON",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1SA",
+    "target": "EZK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2SA",
+    "target": "JHN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "EZK",
+    "target": "GAL",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "EPH",
+    "target": "HOS",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2KI",
+    "target": "JAS",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1PE",
+    "target": "DAN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1PE",
+    "target": "3JN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1TH",
+    "target": "JOB",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2KI",
+    "target": "JOB",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "LAM",
+    "target": "PRO",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1KI",
+    "target": "DAN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "MAT",
+    "target": "ZEP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2TH",
+    "target": "DAN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "DAN",
+    "target": "EXO",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2TH",
+    "target": "TIT",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1KI",
+    "target": "LEV",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1KI",
+    "target": "ROM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2KI",
+    "target": "PRO",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "DAN",
+    "target": "ZEC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JUD",
+    "target": "LUK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JOL",
+    "target": "LUK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2CO",
+    "target": "JUD",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2KI",
+    "target": "GEN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "MAL",
+    "target": "ZEC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1TI",
+    "target": "EXO",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2SA",
+    "target": "EZK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2KI",
+    "target": "AMO",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ACT",
+    "target": "HAB",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1SA",
+    "target": "JAS",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JUD",
+    "target": "TIT",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "COL",
+    "target": "LEV",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "MAT",
+    "target": "RUT",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "EZR",
+    "target": "PHP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2PE",
+    "target": "2TH",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ACT",
+    "target": "JUD",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1KI",
+    "target": "ECC",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2CH",
+    "target": "LUK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2TH",
+    "target": "JAS",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1CH",
+    "target": "JAS",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "3JN",
+    "target": "JHN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "HOS",
+    "target": "LAM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2KI",
+    "target": "MRK",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "EPH",
+    "target": "EST",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "DAN",
+    "target": "JUD",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ACT",
+    "target": "NUM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "DEU",
+    "target": "TIT",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JHN",
+    "target": "SNG",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "EPH",
+    "target": "NUM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2TI",
+    "target": "GEN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ISA",
+    "target": "LEV",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "EXO",
+    "target": "HAB",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "HAG",
+    "target": "ISA",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "MRK",
+    "target": "NUM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2CO",
+    "target": "JDG",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2TH",
+    "target": "JUD",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "EXO",
+    "target": "PHP",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "EST",
+    "target": "PSA",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ECC",
+    "target": "GAL",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1JN",
+    "target": "DAN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "ACT",
+    "target": "LEV",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2KI",
+    "target": "ACT",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2KI",
+    "target": "HEB",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1JN",
+    "target": "3JN",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JDG",
+    "target": "NUM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2KI",
+    "target": "2SA",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2PE",
+    "target": "ACT",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "2TI",
+    "target": "EZR",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1JN",
+    "target": "1KI",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "AMO",
+    "target": "PRO",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JER",
+    "target": "NAH",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "JOL",
+    "target": "MAL",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1CH",
+    "target": "ROM",
+    "count": 3,
+    "weight": 3
+  },
+  {
+    "source": "1KI",
+    "target": "HEB",
+    "count": 3,
+    "weight": 3
+  }
+]

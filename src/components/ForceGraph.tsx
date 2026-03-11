@@ -135,10 +135,13 @@ export default function ForceGraph({
     (svg as unknown as d3.Selection<SVGSVGElement, unknown, null, undefined>).call(zoom.transform, initialTransform);
 
     // ─── EDGES ───────────────────────────────────────
+    // Only render edges with weight >= 4 to avoid visual clutter
+    // (weaker edges still influence the force layout)
+    const visibleLinks = links.filter((d) => d.weight >= 4);
     const linkGroup = container.append("g").attr("class", "edges");
     const linkElements = linkGroup
       .selectAll("line")
-      .data(links)
+      .data(visibleLinks)
       .join("line")
       .attr("stroke", (d) => {
         const sourceId =
@@ -146,8 +149,8 @@ export default function ForceGraph({
         const book = bookMap.get(sourceId);
         return book ? GENRE_COLORS[book.genre] : "#ffffff";
       })
-      .attr("stroke-opacity", (d) => 0.08 + (d.weight / 10) * 0.25)
-      .attr("stroke-width", (d) => 0.3 + (d.weight / 10) * 2.5);
+      .attr("stroke-opacity", (d) => 0.03 + (d.weight / 10) * 0.2)
+      .attr("stroke-width", (d) => 0.2 + (d.weight / 10) * 2.0);
 
     // ─── NODES ───────────────────────────────────────
     const nodeGroup = container.append("g").attr("class", "nodes");
@@ -251,6 +254,8 @@ export default function ForceGraph({
     });
 
     // ─── FORCE SIMULATION ────────────────────────────
+    // With ~950 edges (from verse cross-refs), use gentler link forces
+    // so weak connections don't collapse the graph
     const simulation = d3
       .forceSimulation<SimNode>(nodes)
       .force(
@@ -258,19 +263,19 @@ export default function ForceGraph({
         d3
           .forceLink<SimNode, SimLink>(links)
           .id((d) => d.id)
-          .distance((d) => 180 - d.weight * 14)
-          .strength((d) => 0.2 + (d.weight / 10) * 0.6)
+          .distance((d) => 220 - d.weight * 16)
+          .strength((d) => 0.05 + (d.weight / 10) * 0.35)
       )
-      .force("charge", d3.forceManyBody().strength(-120).distanceMax(500))
-      .force("center", d3.forceCenter(width / 2, height / 2).strength(0.05))
+      .force("charge", d3.forceManyBody().strength(-180).distanceMax(600))
+      .force("center", d3.forceCenter(width / 2, height / 2).strength(0.04))
       .force(
         "collide",
-        d3.forceCollide<SimNode>().radius((d) => d.radius + 8)
+        d3.forceCollide<SimNode>().radius((d) => d.radius + 10)
       )
-      .force("x", d3.forceX(width / 2).strength(0.02))
-      .force("y", d3.forceY(height / 2).strength(0.02))
-      .alphaDecay(0.015)
-      .velocityDecay(0.3)
+      .force("x", d3.forceX(width / 2).strength(0.015))
+      .force("y", d3.forceY(height / 2).strength(0.015))
+      .alphaDecay(0.012)
+      .velocityDecay(0.35)
       .on("tick", () => {
         linkElements
           .attr("x1", (d) => (d.source as SimNode).x!)
@@ -284,20 +289,27 @@ export default function ForceGraph({
 
     simRef.current = simulation;
 
-    // Highlight selected
+    // Highlight selected — show connections with weight >= 3
     if (selectedBookId) {
       const connectedIds = new Set<string>();
+      const connectedWeights = new Map<string, number>();
       activeEdges.forEach((e) => {
-        if (e.source === selectedBookId) connectedIds.add(e.target);
-        if (e.target === selectedBookId) connectedIds.add(e.source);
+        if (e.source === selectedBookId && e.weight >= 3) {
+          connectedIds.add(e.target);
+          connectedWeights.set(e.target, e.weight);
+        }
+        if (e.target === selectedBookId && e.weight >= 3) {
+          connectedIds.add(e.source);
+          connectedWeights.set(e.source, e.weight);
+        }
       });
       connectedIds.add(selectedBookId);
 
       nodeElements
         .select("circle:nth-child(2)")
-        .attr("opacity", (d) => (connectedIds.has(d.id) ? 0.95 : 0.2));
+        .attr("opacity", (d) => (connectedIds.has(d.id) ? 0.95 : 0.15));
       labelElements.attr("opacity", (d) =>
-        connectedIds.has(d.id) ? 1 : 0.15
+        connectedIds.has(d.id) ? 1 : 0.1
       );
       linkElements.attr("stroke-opacity", (d) => {
         const sid =
@@ -305,9 +317,9 @@ export default function ForceGraph({
         const tid =
           typeof d.target === "string" ? d.target : (d.target as SimNode).id;
         if (sid === selectedBookId || tid === selectedBookId) {
-          return 0.3 + (d.weight / 10) * 0.5;
+          return 0.2 + (d.weight / 10) * 0.5;
         }
-        return 0.03;
+        return 0.015;
       });
     }
   }, [canon, selectedBookId, todayBookIds, onSelectBook, onHover]);
