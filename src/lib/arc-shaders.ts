@@ -1,11 +1,12 @@
 // GLSL shaders for WebGL2 instanced arc rendering
-// Vertex shader computes ellipse geometry on the GPU; fragment shader passes through color.
+// Uses triangle-strip quads for smooth, anti-aliased lines with configurable width.
 
 export const VERTEX_SHADER = `#version 300 es
 precision highp float;
 
-// Shared geometry: parameter along the ellipse (0..1)
+// Shared geometry: parameter along the ellipse (0..1) and side offset (-1 or +1)
 in float a_t;
+in float a_side;
 
 // Per-instance attributes (one per arc)
 in float a_fromIdx;
@@ -35,13 +36,22 @@ uniform float u_alphaDefault;
 uniform float u_alphaHighlight;
 uniform float u_alphaDimmed;
 
+// Line rendering
+uniform float u_lineWidth; // in CSS pixels
+uniform float u_dpr;       // device pixel ratio
+
+// Zoom-dependent alpha
+uniform float u_zoomAlpha;
+
 out vec4 v_color;
+out float v_side;
 
 void main() {
   // Discard invisible arcs (canon filtering)
   if (a_visible < 0.5) {
     gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
     v_color = vec4(0.0);
+    v_side = 0.0;
     return;
   }
 
@@ -57,6 +67,7 @@ void main() {
   if (maxX < -50.0 || minX > u_resolution.x + 50.0) {
     gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
     v_color = vec4(0.0);
+    v_side = 0.0;
     return;
   }
 
@@ -74,16 +85,45 @@ void main() {
   // Parametric ellipse: angle from 0 to PI
   float angle = a_t * 3.14159265;
 
+  // Compute point on ellipse (in CSS pixel coords)
   float px, py;
   if (isForward) {
-    // Arc above axis: sweep from PI to 0
     px = cx + rx * cos(3.14159265 - angle);
     py = u_axisY - ry * sin(angle);
   } else {
-    // Arc below axis: sweep from 0 to PI
     px = cx + rx * cos(angle);
     py = u_axisY + ry * sin(angle);
   }
+
+  // Compute analytical tangent for normal calculation
+  // Derivative of parametric ellipse with respect to angle:
+  //   dx/dangle, dy/dangle
+  float tx, ty;
+  if (isForward) {
+    // px = cx + rx * cos(PI - angle) => dx/dangle = rx * sin(PI - angle)
+    // py = axisY - ry * sin(angle)   => dy/dangle = -ry * cos(angle)
+    tx = rx * sin(3.14159265 - angle);
+    ty = -ry * cos(angle);
+  } else {
+    // px = cx + rx * cos(angle) => dx/dangle = -rx * sin(angle)
+    // py = axisY + ry * sin(angle) => dy/dangle = ry * cos(angle)
+    tx = -rx * sin(angle);
+    ty = ry * cos(angle);
+  }
+
+  // Screen-space normal (perpendicular to tangent)
+  float tLen = length(vec2(tx, ty));
+  vec2 normal;
+  if (tLen > 0.001) {
+    normal = vec2(-ty, tx) / tLen;
+  } else {
+    normal = vec2(0.0, 1.0);
+  }
+
+  // Offset position by half line width in screen space
+  float halfWidth = u_lineWidth * 0.5;
+  px += a_side * halfWidth * normal.x;
+  py += a_side * halfWidth * normal.y;
 
   // Convert to clip space
   gl_Position = vec4(
@@ -103,8 +143,12 @@ void main() {
     alpha = (fromInSel || toInSel) ? u_alphaHighlight : u_alphaDimmed;
   }
 
+  // Apply zoom-dependent alpha boost
+  alpha *= u_zoomAlpha;
+
   int gi = int(a_genreIdx);
   v_color = vec4(u_genreColors[gi], alpha);
+  v_side = a_side;
 }
 `;
 
@@ -112,9 +156,13 @@ export const FRAGMENT_SHADER = `#version 300 es
 precision highp float;
 
 in vec4 v_color;
+in float v_side;
 out vec4 fragColor;
 
 void main() {
-  fragColor = v_color;
+  // Smooth edge falloff for anti-aliased line edges
+  float edgeDist = abs(v_side);
+  float edgeAlpha = 1.0 - smoothstep(0.5, 1.0, edgeDist);
+  fragColor = vec4(v_color.rgb, v_color.a * edgeAlpha);
 }
 `;
