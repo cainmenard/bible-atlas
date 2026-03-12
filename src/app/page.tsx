@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import StarBackground from "@/components/StarBackground";
 import Tooltip from "@/components/Tooltip";
@@ -22,7 +22,7 @@ const ArcDiagram = dynamic(() => import("@/components/ArcDiagram"), {
 });
 
 export default function Home() {
-  const [viewMode, setViewMode] = useState<ViewMode>("graph");
+  const [viewMode, setViewMode] = useState<ViewMode>("arcs");
   const [canon, setCanon] = useState<Canon>("catholic");
   const [translation, setTranslation] = useState("web");
   const [edgeThreshold, setEdgeThreshold] = useState(5);
@@ -86,48 +86,54 @@ export default function Home() {
         />
       )}
 
-      <CanonFilter canon={canon} onChange={setCanon} />
+      {/* Unified compact toolbar */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4">
+        {/* Canon selector */}
+        <CanonFilter canon={canon} onChange={setCanon} />
 
-      {/* View mode toggle + edge threshold slider */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3">
-        <div className="flex gap-1 bg-white/[0.06] backdrop-blur-sm rounded-full p-1 border border-white/[0.08]">
+        {/* View mode toggle */}
+        <div className="glass-panel rounded-full p-1 flex gap-1">
+          <button
+            onClick={() => setViewMode("arcs")}
+            className={`px-4 py-2 text-[11px] rounded-full transition-all font-mono ${
+              viewMode === "arcs"
+                ? "bg-white/15 text-[var(--accent)] opacity-100"
+                : "text-[var(--text-secondary)] opacity-[var(--opacity-rest)] hover:opacity-[var(--opacity-hover)]"
+            }`}
+          >
+            Arc
+          </button>
           <button
             onClick={() => setViewMode("graph")}
-            className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${
+            className={`px-4 py-2 text-[11px] rounded-full transition-all font-mono ${
               viewMode === "graph"
-                ? "bg-white/15 text-white/90"
-                : "text-white/40 hover:text-white/60"
+                ? "bg-white/15 text-[var(--accent)] opacity-100"
+                : "text-[var(--text-secondary)] opacity-[var(--opacity-rest)] hover:opacity-[var(--opacity-hover)]"
             }`}
           >
             Graph
           </button>
-          <button
-            onClick={() => setViewMode("arcs")}
-            className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all ${
-              viewMode === "arcs"
-                ? "bg-white/15 text-white/90"
-                : "text-white/40 hover:text-white/60"
-            }`}
-          >
-            Arcs
-          </button>
         </div>
+
+        {/* Edge threshold slider (graph mode only) */}
         {viewMode === "graph" && (
-          <div className="flex items-center gap-2 bg-white/[0.06] backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/[0.08]">
-            <span className="text-[10px] text-white/40 whitespace-nowrap">Edges</span>
+          <div className="glass-panel rounded-full px-4 py-2 flex items-center gap-3">
+            <span className="text-[10px] text-[var(--text-dim)] font-mono whitespace-nowrap">Edges</span>
             <input
               type="range"
               min={1}
               max={10}
               value={edgeThreshold}
               onChange={(e) => setEdgeThreshold(Number(e.target.value))}
-              className="w-16 h-1 accent-white/60 cursor-pointer"
+              className="w-16 h-1 cursor-pointer"
             />
-            <span className="text-[10px] text-white/50 w-4 text-center">{edgeThreshold}</span>
+            <span className="text-[10px] text-[var(--text-secondary)] font-mono w-4 text-center">{edgeThreshold}</span>
           </div>
         )}
+
+        {/* Translation selector */}
+        <TranslationSelector translation={translation} onChange={setTranslation} />
       </div>
-      <TranslationSelector translation={translation} onChange={setTranslation} />
 
       <Tooltip
         book={hoveredBook?.book ?? null}
@@ -147,13 +153,14 @@ export default function Home() {
 
       <Link
         href="/about"
-        className="fixed bottom-4 right-4 z-40 text-[10px] text-white/20 hover:text-white/50 transition-colors"
+        className="fixed bottom-4 right-4 z-40 text-[10px] font-mono three-state-interactive"
+        style={{ color: "var(--text-dim)" }}
       >
         About Bible Atlas
       </Link>
 
       <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none text-center">
-        <h1 className="text-white/[0.07] text-3xl font-light tracking-[0.3em] uppercase">
+        <h1 className="text-[var(--accent)] opacity-[0.07] text-3xl font-light tracking-[0.3em] uppercase font-serif">
           Bible Atlas
         </h1>
       </div>

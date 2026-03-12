@@ -16,23 +16,26 @@ export default function Tooltip({ book, x, y }: Props) {
 
   return (
     <div
-      className="tooltip"
+      className="tooltip glass-panel"
       style={{
         left: x + 16,
         top: y - 10,
         borderColor: GENRE_COLORS[book.genre] + "40",
       }}
     >
-      <div style={{ color: GENRE_COLORS[book.genre], fontWeight: 600, marginBottom: 4 }}>
+      <div
+        className="font-serif"
+        style={{ color: GENRE_COLORS[book.genre], fontWeight: 600, marginBottom: 6, fontSize: 14 }}
+      >
         {book.name}
       </div>
-      <div style={{ opacity: 0.7 }}>
+      <div className="font-mono" style={{ color: "var(--text-secondary)", fontSize: 11 }}>
         {book.genre} &middot; {book.testament === "DC" ? "Deuterocanonical" : book.testament}
       </div>
-      <div style={{ opacity: 0.6, marginTop: 4 }}>
+      <div className="font-mono" style={{ color: "var(--text-secondary)", marginTop: 6, fontSize: 11 }}>
         {book.chapters} ch &middot; {book.verses.toLocaleString()} verses
       </div>
-      <div style={{ opacity: 0.45, marginTop: 2, fontSize: 10 }}>
+      <div className="font-mono" style={{ color: "var(--text-dim)", marginTop: 4, fontSize: 10 }}>
         Canons: {canons}
       </div>
     </div>
