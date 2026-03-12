@@ -1,12 +1,18 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { GENRE_COLORS } from "@/lib/colors";
 import { Canon } from "@/lib/types";
 import { books } from "@/data/books";
 import { CHAPTER_VERSES } from "@/data/chapter-verses";
 import { ArcRenderer } from "@/lib/arc-renderer";
 import { indexToVerseRef, formatVerseRef } from "@/lib/verse-index";
+import {
+  computeBookLabels,
+  computeChapterLabels,
+  type LabelItem,
+  type TickItem,
+} from "@/lib/label-layout";
 
 interface ArcData {
   totalVerses: number;
@@ -139,6 +145,13 @@ export default function ArcDiagram({
   const [selectedArc, setSelectedArc] = useState<SelectedArc | null>(null);
   const selectedArcRef = useRef<SelectedArc | null>(null);
 
+  // Pre-compute book name lookup (stable, no deps)
+  const bookNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const b of books) m.set(b.id, b.name);
+    return m;
+  }, []);
+
   // Keep ref in sync with state for use in draw callback
   useEffect(() => {
     selectedArcRef.current = selectedArc;
@@ -266,80 +279,91 @@ export default function ArcDiagram({
       books.filter((b) => b.canons.includes(canon)).map((b) => b.id)
     );
 
-    const useFullNames = scaleX >= 3;
-    ctx.font = useFullNames ? "11px monospace" : "9px monospace";
     ctx.textAlign = "center";
 
+    // --- Book boundary ticks (always drawn for visible books) ---
+    ctx.strokeStyle = "rgba(255,255,255,0.1)";
+    ctx.lineWidth = 0.5;
     for (const b of data.books) {
       if (!activeBookIds.has(b.id)) continue;
-
       const bookStartX = MARGIN + offsetX + b.offset * xScale;
       const bookEndX = MARGIN + offsetX + (b.offset + b.verses) * xScale;
-      const bookCenterX = (bookStartX + bookEndX) / 2;
-      const bookPixelWidth = bookEndX - bookStartX;
-
       if (bookEndX < -50 || bookStartX > width + 50) continue;
-
-      // Book boundary tick
-      ctx.strokeStyle = "rgba(255,255,255,0.1)";
-      ctx.lineWidth = 0.5;
       ctx.beginPath();
       ctx.moveTo(bookStartX, axisY - 4);
       ctx.lineTo(bookStartX, axisY + 4);
       ctx.stroke();
+    }
 
-      const isSelected = selectedBookId === b.id;
-      const genreColor = GENRE_COLOR_LIST[b.genre % GENRE_COLOR_LIST.length];
-      ctx.fillStyle = isSelected ? genreColor : "rgba(255,255,255,0.4)";
+    // --- Compute book labels with dynamic sizing ---
+    const bookLabels = computeBookLabels(
+      data.books,
+      activeBookIds,
+      bookNameMap,
+      xScale,
+      offsetX,
+      MARGIN,
+      width,
+      axisY,
+      selectedBookId,
+      GENRE_COLOR_LIST,
+    );
 
-      // Book label
-      if (bookPixelWidth > 20) {
-        const fullBook = books.find((bk) => bk.id === b.id);
-        const label =
-          useFullNames && bookPixelWidth > 60 && fullBook
-            ? fullBook.name
-            : b.id;
-        ctx.fillText(label, bookCenterX, axisY + 18);
+    // --- Compute chapter labels + ticks for visible books ---
+    const allChapterLabels: LabelItem[] = [];
+    const allChapterTicks: TickItem[] = [];
+    for (const b of data.books) {
+      if (!activeBookIds.has(b.id)) continue;
+      const bookStartX = MARGIN + offsetX + b.offset * xScale;
+      const bookEndX = MARGIN + offsetX + (b.offset + b.verses) * xScale;
+      if (bookEndX < -50 || bookStartX > width + 50) continue;
+      const chapters = CHAPTER_VERSES[b.id];
+      if (!chapters) continue;
+      const { labels, ticks } = computeChapterLabels(
+        b.id, b.offset, chapters, xScale, offsetX, MARGIN, width, axisY,
+      );
+      allChapterLabels.push(...labels);
+      allChapterTicks.push(...ticks);
+    }
+
+    // --- Draw chapter ticks (batch) ---
+    if (allChapterTicks.length > 0) {
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 0.5;
+      for (const t of allChapterTicks) {
+        ctx.beginPath();
+        ctx.moveTo(t.x, t.yTop);
+        ctx.lineTo(t.x, t.yBot);
+        ctx.stroke();
       }
+    }
 
-      // --- Chapter markers (medium zoom) ---
-      if (scaleX >= 5) {
-        const chapters = CHAPTER_VERSES[b.id];
-        if (chapters) {
-          let verseOffset = b.offset;
-          for (let ch = 0; ch < chapters.length; ch++) {
-            const chStartX = MARGIN + offsetX + verseOffset * xScale;
-            const chEndX =
-              MARGIN + offsetX + (verseOffset + chapters[ch]) * xScale;
-            const chWidth = chEndX - chStartX;
-
-            if (chStartX > width + 20) break;
-            if (chEndX > -20) {
-              // Chapter tick
-              ctx.strokeStyle = "rgba(255,255,255,0.06)";
-              ctx.lineWidth = 0.5;
-              ctx.beginPath();
-              ctx.moveTo(chStartX, axisY - 3);
-              ctx.lineTo(chStartX, axisY + 3);
-              ctx.stroke();
-
-              // Chapter number
-              if (chWidth > 14) {
-                ctx.font = "7px monospace";
-                ctx.fillStyle = "rgba(255,255,255,0.2)";
-                ctx.fillText(
-                  String(ch + 1),
-                  chStartX + chWidth / 2,
-                  axisY + 28
-                );
-              }
-            }
-            verseOffset += chapters[ch];
-          }
-          // Restore font for next book label
-          ctx.font = useFullNames ? "11px monospace" : "9px monospace";
-        }
+    // --- Batch-draw book labels (sorted by font size to minimize ctx.font switches) ---
+    bookLabels.sort((a, b) => a.fontSize - b.fontSize);
+    {
+      let curFont = "";
+      for (const item of bookLabels) {
+        const font = `${item.fontSize}px monospace`;
+        if (font !== curFont) { ctx.font = font; curFont = font; }
+        ctx.globalAlpha = item.alpha;
+        ctx.fillStyle = item.color;
+        ctx.fillText(item.text, item.x, item.y);
       }
+      ctx.globalAlpha = 1;
+    }
+
+    // --- Batch-draw chapter labels (sorted by font size) ---
+    allChapterLabels.sort((a, b) => a.fontSize - b.fontSize);
+    {
+      let curFont = "";
+      for (const item of allChapterLabels) {
+        const font = `${item.fontSize}px monospace`;
+        if (font !== curFont) { ctx.font = font; curFont = font; }
+        ctx.globalAlpha = item.alpha;
+        ctx.fillStyle = item.color;
+        ctx.fillText(item.text, item.x, item.y);
+      }
+      ctx.globalAlpha = 1;
     }
 
     // --- Verse ticks (deep zoom) ---
@@ -361,6 +385,23 @@ export default function ArcDiagram({
         ctx.moveTo(vx, axisY - 2);
         ctx.lineTo(vx, axisY + 2);
         ctx.stroke();
+      }
+
+      // Verse reference labels at extreme zoom
+      const versePixelWidth = xScale;
+      if (versePixelWidth > 14) {
+        ctx.font = "8px monospace";
+        ctx.fillStyle = "rgba(255,255,255,0.15)";
+        ctx.globalAlpha = Math.min(1, (versePixelWidth - 14) / 10);
+        for (let v = visibleStartIdx; v < visibleEndIdx; v++) {
+          const vx = MARGIN + offsetX + v * xScale;
+          if (vx < -5 || vx > width + 5) continue;
+          const ref = indexToVerseRef(v, data.books);
+          if (ref) {
+            ctx.fillText(`${ref.chapter}:${ref.verse}`, vx, axisY + 38);
+          }
+        }
+        ctx.globalAlpha = 1;
       }
     }
 
