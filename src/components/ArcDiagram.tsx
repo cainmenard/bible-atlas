@@ -3,7 +3,7 @@
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { GENRE_COLORS } from "@/lib/colors";
 import { Canon } from "@/lib/types";
-import { books } from "@/data/books";
+import { books, bookMap } from "@/data/books";
 import { CHAPTER_VERSES } from "@/data/chapter-verses";
 import { ArcRenderer } from "@/lib/arc-renderer";
 import { indexToVerseRef, formatVerseRef } from "@/lib/verse-index";
@@ -13,6 +13,8 @@ import {
   type LabelItem,
   type TickItem,
 } from "@/lib/label-layout";
+import { fetchVerseText, getBibleGatewayUrl, getBookName } from "@/lib/bible-api";
+import VersePopover from "@/components/VersePopover";
 
 interface ArcData {
   totalVerses: number;
@@ -31,14 +33,46 @@ interface SelectedArc {
   screenY: number;
 }
 
+interface VersePopoverState {
+  bookId: string;
+  chapter: number;
+  verse?: number;
+  screenX: number;
+  screenY: number;
+}
+
 interface Props {
   canon: Canon;
   selectedBookId: string | null;
   onSelectBook: (id: string | null) => void;
+  translation?: string;
 }
 
 const GENRE_COLOR_LIST = Object.values(GENRE_COLORS);
 const MARGIN = 40;
+
+/** Find the label at a screen point. Returns the label or null. */
+function findLabelAtPoint(
+  mouseX: number,
+  mouseY: number,
+  labels: LabelItem[],
+): LabelItem | null {
+  for (let i = labels.length - 1; i >= 0; i--) {
+    const l = labels[i];
+    // Labels are drawn with textAlign="center", so x is the center
+    const halfW = l.width / 2;
+    const top = l.y - l.height;
+    if (
+      mouseX >= l.x - halfW &&
+      mouseX <= l.x + halfW &&
+      mouseY >= top &&
+      mouseY <= l.y + 4 // small padding below baseline
+    ) {
+      return l;
+    }
+  }
+  return null;
+}
 
 /** Find the arc closest to a screen point. Returns arc index or null. */
 function findArcAtPoint(
@@ -128,6 +162,7 @@ export default function ArcDiagram({
   canon,
   selectedBookId,
   onSelectBook,
+  translation = "web",
 }: Props) {
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -145,6 +180,17 @@ export default function ArcDiagram({
   const [selectedArc, setSelectedArc] = useState<SelectedArc | null>(null);
   const selectedArcRef = useRef<SelectedArc | null>(null);
 
+  // Verse text fetched for the arc detail card
+  const [arcFromText, setArcFromText] = useState<string | null>(null);
+  const [arcToText, setArcToText] = useState<string | null>(null);
+  const [arcTextLoading, setArcTextLoading] = useState(false);
+
+  // Verse popover state (for clicking verse/chapter labels)
+  const [versePopover, setVersePopover] = useState<VersePopoverState | null>(null);
+
+  // Store rendered labels for hit-testing
+  const renderedLabelsRef = useRef<LabelItem[]>([]);
+
   // Pre-compute book name lookup (stable, no deps)
   const bookNameMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -156,6 +202,33 @@ export default function ArcDiagram({
   useEffect(() => {
     selectedArcRef.current = selectedArc;
   }, [selectedArc]);
+
+  // Fetch verse text when an arc is selected
+  useEffect(() => {
+    if (!selectedArc || !dataRef.current) {
+      setArcFromText(null);
+      setArcToText(null);
+      return;
+    }
+
+    const data = dataRef.current;
+    const fromRef = indexToVerseRef(selectedArc.fromIdx, data.books);
+    const toRef = indexToVerseRef(selectedArc.toIdx, data.books);
+    if (!fromRef || !toRef) return;
+
+    setArcTextLoading(true);
+    setArcFromText(null);
+    setArcToText(null);
+
+    Promise.all([
+      fetchVerseText(fromRef.bookId, fromRef.chapter, fromRef.verse, translation),
+      fetchVerseText(toRef.bookId, toRef.chapter, toRef.verse, translation),
+    ]).then(([fromResult, toResult]) => {
+      setArcFromText(fromResult?.text || null);
+      setArcToText(toResult?.text || null);
+      setArcTextLoading(false);
+    });
+  }, [selectedArc, translation]);
 
   // Track last overlay canvas size to avoid unnecessary resets
   const lastOverlaySizeRef = useRef({ width: 0, height: 0, dpr: 0 });
@@ -380,7 +453,8 @@ export default function ArcDiagram({
       ctx.globalAlpha = 1;
     }
 
-    // --- Verse ticks (deep zoom) ---
+    // --- Verse ticks & labels (deep zoom) ---
+    const allVerseLabels: LabelItem[] = [];
     if (scaleX >= 50) {
       const visibleStartIdx = Math.max(
         0,
@@ -413,12 +487,30 @@ export default function ArcDiagram({
           if (vx < -5 || vx > width + 5) continue;
           const ref = indexToVerseRef(v, data.books);
           if (ref) {
-            ctx.fillText(`${ref.chapter}:${ref.verse}`, vx, axisY + 52);
+            const vText = `${ref.chapter}:${ref.verse}`;
+            ctx.fillText(vText, vx, axisY + 52);
+            allVerseLabels.push({
+              text: vText,
+              x: vx,
+              y: axisY + 52,
+              fontSize: verseFontSize,
+              color: "rgba(255,255,255,0.5)",
+              alpha: Math.min(1, (versePixelWidth - 14) / 6),
+              type: "verse",
+              bookId: ref.bookId,
+              chapter: ref.chapter,
+              verse: ref.verse,
+              width: vText.length * verseFontSize * 0.6,
+              height: verseFontSize,
+            });
           }
         }
         ctx.globalAlpha = 1;
       }
     }
+
+    // Store all labels for hit-testing
+    renderedLabelsRef.current = [...bookLabels, ...allChapterLabels, ...allVerseLabels];
 
     // --- Draw selected arc highlight ---
     const selArc = selectedArcRef.current;
@@ -570,6 +662,23 @@ export default function ArcDiagram({
     animRef.current = requestAnimationFrame(draw);
   }, [draw]);
 
+  /** Smoothly zoom to center a specific verse range in the viewport */
+  const zoomToRange = useCallback((startIdx: number, endIdx: number) => {
+    const data = dataRef.current;
+    if (!data) return;
+    const width = window.innerWidth;
+    const baseWidth = width - MARGIN * 2;
+    const rangeVerses = endIdx - startIdx;
+    // Target: range fills ~60% of viewport
+    const targetScale = (baseWidth * 0.6) / (rangeVerses * (baseWidth / data.totalVerses));
+    const newScale = Math.max(1, Math.min(1000, targetScale));
+    const centerIdx = (startIdx + endIdx) / 2;
+    const newOffsetX = (width / 2 - MARGIN) - centerIdx * (baseWidth * newScale / data.totalVerses);
+    transformRef.current = { offsetX: newOffsetX, scaleX: newScale };
+    cancelAnimationFrame(animRef.current);
+    animRef.current = requestAnimationFrame(draw);
+  }, [draw]);
+
   // Handle zoom and pan
   useEffect(() => {
     const overlay = overlayCanvasRef.current;
@@ -596,18 +705,26 @@ export default function ArcDiagram({
         startY: e.clientY,
         startOffsetX: transformRef.current.offsetX,
       };
+      overlay!.style.cursor = "grabbing";
     }
 
     function handleMouseMove(e: MouseEvent) {
-      if (!dragRef.current) return;
-      const dx = e.clientX - dragRef.current.startX;
-      transformRef.current.offsetX = dragRef.current.startOffsetX + dx;
-      cancelAnimationFrame(animRef.current);
-      animRef.current = requestAnimationFrame(draw);
+      if (dragRef.current) {
+        const dx = e.clientX - dragRef.current.startX;
+        transformRef.current.offsetX = dragRef.current.startOffsetX + dx;
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(draw);
+        return;
+      }
+
+      // Check if hovering over a label — change cursor
+      const hitLabel = findLabelAtPoint(e.clientX, e.clientY, renderedLabelsRef.current);
+      overlay!.style.cursor = hitLabel ? "pointer" : "grab";
     }
 
     function handleMouseUp() {
       dragRef.current = null;
+      overlay!.style.cursor = "grab";
     }
 
     function handleClick(e: MouseEvent) {
@@ -627,7 +744,50 @@ export default function ArcDiagram({
       const clickX = e.clientX;
       const clickY = e.clientY;
 
-      // Try arc hit-test first
+      // 1. Check label hit-test first
+      const hitLabel = findLabelAtPoint(clickX, clickY, renderedLabelsRef.current);
+      if (hitLabel) {
+        if (hitLabel.type === "book") {
+          onSelectBook(selectedBookId === hitLabel.bookId ? null : hitLabel.bookId);
+          setSelectedArc(null);
+          setVersePopover(null);
+          return;
+        }
+        if (hitLabel.type === "chapter" && hitLabel.chapter) {
+          // Zoom to chapter + show info popover
+          const bookData = data.books.find((b) => b.id === hitLabel.bookId);
+          const chapters = CHAPTER_VERSES[hitLabel.bookId];
+          if (bookData && chapters) {
+            let chapterOffset = bookData.offset;
+            for (let i = 0; i < hitLabel.chapter - 1 && i < chapters.length; i++) {
+              chapterOffset += chapters[i];
+            }
+            const chapterVerses = chapters[hitLabel.chapter - 1] || 0;
+            zoomToRange(chapterOffset, chapterOffset + chapterVerses);
+            setVersePopover({
+              bookId: hitLabel.bookId,
+              chapter: hitLabel.chapter,
+              screenX: clickX,
+              screenY: clickY,
+            });
+            setSelectedArc(null);
+          }
+          return;
+        }
+        if (hitLabel.type === "verse" && hitLabel.chapter && hitLabel.verse) {
+          setVersePopover({
+            bookId: hitLabel.bookId,
+            chapter: hitLabel.chapter,
+            verse: hitLabel.verse,
+            screenX: clickX,
+            screenY: clickY,
+          });
+          setSelectedArc(null);
+          return;
+        }
+      }
+
+      // 2. Try arc hit-test
       const activeBookIds = new Set(
         books.filter((bk) => bk.canons.includes(canon)).map((bk) => bk.id)
       );
@@ -656,19 +816,23 @@ export default function ArcDiagram({
           screenX: clickX,
           screenY: clickY,
         });
+        setVersePopover(null);
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
         return;
       }
 
-      // Clear arc selection if clicking elsewhere
+      // 3. Clear selections if clicking elsewhere
       if (selectedArcRef.current) {
         setSelectedArc(null);
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
       }
+      if (versePopover) {
+        setVersePopover(null);
+      }
 
-      // Fall through to book selection
+      // 4. Fall through to book selection on the axis
       const totalWidth = (width - MARGIN * 2) * scaleX;
       const xScale = totalWidth / data.totalVerses;
       const verseIdx = (clickX - MARGIN - offsetX) / xScale;
@@ -705,6 +869,11 @@ export default function ArcDiagram({
         transformRef.current.offsetX -= window.innerWidth * 0.1;
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
+      } else if (e.key === "Escape") {
+        setSelectedArc(null);
+        setVersePopover(null);
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(draw);
       }
     }
 
@@ -723,7 +892,8 @@ export default function ArcDiagram({
       overlay.removeEventListener("click", handleClick);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [draw, applyZoom, resetZoom, canon, selectedBookId, onSelectBook]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draw, applyZoom, resetZoom, zoomToRange, canon, selectedBookId, onSelectBook, versePopover]);
 
   // Redraw on data load, resize, or prop changes
   useEffect(() => {
@@ -737,17 +907,19 @@ export default function ArcDiagram({
     return () => window.removeEventListener("resize", handleResize);
   }, [draw]);
 
-  // Build arc tooltip content
-  const tooltipContent = selectedArc
+  // Build arc detail card content
+  const arcDetail = selectedArc
     ? (() => {
         const data = dataRef.current;
         if (!data) return null;
         const fromRef = indexToVerseRef(selectedArc.fromIdx, data.books);
         const toRef = indexToVerseRef(selectedArc.toIdx, data.books);
         if (!fromRef || !toRef) return null;
-        const genreColor =
-          GENRE_COLOR_LIST[selectedArc.genreIdx % GENRE_COLOR_LIST.length];
-        return { fromRef, toRef, genreColor };
+        const fromBook = bookMap.get(fromRef.bookId);
+        const toBook = bookMap.get(toRef.bookId);
+        const fromColor = fromBook ? GENRE_COLORS[fromBook.genre] : "#888";
+        const toColor = toBook ? GENRE_COLORS[toBook.genre] : "#888";
+        return { fromRef, toRef, fromColor, toColor, fromBook, toBook };
       })()
     : null;
 
@@ -783,50 +955,185 @@ export default function ArcDiagram({
           cursor: "grab",
         }}
       />
-      {/* Arc info tooltip */}
-      {selectedArc && tooltipContent && (
+
+      {/* Arc detail card with scripture text */}
+      {selectedArc && arcDetail && (
         <div
           style={{
-            position: "absolute",
-            left: Math.min(
-              selectedArc.screenX + 12,
-              window.innerWidth - 280
-            ),
-            top: Math.min(
-              selectedArc.screenY - 60,
-              window.innerHeight - 120
-            ),
-            background: "rgba(8, 12, 20, 0.92)",
-            border: `1px solid ${tooltipContent.genreColor}44`,
-            borderLeft: `3px solid ${tooltipContent.genreColor}`,
-            borderRadius: "6px",
-            padding: "10px 14px",
+            position: "fixed",
+            left: Math.min(selectedArc.screenX + 12, window.innerWidth - 340),
+            top: Math.min(Math.max(selectedArc.screenY - 80, 8), window.innerHeight - 350),
+            background: "rgba(8, 12, 20, 0.95)",
+            border: `1px solid rgba(255,255,255,0.1)`,
+            borderRadius: 8,
+            padding: "14px 16px",
             color: "#e0e0e0",
             fontFamily: "monospace",
-            fontSize: "12px",
-            pointerEvents: "none",
+            fontSize: 12,
             zIndex: 100,
-            maxWidth: "280px",
-            backdropFilter: "blur(8px)",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+            maxWidth: 320,
+            backdropFilter: "blur(12px)",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.6)",
           }}
         >
-          <div style={{ color: tooltipContent.genreColor, fontWeight: "bold", marginBottom: 4 }}>
-            {formatVerseRef(tooltipContent.fromRef)}
+          {/* Close button */}
+          <button
+            onClick={() => setSelectedArc(null)}
+            style={{
+              position: "absolute",
+              top: 6,
+              right: 8,
+              background: "none",
+              border: "none",
+              color: "rgba(255,255,255,0.4)",
+              cursor: "pointer",
+              fontSize: 14,
+            }}
+          >
+            &times;
+          </button>
+
+          {/* From verse */}
+          <div style={{ marginBottom: 8 }}>
+            <button
+              onClick={() => {
+                onSelectBook(arcDetail.fromRef.bookId);
+                setSelectedArc(null);
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: arcDetail.fromColor,
+                fontWeight: "bold",
+                fontSize: 13,
+                cursor: "pointer",
+                padding: 0,
+                fontFamily: "monospace",
+                textDecoration: "underline",
+                textDecorationColor: `${arcDetail.fromColor}44`,
+              }}
+            >
+              {formatVerseRef(arcDetail.fromRef)}
+            </button>
+            {arcDetail.fromBook && (
+              <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, marginLeft: 6 }}>
+                {arcDetail.fromBook.genre}
+              </span>
+            )}
+            {arcTextLoading ? (
+              <div style={{ color: "rgba(255,255,255,0.3)", fontStyle: "italic", marginTop: 4, fontSize: 11 }}>
+                Loading...
+              </div>
+            ) : arcFromText ? (
+              <p style={{
+                color: "rgba(255,255,255,0.7)",
+                fontFamily: "Georgia, serif",
+                fontSize: 12,
+                lineHeight: "1.5",
+                fontStyle: "italic",
+                margin: "4px 0 0",
+              }}>
+                &ldquo;{arcFromText}&rdquo;
+              </p>
+            ) : null}
           </div>
-          <div style={{ color: "rgba(255,255,255,0.4)", margin: "2px 0" }}>
-            {selectedArc.toIdx > selectedArc.fromIdx ? "→" : "←"} references
+
+          {/* Direction indicator */}
+          <div style={{ color: "rgba(255,255,255,0.3)", margin: "4px 0", fontSize: 11 }}>
+            {selectedArc.toIdx > selectedArc.fromIdx ? "\u2193" : "\u2191"} references
           </div>
-          <div style={{ color: tooltipContent.genreColor, fontWeight: "bold", marginBottom: 4 }}>
-            {formatVerseRef(tooltipContent.toRef)}
+
+          {/* To verse */}
+          <div style={{ marginBottom: 8 }}>
+            <button
+              onClick={() => {
+                onSelectBook(arcDetail.toRef.bookId);
+                setSelectedArc(null);
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: arcDetail.toColor,
+                fontWeight: "bold",
+                fontSize: 13,
+                cursor: "pointer",
+                padding: 0,
+                fontFamily: "monospace",
+                textDecoration: "underline",
+                textDecorationColor: `${arcDetail.toColor}44`,
+              }}
+            >
+              {formatVerseRef(arcDetail.toRef)}
+            </button>
+            {arcDetail.toBook && (
+              <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, marginLeft: 6 }}>
+                {arcDetail.toBook.genre}
+              </span>
+            )}
+            {arcTextLoading ? (
+              <div style={{ color: "rgba(255,255,255,0.3)", fontStyle: "italic", marginTop: 4, fontSize: 11 }}>
+                Loading...
+              </div>
+            ) : arcToText ? (
+              <p style={{
+                color: "rgba(255,255,255,0.7)",
+                fontFamily: "Georgia, serif",
+                fontSize: 12,
+                lineHeight: "1.5",
+                fontStyle: "italic",
+                margin: "4px 0 0",
+              }}>
+                &ldquo;{arcToText}&rdquo;
+              </p>
+            ) : null}
           </div>
+
+          {/* Votes */}
           {selectedArc.votes > 0 && (
-            <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "10px", marginTop: 4 }}>
+            <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, marginBottom: 6 }}>
               {selectedArc.votes} community votes
             </div>
           )}
+
+          {/* BibleGateway links */}
+          <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+            <a
+              href={getBibleGatewayUrl(arcDetail.fromRef.bookId, arcDetail.fromRef.chapter, arcDetail.fromRef.verse)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: arcDetail.fromColor, fontSize: 10, opacity: 0.7, textDecoration: "none" }}
+            >
+              Read {getBookName(arcDetail.fromRef.bookId)} &rarr;
+            </a>
+            <a
+              href={getBibleGatewayUrl(arcDetail.toRef.bookId, arcDetail.toRef.chapter, arcDetail.toRef.verse)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: arcDetail.toColor, fontSize: 10, opacity: 0.7, textDecoration: "none" }}
+            >
+              Read {getBookName(arcDetail.toRef.bookId)} &rarr;
+            </a>
+          </div>
         </div>
       )}
+
+      {/* Verse/Chapter popover */}
+      {versePopover && (
+        <VersePopover
+          bookId={versePopover.bookId}
+          chapter={versePopover.chapter}
+          verse={versePopover.verse}
+          translation={translation}
+          screenX={versePopover.screenX}
+          screenY={versePopover.screenY}
+          onClose={() => setVersePopover(null)}
+          onSelectBook={(id) => {
+            onSelectBook(id);
+            setVersePopover(null);
+          }}
+        />
+      )}
+
       {/* Zoom controls */}
       <div
         style={{

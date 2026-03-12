@@ -82,6 +82,7 @@ export default function Home() {
           canon={canon}
           selectedBookId={selectedBookId}
           onSelectBook={handleSelectBook}
+          translation={translation}
         />
       )}
 
