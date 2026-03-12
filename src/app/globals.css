@@ -1,46 +1,128 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap');
+@import "./tokens.css";
 @import "tailwindcss";
 
-:root {
-  --bg-center: #0d1b3e;
-  --bg-edge: #020509;
-  --accent: #f8c471;
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-serif: 'Merriweather', Georgia, serif;
-}
+/* ============================================================
+   GLOBAL STYLESHEET
+   Foundation styles only. No component-specific rules.
+   ============================================================ */
 
+/* ----------------------------------------------------------
+   RESET
+   ---------------------------------------------------------- */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* ----------------------------------------------------------
+   BASE
+   ---------------------------------------------------------- */
 html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: var(--font-mono);
-  color: #c8d6e5;
-  background: var(--bg-edge);
+  font-family: var(--font-serif);
+  color: var(--text-primary);
+  background: var(--bg-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: radial-gradient(ellipse at 50% 50%, var(--bg-center) 0%, var(--bg-edge) 70%);
+  background: radial-gradient(ellipse at 50% 50%, var(--bg-elevated) 0%, var(--bg-base) 70%);
 }
 
-/* Scrollbar styling */
+/* ----------------------------------------------------------
+   TYPOGRAPHY UTILITIES
+   ---------------------------------------------------------- */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Legacy alias — kept for existing component references */
+.serif {
+  font-family: var(--font-serif);
+}
+
+/* ----------------------------------------------------------
+   GLASS PANEL UTILITY
+   ---------------------------------------------------------- */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+/* ----------------------------------------------------------
+   THREE-STATE INTERACTIVE
+   ---------------------------------------------------------- */
+.three-state-interactive {
+  opacity: var(--opacity-rest);
+  transition: var(--transition-base);
+  cursor: pointer;
+}
+
+.three-state-interactive:hover {
+  opacity: var(--opacity-hover);
+}
+
+.three-state-interactive:active,
+.three-state-interactive[data-active="true"] {
+  opacity: var(--opacity-active);
+  color: var(--accent);
+}
+
+/* ----------------------------------------------------------
+   NATIVE FORM ELEMENT RESET
+   ---------------------------------------------------------- */
+input,
+select,
+button,
+textarea,
+input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  padding: var(--space-4);
+  cursor: pointer;
+}
+
+input[type="range"] {
+  padding: 0;
+}
+
+/* ----------------------------------------------------------
+   SCROLLBAR
+   ---------------------------------------------------------- */
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: rgba(13, 27, 62, 0.5);
+  background: rgba(10, 10, 18, 0.5);
 }
+
 ::-webkit-scrollbar-thumb {
-  background: rgba(200, 214, 229, 0.2);
+  background: rgba(232, 224, 208, 0.15);
   border-radius: 3px;
 }
 
-/* Node pulse animation for daily readings */
+/* ----------------------------------------------------------
+   ANIMATIONS
+   ---------------------------------------------------------- */
+
+/* Node pulse for daily readings highlights */
 @keyframes pulse-glow {
   0%, 100% { opacity: 0.6; r: 1; }
   50% { opacity: 1; r: 1.4; }
@@ -50,16 +132,18 @@ body {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
-/* Detail panel slide animations */
+/* ----------------------------------------------------------
+   DETAIL PANEL SLIDE
+   ---------------------------------------------------------- */
 .panel-enter {
   transform: translateX(100%);
 }
+
 .panel-active {
   transform: translateX(0);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Mobile bottom sheet */
 @media (max-width: 768px) {
   .panel-enter {
     transform: translateY(100%);
@@ -69,40 +153,44 @@ body {
   }
 }
 
-/* Tooltip */
+/* ----------------------------------------------------------
+   TOOLTIP
+   ---------------------------------------------------------- */
 .tooltip {
   pointer-events: none;
   position: fixed;
   z-index: 100;
-  background: rgba(2, 5, 9, 0.92);
-  border: 1px solid rgba(200, 214, 229, 0.15);
+  background: rgba(10, 10, 18, 0.92);
+  border: 1px solid rgba(232, 224, 208, 0.12);
   border-radius: 8px;
   padding: 10px 14px;
+  font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.5;
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   max-width: 220px;
 }
 
-/* Star background */
+/* ----------------------------------------------------------
+   STAR BACKGROUND
+   ---------------------------------------------------------- */
 .star {
   position: absolute;
   border-radius: 50%;
   background: white;
 }
 
-/* Serif text for reading content */
-.serif {
-  font-family: var(--font-serif);
-}
-
-/* Strength bar */
+/* ----------------------------------------------------------
+   STRENGTH BAR
+   ---------------------------------------------------------- */
 .strength-bar {
   height: 4px;
   border-radius: 2px;
-  background: rgba(200, 214, 229, 0.1);
+  background: rgba(232, 224, 208, 0.08);
   overflow: hidden;
 }
+
 .strength-fill {
   height: 100%;
   border-radius: 2px;
