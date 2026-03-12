@@ -33,7 +33,7 @@ export function computeBookFontSize(bookPixelWidth: number): number {
 }
 
 export function computeChapterFontSize(chapterPixelWidth: number): number {
-  return quantizeFontSize(clamp(Math.sqrt(chapterPixelWidth) * 0.95, 8, 16));
+  return quantizeFontSize(clamp(Math.sqrt(chapterPixelWidth) * 0.95, 8, 20));
 }
 
 /** Books that remain visible at all zoom levels when stride culling is active */
@@ -118,12 +118,12 @@ export function computeBookLabels(
 
     const isSelected = selectedBookId === b.id;
     const genreColor = genreColors[b.genre % genreColors.length];
-    const color = isSelected ? genreColor : "rgba(255,255,255,0.4)";
+    const color = isSelected ? genreColor : "rgba(255,255,255,0.7)";
 
     labels.push({
       text,
       x: bookCenterX,
-      y: axisY + 18,
+      y: axisY + 20,
       fontSize,
       color,
       alpha,
@@ -170,12 +170,12 @@ export function computeChapterLabels(
       // Chapter number label with stride
       if (chWidth > MIN_CHAPTER_LABEL_WIDTH && ch % stride === 0) {
         const fontSize = computeChapterFontSize(chWidth);
-        const alpha = clamp((chWidth - MIN_CHAPTER_LABEL_WIDTH) / 10, 0.15, 0.5);
+        const alpha = clamp((chWidth - MIN_CHAPTER_LABEL_WIDTH) / 10, 0.15, 0.85);
 
         labels.push({
           text: String(ch + 1),
           x: chStartX + chWidth / 2,
-          y: axisY + 28,
+          y: axisY + 36,
           fontSize,
           color: "rgba(255,255,255,0.3)",
           alpha,

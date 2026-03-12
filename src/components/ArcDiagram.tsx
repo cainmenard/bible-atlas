@@ -282,17 +282,31 @@ export default function ArcDiagram({
     ctx.textAlign = "center";
 
     // --- Book boundary ticks (always drawn for visible books) ---
-    ctx.strokeStyle = "rgba(255,255,255,0.1)";
-    ctx.lineWidth = 0.5;
-    for (const b of data.books) {
-      if (!activeBookIds.has(b.id)) continue;
-      const bookStartX = MARGIN + offsetX + b.offset * xScale;
-      const bookEndX = MARGIN + offsetX + (b.offset + b.verses) * xScale;
-      if (bookEndX < -50 || bookStartX > width + 50) continue;
-      ctx.beginPath();
-      ctx.moveTo(bookStartX, axisY - 4);
-      ctx.lineTo(bookStartX, axisY + 4);
-      ctx.stroke();
+    {
+      const boundaryAlpha = Math.min(0.4, 0.1 + Math.log2(Math.max(1, scaleX)) * 0.03);
+      const boundaryHeight = Math.min(30, 4 + Math.log2(Math.max(1, scaleX)) * 2);
+      let bookIdx = 0;
+      for (const b of data.books) {
+        if (!activeBookIds.has(b.id)) { bookIdx++; continue; }
+        const bookStartX = MARGIN + offsetX + b.offset * xScale;
+        const bookEndX = MARGIN + offsetX + (b.offset + b.verses) * xScale;
+        if (bookEndX < -50 || bookStartX > width + 50) { bookIdx++; continue; }
+
+        // Alternating background bands at high zoom
+        if (scaleX > 5 && bookIdx % 2 === 0) {
+          ctx.fillStyle = "rgba(255,255,255,0.015)";
+          ctx.fillRect(bookStartX, axisY - 60, bookEndX - bookStartX, 120);
+        }
+
+        // Adaptive boundary line
+        ctx.strokeStyle = `rgba(255,255,255,${boundaryAlpha})`;
+        ctx.lineWidth = scaleX > 50 ? 1.0 : 0.5;
+        ctx.beginPath();
+        ctx.moveTo(bookStartX, axisY - boundaryHeight);
+        ctx.lineTo(bookStartX, axisY + boundaryHeight);
+        ctx.stroke();
+        bookIdx++;
+      }
     }
 
     // --- Compute book labels with dynamic sizing ---
@@ -390,15 +404,16 @@ export default function ArcDiagram({
       // Verse reference labels at extreme zoom
       const versePixelWidth = xScale;
       if (versePixelWidth > 14) {
-        ctx.font = "8px monospace";
-        ctx.fillStyle = "rgba(255,255,255,0.15)";
-        ctx.globalAlpha = Math.min(1, (versePixelWidth - 14) / 10);
+        const verseFontSize = Math.min(14, Math.max(8, Math.floor(versePixelWidth * 0.4)));
+        ctx.font = `${verseFontSize}px monospace`;
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.globalAlpha = Math.min(1, (versePixelWidth - 14) / 6);
         for (let v = visibleStartIdx; v < visibleEndIdx; v++) {
           const vx = MARGIN + offsetX + v * xScale;
           if (vx < -5 || vx > width + 5) continue;
           const ref = indexToVerseRef(v, data.books);
           if (ref) {
-            ctx.fillText(`${ref.chapter}:${ref.verse}`, vx, axisY + 38);
+            ctx.fillText(`${ref.chapter}:${ref.verse}`, vx, axisY + 52);
           }
         }
         ctx.globalAlpha = 1;
@@ -458,34 +473,102 @@ export default function ArcDiagram({
       ctx.fill();
     }
 
+    // --- Draw minimap when zoomed in ---
+    if (scaleX > 2) {
+      const miniY = 8;
+      const miniH = 24;
+      const miniLeft = MARGIN;
+      const miniRight = width - MARGIN;
+      const miniW = miniRight - miniLeft;
+
+      // Background bar
+      ctx.fillStyle = "rgba(255,255,255,0.03)";
+      ctx.fillRect(miniLeft, miniY, miniW, miniH);
+
+      // Draw book regions as colored segments
+      for (const b of data.books) {
+        if (!activeBookIds.has(b.id)) continue;
+        const bx = miniLeft + (b.offset / data.totalVerses) * miniW;
+        const bw = (b.verses / data.totalVerses) * miniW;
+        const genreColor = GENRE_COLOR_LIST[b.genre % GENRE_COLOR_LIST.length];
+        ctx.fillStyle = genreColor;
+        ctx.globalAlpha = 0.15;
+        ctx.fillRect(bx, miniY, bw, miniH);
+      }
+      ctx.globalAlpha = 1;
+
+      // Viewport indicator rectangle
+      const visStart = (-offsetX / totalWidth) * miniW + miniLeft;
+      const visWidth = (width / totalWidth) * miniW;
+      ctx.strokeStyle = "rgba(255,255,255,0.6)";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(
+        Math.max(miniLeft, visStart),
+        miniY,
+        Math.max(2, Math.min(miniW, visWidth)),
+        miniH
+      );
+    }
+
     // --- Draw title ---
     ctx.font = "12px sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.25)";
     ctx.textAlign = "left";
+    const titleY = scaleX > 2 ? 52 : 28;
     ctx.fillText(
       `${data.arcs.length.toLocaleString()} Cross References`,
       16,
-      28
+      titleY
     );
 
     ctx.font = "10px sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.15)";
-    ctx.fillText("Above: target is later in the Bible", 16, 44);
-    ctx.fillText("Below: target is earlier in the Bible", 16, 58);
+    ctx.fillText("Above: target is later in the Bible", 16, titleY + 16);
+    ctx.fillText("Below: target is earlier in the Bible", 16, titleY + 30);
 
-    // --- Zoom indicator ---
+    // --- Zoom indicator with location ---
     if (scaleX > 1.05) {
-      ctx.font = "10px monospace";
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      const visStartIdx = Math.max(0, Math.floor((-offsetX) / xScale));
+      const visEndIdx = Math.min(data.totalVerses - 1, Math.ceil((width - 2 * MARGIN - offsetX) / xScale));
+      const startRef = indexToVerseRef(visStartIdx, data.books);
+      const endRef = indexToVerseRef(visEndIdx, data.books);
+
+      ctx.font = "11px monospace";
+      ctx.fillStyle = "rgba(255,255,255,0.5)";
       ctx.textAlign = "right";
-      ctx.fillText(
-        `${scaleX < 10 ? scaleX.toFixed(1) : Math.round(scaleX)}x`,
-        width - 16,
-        height - 16
-      );
+
+      const zoomText = `${scaleX < 10 ? scaleX.toFixed(1) : Math.round(scaleX)}x`;
+      ctx.fillText(zoomText, width - 16, height - 32);
+
+      if (startRef && endRef) {
+        const startBook = bookNameMap.get(startRef.bookId) || startRef.bookId;
+        const endBook = bookNameMap.get(endRef.bookId) || endRef.bookId;
+        const locText = startRef.bookId === endRef.bookId
+          ? `${startBook} ${startRef.chapter}\u2013${endRef.chapter}`
+          : `${startBook} \u2013 ${endBook}`;
+        ctx.fillText(locText, width - 16, height - 16);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loaded triggers initial draw after data fetch
   }, [canon, selectedBookId, loaded]);
+
+  // Reusable zoom helpers for controls and keyboard
+  const applyZoom = useCallback((factor: number, centerX: number) => {
+    const t = transformRef.current;
+    const mx = centerX - MARGIN;
+    const newScale = Math.max(0.5, Math.min(1000, t.scaleX * factor));
+    const scaleChange = newScale / t.scaleX;
+    t.offsetX = mx - scaleChange * (mx - t.offsetX);
+    t.scaleX = newScale;
+    cancelAnimationFrame(animRef.current);
+    animRef.current = requestAnimationFrame(draw);
+  }, [draw]);
+
+  const resetZoom = useCallback(() => {
+    transformRef.current = { offsetX: 0, scaleX: 1 };
+    cancelAnimationFrame(animRef.current);
+    animRef.current = requestAnimationFrame(draw);
+  }, [draw]);
 
   // Handle zoom and pan
   useEffect(() => {
@@ -606,11 +689,31 @@ export default function ArcDiagram({
       onSelectBook(null);
     }
 
+    function handleKeyDown(e: KeyboardEvent) {
+      const centerX = window.innerWidth / 2;
+      if (e.key === "=" || e.key === "+") {
+        applyZoom(1.3, centerX);
+      } else if (e.key === "-") {
+        applyZoom(1 / 1.3, centerX);
+      } else if (e.key === "0") {
+        resetZoom();
+      } else if (e.key === "ArrowLeft") {
+        transformRef.current.offsetX += window.innerWidth * 0.1;
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(draw);
+      } else if (e.key === "ArrowRight") {
+        transformRef.current.offsetX -= window.innerWidth * 0.1;
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(draw);
+      }
+    }
+
     overlay.addEventListener("wheel", handleWheel, { passive: false });
     overlay.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
     overlay.addEventListener("click", handleClick);
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       overlay.removeEventListener("wheel", handleWheel);
@@ -618,8 +721,9 @@ export default function ArcDiagram({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
       overlay.removeEventListener("click", handleClick);
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [draw, canon, selectedBookId, onSelectBook]);
+  }, [draw, applyZoom, resetZoom, canon, selectedBookId, onSelectBook]);
 
   // Redraw on data load, resize, or prop changes
   useEffect(() => {
@@ -723,6 +827,46 @@ export default function ArcDiagram({
           )}
         </div>
       )}
+      {/* Zoom controls */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 16,
+          left: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          zIndex: 50,
+        }}
+      >
+        {[
+          { label: "+", action: () => applyZoom(1.3, window.innerWidth / 2) },
+          { label: "\u2212", action: () => applyZoom(1 / 1.3, window.innerWidth / 2) },
+          { label: "1:1", action: () => resetZoom() },
+        ].map(({ label, action }) => (
+          <button
+            key={label}
+            onClick={action}
+            style={{
+              width: 32,
+              height: 32,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 4,
+              color: "rgba(255,255,255,0.6)",
+              fontSize: label === "1:1" ? 10 : 16,
+              fontFamily: "monospace",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
