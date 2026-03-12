@@ -6,7 +6,7 @@ import StarBackground from "@/components/StarBackground";
 import Tooltip from "@/components/Tooltip";
 import DetailPanel from "@/components/DetailPanel";
 import ReadingsCard from "@/components/ReadingsCard";
-import CanonFilter from "@/components/CanonFilter";
+import OrbitalRingSelector from "@/components/OrbitalRingSelector";
 import TranslationSelector from "@/components/TranslationSelector";
 import { BibleBook, Canon, LiturgicalSeason, ViewMode } from "@/lib/types";
 import { LITURGICAL_COLORS } from "@/lib/colors";
@@ -86,11 +86,11 @@ export default function Home() {
         />
       )}
 
+      {/* Orbital ring canon selector — fixed bottom-left */}
+      <OrbitalRingSelector canon={canon} onChange={setCanon} />
+
       {/* Unified compact toolbar */}
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4">
-        {/* Canon selector */}
-        <CanonFilter canon={canon} onChange={setCanon} />
-
         {/* View mode toggle */}
         <div className="glass-panel rounded-full p-1 flex gap-1">
           <button
