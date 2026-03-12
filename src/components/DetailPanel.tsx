@@ -176,8 +176,7 @@ export default function DetailPanel({
 
   return (
     <div
-      className={`fixed z-50 bg-[#070d1f]/95 backdrop-blur-md border-l border-white/5
-        overflow-y-auto
+      className={`fixed z-50 glass-panel overflow-y-auto
         md:right-0 md:top-0 md:h-full md:w-[380px]
         max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:max-h-[65vh] max-md:rounded-t-2xl max-md:border-t max-md:border-l-0
         panel-active`}
@@ -185,7 +184,8 @@ export default function DetailPanel({
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 text-white/40 hover:text-white/80 text-lg"
+        className="absolute top-4 right-4 text-lg three-state-interactive"
+        style={{ color: "var(--text-secondary)" }}
       >
         &times;
       </button>
@@ -193,35 +193,35 @@ export default function DetailPanel({
       <div className="p-6">
         {/* Badge */}
         <div
-          className="inline-block px-3 py-1 rounded-md text-sm font-bold mb-3"
+          className="inline-block px-3 py-1 rounded-md text-sm font-bold mb-3 font-mono"
           style={{ background: color + "25", color: color }}
         >
           {bookId}
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-semibold text-white/90 mb-1">{book.name}</h2>
-        <p className="text-xs text-white/40 mb-4">
+        <h2 className="text-xl font-semibold mb-1 font-serif" style={{ color: "var(--text-primary)" }}>{book.name}</h2>
+        <p className="text-xs mb-4 font-mono" style={{ color: "var(--text-secondary)" }}>
           {book.genre} &middot;{" "}
           {book.testament === "DC" ? "Deuterocanonical" : book.testament === "OT" ? "Old Testament" : "New Testament"}
           {book.testament === "DC" && (
-            <span className="ml-2 text-white/25">({book.canons.join(", ")})</span>
+            <span className="ml-2" style={{ color: "var(--text-dim)" }}>({book.canons.join(", ")})</span>
           )}
         </p>
 
         {/* Stats */}
-        <div className="flex gap-4 mb-6 text-xs">
+        <div className="flex gap-6 mb-6 text-xs">
           <div className="text-center">
-            <div className="text-white/80 font-semibold text-lg">{book.chapters}</div>
-            <div className="text-white/30">Chapters</div>
+            <div className="font-semibold text-lg font-mono" style={{ color: "var(--text-primary)" }}>{book.chapters}</div>
+            <div className="font-mono" style={{ color: "var(--text-dim)" }}>Chapters</div>
           </div>
           <div className="text-center">
-            <div className="text-white/80 font-semibold text-lg">{book.verses.toLocaleString()}</div>
-            <div className="text-white/30">Verses</div>
+            <div className="font-semibold text-lg font-mono" style={{ color: "var(--text-primary)" }}>{book.verses.toLocaleString()}</div>
+            <div className="font-mono" style={{ color: "var(--text-dim)" }}>Verses</div>
           </div>
           <div className="text-center">
-            <div className="text-white/80 font-semibold text-lg">{totalCrossRefs.toLocaleString()}</div>
-            <div className="text-white/30">Cross-refs</div>
+            <div className="font-semibold text-lg font-mono" style={{ color: "var(--text-primary)" }}>{totalCrossRefs.toLocaleString()}</div>
+            <div className="font-mono" style={{ color: "var(--text-dim)" }}>Cross-refs</div>
           </div>
         </div>
 
@@ -232,13 +232,13 @@ export default function DetailPanel({
             style={{ background: color + "08", border: `1px solid ${color}15` }}
           >
             {loading ? (
-              <div className="text-white/30 text-xs">Loading verse...</div>
+              <div className="font-mono text-xs" style={{ color: "var(--text-dim)" }}>Loading verse...</div>
             ) : verse ? (
               <>
-                <p className="serif text-white/70 text-sm leading-relaxed italic mb-2">
+                <p className="font-serif text-sm leading-relaxed italic mb-2" style={{ color: "var(--text-primary)", opacity: 0.8 }}>
                   &ldquo;{verse.text.trim()}&rdquo;
                 </p>
-                <p className="text-xs" style={{ color: color + "aa" }}>
+                <p className="text-xs font-mono" style={{ color: color + "aa" }}>
                   {verse.reference}
                 </p>
               </>
@@ -247,7 +247,7 @@ export default function DetailPanel({
         )}
 
         {/* Book-level Connections */}
-        <h3 className="text-xs text-white/30 uppercase tracking-wider mb-3">
+        <h3 className="text-xs uppercase tracking-wider mb-3 font-mono" style={{ color: "var(--text-dim)" }}>
           Connected Books ({connections.length})
         </h3>
         <div className="space-y-1 mb-6">
@@ -261,8 +261,8 @@ export default function DetailPanel({
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ background: GENRE_COLORS[conn.genre] }}
               />
-              <span className="text-sm text-white/70 flex-1">{conn.name}</span>
-              <span className="text-[10px] text-white/25 group-hover:text-white/40">
+              <span className="text-sm flex-1 font-serif" style={{ color: "var(--text-primary)", opacity: 0.7 }}>{conn.name}</span>
+              <span className="text-[10px] font-mono" style={{ color: "var(--text-dim)" }}>
                 {count} refs
               </span>
               <div className="w-12">

@@ -20,9 +20,9 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="fixed bottom-4 left-4 z-40 px-3 py-2 rounded-lg text-xs
-          bg-[#070d1f]/90 backdrop-blur-md border border-white/5 text-white/50
-          hover:text-white/80 transition-colors"
+        className="fixed bottom-4 left-4 z-40 px-4 py-3 rounded-lg text-xs
+          glass-panel three-state-interactive font-mono"
+        style={{ color: "var(--text-secondary)" }}
       >
         Today&apos;s Readings
       </button>
@@ -30,21 +30,22 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 z-40 w-72 rounded-xl bg-[#070d1f]/90 backdrop-blur-md border border-white/5 overflow-hidden">
+    <div className="fixed bottom-4 left-4 z-40 w-72 rounded-xl glass-panel overflow-hidden">
       {/* Season accent bar */}
       <div className="h-1" style={{ background: seasonColor }} />
 
-      <div className="p-4">
-        <div className="flex justify-between items-start mb-3">
+      <div className="p-5">
+        <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-xs text-white/50 uppercase tracking-wider">
+            <h3 className="text-xs uppercase tracking-wider font-mono" style={{ color: "var(--text-secondary)" }}>
               Today&apos;s Readings
             </h3>
-            <p className="text-xs text-white/30 mt-1">{data.date}</p>
+            <p className="text-xs mt-1 font-mono" style={{ color: "var(--text-dim)" }}>{data.date}</p>
           </div>
           <button
             onClick={() => setCollapsed(true)}
-            className="text-white/30 hover:text-white/60 text-xs"
+            className="three-state-interactive text-xs"
+            style={{ color: "var(--text-dim)" }}
           >
             &#x2715;
           </button>
@@ -55,22 +56,22 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
             <button
               key={i}
               onClick={() => r.bookId && onSelectBook(r.bookId)}
-              className="w-full text-left flex items-baseline gap-2 px-2 py-1 rounded hover:bg-white/5 transition-colors"
+              className="w-full text-left flex items-baseline gap-3 px-3 py-2 rounded hover:bg-white/5 transition-all"
             >
-              <span className="text-[10px] text-white/30 uppercase w-20 shrink-0">
+              <span className="text-[10px] uppercase w-20 shrink-0 font-mono" style={{ color: "var(--text-dim)" }}>
                 {r.type}
               </span>
-              <span className="text-xs text-white/60">{r.reference}</span>
+              <span className="text-xs font-serif" style={{ color: "var(--text-primary)", opacity: 0.7 }}>{r.reference}</span>
             </button>
           ))}
         </div>
 
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-4 flex items-center gap-2">
           <div
             className="w-2 h-2 rounded-full"
             style={{ background: seasonColor }}
           />
-          <span className="text-[10px] text-white/25 capitalize">
+          <span className="text-[10px] capitalize font-mono" style={{ color: "var(--text-dim)" }}>
             {data.season} Time
           </span>
         </div>

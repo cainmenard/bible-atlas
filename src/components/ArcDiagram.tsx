@@ -462,7 +462,7 @@ export default function ArcDiagram({
       ctx.lineJoin = "round";
       ctx.miterLimit = 2;
       for (const item of bookLabels) {
-        const font = `bold ${item.fontSize}px monospace`;
+        const font = `bold ${item.fontSize}px 'JetBrains Mono', monospace`;
         if (font !== curFont) { ctx.font = font; curFont = font; }
         ctx.globalAlpha = item.alpha;
         // Dark outline for contrast
@@ -482,7 +482,7 @@ export default function ArcDiagram({
       ctx.lineJoin = "round";
       ctx.miterLimit = 2;
       for (const item of allChapterLabels) {
-        const font = `${item.fontSize}px monospace`;
+        const font = `${item.fontSize}px 'JetBrains Mono', monospace`;
         if (font !== curFont) { ctx.font = font; curFont = font; }
         ctx.globalAlpha = item.alpha;
         // Dark outline for contrast
@@ -521,7 +521,7 @@ export default function ArcDiagram({
       const versePixelWidth = xScale;
       if (versePixelWidth > 14) {
         const verseFontSize = Math.min(14, Math.max(8, Math.floor(versePixelWidth * 0.4)));
-        ctx.font = `${verseFontSize}px monospace`;
+        ctx.font = `${verseFontSize}px 'JetBrains Mono', monospace`;
         ctx.lineJoin = "round";
         ctx.miterLimit = 2;
         for (let v = visibleStartIdx; v < visibleEndIdx; v++) {
@@ -648,8 +648,8 @@ export default function ArcDiagram({
     }
 
     // --- Draw title ---
-    ctx.font = "12px sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.25)";
+    ctx.font = "12px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "rgba(232,224,208,0.25)";
     ctx.textAlign = "left";
     const titleY = scaleX > 2 ? 52 : 28;
     ctx.fillText(
@@ -658,8 +658,8 @@ export default function ArcDiagram({
       titleY
     );
 
-    ctx.font = "10px sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.15)";
+    ctx.font = "10px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "rgba(232,224,208,0.15)";
     ctx.fillText("Above: target is later in the Bible", 16, titleY + 16);
     ctx.fillText("Below: target is earlier in the Bible", 16, titleY + 30);
 
@@ -670,8 +670,8 @@ export default function ArcDiagram({
       const startRef = indexToVerseRef(visStartIdx, data.books);
       const endRef = indexToVerseRef(visEndIdx, data.books);
 
-      ctx.font = "11px monospace";
-      ctx.fillStyle = "rgba(255,255,255,0.5)";
+      ctx.font = "11px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "rgba(232,224,208,0.5)";
       ctx.textAlign = "right";
 
       const zoomText = `${scaleX < 10 ? scaleX.toFixed(1) : Math.round(scaleX)}x`;
@@ -1004,56 +1004,54 @@ export default function ArcDiagram({
       {/* Arc detail card with scripture text */}
       {selectedArc && arcDetail && (
         <div
+          className="glass-panel"
           style={{
             position: "fixed",
             left: Math.min(selectedArc.screenX + 12, window.innerWidth - 340),
             top: Math.min(Math.max(selectedArc.screenY - 80, 8), window.innerHeight - 350),
-            background: "rgba(8, 12, 20, 0.95)",
-            border: `1px solid rgba(255,255,255,0.1)`,
-            borderRadius: 8,
-            padding: "14px 16px",
-            color: "#e0e0e0",
-            fontFamily: "monospace",
+            borderRadius: 10,
+            padding: "18px 22px",
+            color: "var(--text-primary)",
             fontSize: 12,
             zIndex: 100,
             maxWidth: 320,
-            backdropFilter: "blur(12px)",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.6)",
           }}
         >
           {/* Close button */}
           <button
             onClick={() => setSelectedArc(null)}
+            className="three-state-interactive"
             style={{
               position: "absolute",
-              top: 6,
-              right: 8,
+              top: 8,
+              right: 10,
               background: "none",
               border: "none",
-              color: "rgba(255,255,255,0.4)",
+              color: "var(--text-secondary)",
               cursor: "pointer",
               fontSize: 14,
+              padding: 0,
             }}
           >
             &times;
           </button>
 
           {/* From verse */}
-          <div style={{ marginBottom: 8 }}>
+          <div style={{ marginBottom: 10 }}>
             <button
               onClick={() => {
                 onSelectBook(arcDetail.fromRef.bookId);
                 setSelectedArc(null);
               }}
+              className="font-serif"
               style={{
                 background: "none",
                 border: "none",
                 color: arcDetail.fromColor,
                 fontWeight: "bold",
-                fontSize: 13,
+                fontSize: 15,
                 cursor: "pointer",
                 padding: 0,
-                fontFamily: "monospace",
                 textDecoration: "underline",
                 textDecorationColor: `${arcDetail.fromColor}44`,
               }}
@@ -1061,22 +1059,22 @@ export default function ArcDiagram({
               {formatVerseRef(arcDetail.fromRef)}
             </button>
             {arcDetail.fromBook && (
-              <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, marginLeft: 6 }}>
+              <span className="font-mono" style={{ color: "var(--text-dim)", fontSize: 10, marginLeft: 8 }}>
                 {arcDetail.fromBook.genre}
               </span>
             )}
             {arcTextLoading ? (
-              <div style={{ color: "rgba(255,255,255,0.3)", fontStyle: "italic", marginTop: 4, fontSize: 11 }}>
+              <div className="font-mono" style={{ color: "var(--text-dim)", fontStyle: "italic", marginTop: 6, fontSize: 11 }}>
                 Loading...
               </div>
             ) : arcFromText ? (
-              <p style={{
-                color: "rgba(255,255,255,0.7)",
-                fontFamily: "Georgia, serif",
-                fontSize: 12,
-                lineHeight: "1.5",
+              <p className="font-serif" style={{
+                color: "var(--text-primary)",
+                opacity: 0.8,
+                fontSize: 13,
+                lineHeight: "1.6",
                 fontStyle: "italic",
-                margin: "4px 0 0",
+                margin: "6px 0 0",
               }}>
                 &ldquo;{arcFromText}&rdquo;
               </p>
@@ -1084,26 +1082,26 @@ export default function ArcDiagram({
           </div>
 
           {/* Direction indicator */}
-          <div style={{ color: "rgba(255,255,255,0.3)", margin: "4px 0", fontSize: 11 }}>
+          <div className="font-mono" style={{ color: "var(--text-dim)", margin: "6px 0", fontSize: 11 }}>
             {selectedArc.toIdx > selectedArc.fromIdx ? "\u2193" : "\u2191"} references
           </div>
 
           {/* To verse */}
-          <div style={{ marginBottom: 8 }}>
+          <div style={{ marginBottom: 10 }}>
             <button
               onClick={() => {
                 onSelectBook(arcDetail.toRef.bookId);
                 setSelectedArc(null);
               }}
+              className="font-serif"
               style={{
                 background: "none",
                 border: "none",
                 color: arcDetail.toColor,
                 fontWeight: "bold",
-                fontSize: 13,
+                fontSize: 15,
                 cursor: "pointer",
                 padding: 0,
-                fontFamily: "monospace",
                 textDecoration: "underline",
                 textDecorationColor: `${arcDetail.toColor}44`,
               }}
@@ -1111,22 +1109,22 @@ export default function ArcDiagram({
               {formatVerseRef(arcDetail.toRef)}
             </button>
             {arcDetail.toBook && (
-              <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, marginLeft: 6 }}>
+              <span className="font-mono" style={{ color: "var(--text-dim)", fontSize: 10, marginLeft: 8 }}>
                 {arcDetail.toBook.genre}
               </span>
             )}
             {arcTextLoading ? (
-              <div style={{ color: "rgba(255,255,255,0.3)", fontStyle: "italic", marginTop: 4, fontSize: 11 }}>
+              <div className="font-mono" style={{ color: "var(--text-dim)", fontStyle: "italic", marginTop: 6, fontSize: 11 }}>
                 Loading...
               </div>
             ) : arcToText ? (
-              <p style={{
-                color: "rgba(255,255,255,0.7)",
-                fontFamily: "Georgia, serif",
-                fontSize: 12,
-                lineHeight: "1.5",
+              <p className="font-serif" style={{
+                color: "var(--text-primary)",
+                opacity: 0.8,
+                fontSize: 13,
+                lineHeight: "1.6",
                 fontStyle: "italic",
-                margin: "4px 0 0",
+                margin: "6px 0 0",
               }}>
                 &ldquo;{arcToText}&rdquo;
               </p>
@@ -1135,18 +1133,19 @@ export default function ArcDiagram({
 
           {/* Votes */}
           {selectedArc.votes > 0 && (
-            <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, marginBottom: 6 }}>
+            <div className="font-mono" style={{ color: "var(--text-dim)", fontSize: 10, marginBottom: 8 }}>
               {selectedArc.votes} community votes
             </div>
           )}
 
           {/* BibleGateway links */}
-          <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+          <div style={{ display: "flex", gap: 16, marginTop: 6 }}>
             <a
               href={getBibleGatewayUrl(arcDetail.fromRef.bookId, arcDetail.fromRef.chapter, arcDetail.fromRef.verse)}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: arcDetail.fromColor, fontSize: 10, opacity: 0.7, textDecoration: "none" }}
+              className="three-state-interactive font-mono"
+              style={{ color: arcDetail.fromColor, fontSize: 10, textDecoration: "none" }}
             >
               Read {getBookName(arcDetail.fromRef.bookId)} &rarr;
             </a>
@@ -1154,7 +1153,8 @@ export default function ArcDiagram({
               href={getBibleGatewayUrl(arcDetail.toRef.bookId, arcDetail.toRef.chapter, arcDetail.toRef.verse)}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: arcDetail.toColor, fontSize: 10, opacity: 0.7, textDecoration: "none" }}
+              className="three-state-interactive font-mono"
+              style={{ color: arcDetail.toColor, fontSize: 10, textDecoration: "none" }}
             >
               Read {getBookName(arcDetail.toRef.bookId)} &rarr;
             </a>
@@ -1199,15 +1199,12 @@ export default function ArcDiagram({
           <button
             key={label}
             onClick={action}
+            className="glass-panel three-state-interactive font-mono"
             style={{
-              width: 32,
-              height: 32,
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 4,
-              color: "rgba(255,255,255,0.6)",
+              width: 36,
+              height: 36,
+              borderRadius: 6,
               fontSize: label === "1:1" ? 10 : 16,
-              fontFamily: "monospace",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",

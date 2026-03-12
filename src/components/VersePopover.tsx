@@ -52,35 +52,32 @@ export default function VersePopover({
 
   return (
     <div
+      className="glass-panel"
       style={{
         position: "fixed",
         left,
         top,
-        background: "rgba(8, 12, 20, 0.95)",
-        border: `1px solid ${color}44`,
         borderLeft: `3px solid ${color}`,
-        borderRadius: 8,
-        padding: "12px 16px",
-        color: "#e0e0e0",
-        fontFamily: "monospace",
-        fontSize: 12,
+        borderRadius: 10,
+        padding: "16px 20px",
+        color: "var(--text-primary)",
         zIndex: 110,
         maxWidth: 300,
-        backdropFilter: "blur(12px)",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.6)",
       }}
     >
       <button
         onClick={onClose}
+        className="three-state-interactive"
         style={{
           position: "absolute",
-          top: 6,
-          right: 8,
+          top: 8,
+          right: 10,
           background: "none",
           border: "none",
-          color: "rgba(255,255,255,0.4)",
+          color: "var(--text-secondary)",
           cursor: "pointer",
           fontSize: 14,
+          padding: 0,
         }}
       >
         &times;
@@ -88,15 +85,15 @@ export default function VersePopover({
 
       <button
         onClick={() => onSelectBook(bookId)}
+        className="font-serif"
         style={{
           background: "none",
           border: "none",
           color,
           fontWeight: "bold",
-          fontSize: 13,
+          fontSize: 15,
           cursor: "pointer",
           padding: 0,
-          fontFamily: "monospace",
           textDecoration: "underline",
           textDecorationColor: `${color}44`,
         }}
@@ -105,30 +102,30 @@ export default function VersePopover({
       </button>
 
       {book && (
-        <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 10, marginTop: 2 }}>
+        <div className="font-mono" style={{ color: "var(--text-dim)", fontSize: 10, marginTop: 4 }}>
           {book.genre} &middot; {book.testament === "OT" ? "Old Testament" : book.testament === "NT" ? "New Testament" : "Deuterocanonical"}
         </div>
       )}
 
       {verse && (
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 10 }}>
           {loading ? (
-            <div style={{ color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>
+            <div className="font-mono" style={{ color: "var(--text-dim)", fontStyle: "italic", fontSize: 11 }}>
               Loading scripture...
             </div>
           ) : text ? (
-            <p style={{
-              color: "rgba(255,255,255,0.7)",
-              fontFamily: "Georgia, serif",
-              fontSize: 12,
-              lineHeight: "1.5",
+            <p className="font-serif" style={{
+              color: "var(--text-primary)",
+              opacity: 0.8,
+              fontSize: 13,
+              lineHeight: "1.6",
               fontStyle: "italic",
               margin: 0,
             }}>
               &ldquo;{text}&rdquo;
             </p>
           ) : (
-            <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 10 }}>
+            <div className="font-mono" style={{ color: "var(--text-dim)", fontSize: 10 }}>
               Verse text unavailable
             </div>
           )}
@@ -136,7 +133,7 @@ export default function VersePopover({
       )}
 
       {!verse && (
-        <div style={{ marginTop: 6, color: "rgba(255,255,255,0.4)", fontSize: 11 }}>
+        <div className="font-mono" style={{ marginTop: 8, color: "var(--text-secondary)", fontSize: 11 }}>
           {book ? `${book.chapters} chapters \u00b7 ${book.verses.toLocaleString()} verses` : ""}
         </div>
       )}
@@ -145,12 +142,12 @@ export default function VersePopover({
         href={getBibleGatewayUrl(bookId, chapter, verse)}
         target="_blank"
         rel="noopener noreferrer"
+        className="three-state-interactive font-mono"
         style={{
           display: "inline-block",
-          marginTop: 8,
+          marginTop: 10,
           color,
           fontSize: 10,
-          opacity: 0.7,
           textDecoration: "none",
         }}
       >
