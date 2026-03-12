@@ -309,8 +309,12 @@ export class ArcRenderer {
     gl.uniform1f(this.loc_dpr, dpr);
 
     // Zoom-dependent alpha: boost alpha when zoomed in (fewer visible arcs)
-    const zoomAlpha = Math.min(3.0, 1.0 + Math.log2(Math.max(1.0, scaleX)) * 0.15);
+    const zoomAlpha = Math.min(12.0, 1.0 + Math.log2(Math.max(1.0, scaleX)) * 0.8);
     gl.uniform1f(this.loc_zoomAlpha, zoomAlpha);
+
+    // Scale line width with zoom so individual arcs are distinguishable at deep zoom
+    const lineWidth = Math.min(3.0, 1.0 + Math.log2(Math.max(1.0, scaleX)) * 0.15);
+    gl.uniform1f(this.loc_lineWidth, lineWidth);
 
     // Single instanced draw call for all arcs (triangle strip: 2 vertices per segment)
     gl.bindVertexArray(this.vao);
