@@ -163,6 +163,8 @@ void main() {
   // Smooth edge falloff for anti-aliased line edges
   float edgeDist = abs(v_side);
   float edgeAlpha = 1.0 - smoothstep(0.5, 1.0, edgeDist);
-  fragColor = vec4(v_color.rgb, v_color.a * edgeAlpha);
+  // Clamp final alpha to prevent saturation from additive blending at deep zoom
+  float finalAlpha = min(v_color.a * edgeAlpha, 0.15);
+  fragColor = vec4(v_color.rgb, finalAlpha);
 }
 `;

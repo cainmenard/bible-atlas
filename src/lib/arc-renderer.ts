@@ -309,7 +309,8 @@ export class ArcRenderer {
     gl.uniform1f(this.loc_dpr, dpr);
 
     // Zoom-dependent alpha: boost alpha when zoomed in (fewer visible arcs)
-    const zoomAlpha = Math.min(12.0, 1.0 + Math.log2(Math.max(1.0, scaleX)) * 0.8);
+    // Use a gentler curve with lower cap to prevent saturation at deep zoom
+    const zoomAlpha = Math.min(4.0, 1.0 + Math.log2(Math.max(1.0, scaleX)) * 0.5);
     gl.uniform1f(this.loc_zoomAlpha, zoomAlpha);
 
     // Scale line width with zoom so individual arcs are distinguishable at deep zoom

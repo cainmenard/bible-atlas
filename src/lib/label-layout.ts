@@ -4,6 +4,8 @@
  * sizes, and visibility for batch rendering.
  */
 
+export type LabelType = "book" | "chapter" | "verse";
+
 export interface LabelItem {
   text: string;
   x: number;
@@ -11,6 +13,15 @@ export interface LabelItem {
   fontSize: number;
   color: string;
   alpha: number;
+  // Hit-testing fields
+  type: LabelType;
+  bookId: string;
+  chapter?: number;
+  verse?: number;
+  /** Approximate width in pixels (text.length * fontSize * charWidthFactor) */
+  width: number;
+  /** Approximate height in pixels (fontSize) */
+  height: number;
 }
 
 export interface TickItem {
@@ -120,6 +131,7 @@ export function computeBookLabels(
     const genreColor = genreColors[b.genre % genreColors.length];
     const color = isSelected ? genreColor : "rgba(255,255,255,0.7)";
 
+    const labelWidth = text.length * fontSize * 0.6;
     labels.push({
       text,
       x: bookCenterX,
@@ -127,6 +139,10 @@ export function computeBookLabels(
       fontSize,
       color,
       alpha,
+      type: "book",
+      bookId: b.id,
+      width: labelWidth,
+      height: fontSize,
     });
 
     visibleIndex++;
@@ -172,13 +188,19 @@ export function computeChapterLabels(
         const fontSize = computeChapterFontSize(chWidth);
         const alpha = clamp((chWidth - MIN_CHAPTER_LABEL_WIDTH) / 10, 0.15, 0.85);
 
+        const chText = String(ch + 1);
         labels.push({
-          text: String(ch + 1),
+          text: chText,
           x: chStartX + chWidth / 2,
           y: axisY + 36,
           fontSize,
           color: "rgba(255,255,255,0.3)",
           alpha,
+          type: "chapter",
+          bookId,
+          chapter: ch + 1,
+          width: chText.length * fontSize * 0.6,
+          height: fontSize,
         });
       }
     }
