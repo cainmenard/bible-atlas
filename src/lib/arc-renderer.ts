@@ -156,19 +156,21 @@ export class ArcRenderer {
     }
     gl.uniform3fv(this.loc_genreColors, colorArray);
 
-    // Set default alpha tiers
-    gl.uniform1f(this.loc_alphaDefault, 0.015);
-    gl.uniform1f(this.loc_alphaHighlight, 0.08);
-    gl.uniform1f(this.loc_alphaDimmed, 0.003);
+    // Set default alpha tiers (reduced vs Canvas 2D to compensate for
+    // WebGL lineWidth=1 vs Canvas 2D lineWidth=0.4)
+    gl.uniform1f(this.loc_alphaDefault, 0.006);
+    gl.uniform1f(this.loc_alphaHighlight, 0.035);
+    gl.uniform1f(this.loc_alphaDimmed, 0.0012);
     gl.uniform1f(this.loc_margin, 40.0);
 
     // No selection by default
     gl.uniform1f(this.loc_selStart, -1.0);
     gl.uniform1f(this.loc_selEnd, -1.0);
 
-    // Enable additive blending
+    // Enable additive blending: src.rgb * src.a + dst.rgb
+    // This matches Canvas 2D globalCompositeOperation = "lighter"
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
     // Context loss handling
     canvas.addEventListener("webglcontextlost", this.handleContextLost);
