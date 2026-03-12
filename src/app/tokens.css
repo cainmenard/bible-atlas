@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ============================================================
+   BIBLE ATLAS — DESIGN TOKENS
+   All CSS custom properties for the design system.
+   Do not add component-specific styles here.
+   ============================================================ */
+
+:root {
+
+  /* ----------------------------------------------------------
+     FONTS
+     ---------------------------------------------------------- */
+  --font-serif: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  /* ----------------------------------------------------------
+     BACKGROUND COLORS
+     ---------------------------------------------------------- */
+  --bg-base:        #0a0a12;  /* Darkest — page root */
+  --bg-surface:     #0d0d1a;  /* Mid-dark surface */
+  --bg-elevated:    #12121f;  /* Elevated surface / card base */
+
+  /* ----------------------------------------------------------
+     TEXT COLORS
+     ---------------------------------------------------------- */
+  --text-primary:   #e8e0d0;  /* Body text, headings */
+  --text-secondary: #8a8a9a;  /* Supporting text, labels */
+  --text-dim:       #4a4a5a;  /* Placeholders, disabled states */
+
+  /* ----------------------------------------------------------
+     ACCENT
+     ---------------------------------------------------------- */
+  --accent:         #d4a04a;  /* Warm amber — active states, title wordmark */
+
+  /* ----------------------------------------------------------
+     GLASS MORPHISM
+     ---------------------------------------------------------- */
+  --glass-bg:       rgba(20, 20, 40, 0.7);
+  --glass-blur:     12px;
+  --glass-border:   rgba(255, 255, 255, 0.06);
+
+  /* ----------------------------------------------------------
+     INTERACTION STATE OPACITIES
+     ---------------------------------------------------------- */
+  --opacity-rest:   0.35;  /* Dim, receding (30–50%) */
+  --opacity-hover:  0.65;  /* Present, slightly brighter (60–80%) */
+  --opacity-active: 1;     /* Full presence */
+
+  /* ----------------------------------------------------------
+     TRANSITIONS
+     ---------------------------------------------------------- */
+  --transition-base: all 200ms ease-out;
+
+  /* ----------------------------------------------------------
+     SPACING
+     ---------------------------------------------------------- */
+  --space-2:   8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+}
