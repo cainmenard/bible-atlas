@@ -125,11 +125,11 @@ export function computeBookLabels(
     const text = fullName && bookPixelWidth > fullNameWidth ? fullName : b.id;
 
     // Smooth alpha fade near visibility threshold
-    const alpha = clamp((bookPixelWidth - MIN_BOOK_LABEL_WIDTH) / 10, 0.15, 1.0);
+    const alpha = clamp((bookPixelWidth - MIN_BOOK_LABEL_WIDTH) / 10, 0.3, 1.0);
 
     const isSelected = selectedBookId === b.id;
     const genreColor = genreColors[b.genre % genreColors.length];
-    const color = isSelected ? genreColor : "rgba(255,255,255,0.7)";
+    const color = isSelected ? genreColor : "rgba(255,255,255,0.85)";
 
     const labelWidth = text.length * fontSize * 0.6;
     labels.push({
@@ -186,7 +186,7 @@ export function computeChapterLabels(
       // Chapter number label with stride
       if (chWidth > MIN_CHAPTER_LABEL_WIDTH && ch % stride === 0) {
         const fontSize = computeChapterFontSize(chWidth);
-        const alpha = clamp((chWidth - MIN_CHAPTER_LABEL_WIDTH) / 10, 0.15, 0.85);
+        const alpha = clamp((chWidth - MIN_CHAPTER_LABEL_WIDTH) / 10, 0.25, 0.95);
 
         const chText = String(ch + 1);
         labels.push({
@@ -194,7 +194,7 @@ export function computeChapterLabels(
           x: chStartX + chWidth / 2,
           y: axisY + 36,
           fontSize,
-          color: "rgba(255,255,255,0.3)",
+          color: "rgba(255,255,255,0.6)",
           alpha,
           type: "chapter",
           bookId,
