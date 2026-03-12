@@ -22,7 +22,7 @@ const ArcDiagram = dynamic(() => import("@/components/ArcDiagram"), {
 });
 
 export default function Home() {
-  const [viewMode, setViewMode] = useState<ViewMode>("arcs");
+  const [viewMode, setViewMode] = useState<ViewMode>("graph");
   const [canon, setCanon] = useState<Canon>("catholic");
   const [translation, setTranslation] = useState("web");
   const [edgeThreshold, setEdgeThreshold] = useState(5);
@@ -94,16 +94,6 @@ export default function Home() {
         {/* View mode toggle */}
         <div className="glass-panel rounded-full p-1 flex gap-1">
           <button
-            onClick={() => setViewMode("arcs")}
-            className={`px-4 py-2 text-[11px] rounded-full transition-all font-mono ${
-              viewMode === "arcs"
-                ? "bg-white/15 text-[var(--accent)] opacity-100"
-                : "text-[var(--text-secondary)] opacity-[var(--opacity-rest)] hover:opacity-[var(--opacity-hover)]"
-            }`}
-          >
-            Arc
-          </button>
-          <button
             onClick={() => setViewMode("graph")}
             className={`px-4 py-2 text-[11px] rounded-full transition-all font-mono ${
               viewMode === "graph"
@@ -112,6 +102,16 @@ export default function Home() {
             }`}
           >
             Graph
+          </button>
+          <button
+            onClick={() => setViewMode("arcs")}
+            className={`px-4 py-2 text-[11px] rounded-full transition-all font-mono ${
+              viewMode === "arcs"
+                ? "bg-white/15 text-[var(--accent)] opacity-100"
+                : "text-[var(--text-secondary)] opacity-[var(--opacity-rest)] hover:opacity-[var(--opacity-hover)]"
+            }`}
+          >
+            Arc
           </button>
         </div>
 
