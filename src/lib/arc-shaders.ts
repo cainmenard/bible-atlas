@@ -78,9 +78,14 @@ void main() {
   float normalizedDist = distance / u_totalVerses;
   bool isForward = a_toIdx > a_fromIdx;
 
-  float ry = isForward
+  float ryBase = isForward
     ? max(3.0, normalizedDist * u_maxArcHeight * 2.0)
     : max(3.0, normalizedDist * u_maxArcHeightBelow * 2.0);
+  // Scale ry with sqrt(scaleX) so arcs maintain curvature at high zoom
+  float ryScaled = ryBase * sqrt(u_scaleX);
+  // Clamp so arcs never exceed viewport bounds
+  float maxRy = isForward ? (u_axisY - 5.0) : (u_resolution.y - u_axisY - 5.0);
+  float ry = min(ryScaled, maxRy);
 
   // Parametric ellipse: angle from 0 to PI
   float angle = a_t * 3.14159265;
@@ -164,7 +169,7 @@ void main() {
   float edgeDist = abs(v_side);
   float edgeAlpha = 1.0 - smoothstep(0.5, 1.0, edgeDist);
   // Clamp final alpha to prevent saturation from additive blending at deep zoom
-  float finalAlpha = min(v_color.a * edgeAlpha, 0.15);
+  float finalAlpha = min(v_color.a * edgeAlpha, 0.25);
   fragColor = vec4(v_color.rgb, finalAlpha);
 }
 `;

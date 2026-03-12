@@ -75,6 +75,27 @@ function findLabelAtPoint(
 }
 
 /** Find the arc closest to a screen point. Returns arc index or null. */
+function computeArcRy(
+  fromIdx: number,
+  toIdx: number,
+  totalVerses: number,
+  maxArcHeight: number,
+  maxArcHeightBelow: number,
+  scaleX: number,
+  axisY: number,
+  canvasHeight: number
+): number {
+  const distance = Math.abs(toIdx - fromIdx);
+  const normalizedDist = distance / totalVerses;
+  const isForward = toIdx > fromIdx;
+  const ryBase = isForward
+    ? Math.max(3, normalizedDist * maxArcHeight * 2)
+    : Math.max(3, normalizedDist * maxArcHeightBelow * 2);
+  const ryScaled = ryBase * Math.sqrt(scaleX);
+  const maxRy = isForward ? (axisY - 5) : (canvasHeight - axisY - 5);
+  return Math.min(ryScaled, maxRy);
+}
+
 function findArcAtPoint(
   mouseX: number,
   mouseY: number,
@@ -128,11 +149,7 @@ function findArcAtPoint(
     const rx = (maxX - minX) / 2;
     if (rx < 1) continue;
 
-    const distance = Math.abs(toIdx - fromIdx);
-    const normalizedDist = distance / totalVerses;
-    const ry = isForward
-      ? Math.max(3, normalizedDist * maxArcHeight * 2)
-      : Math.max(3, normalizedDist * maxArcHeightBelow * 2);
+    const ry = computeArcRy(fromIdx, toIdx, totalVerses, maxArcHeight, maxArcHeightBelow, scaleX, axisY, height);
 
     // Find arc Y at mouseX using parametric ellipse
     const dx = mouseX - cx;
@@ -523,13 +540,9 @@ export default function ArcDiagram({
       const cx = (x1 + x2) / 2;
       const rx = (maxX - minX) / 2;
       const isForward = toIdx > fromIdx;
-      const distance = Math.abs(toIdx - fromIdx);
-      const normalizedDist = distance / data.totalVerses;
       const maxArcH = axisY - 20;
       const maxArcHBelow = height - axisY - 30;
-      const ry = isForward
-        ? Math.max(3, normalizedDist * maxArcH * 2)
-        : Math.max(3, normalizedDist * maxArcHBelow * 2);
+      const ry = computeArcRy(fromIdx, toIdx, data.totalVerses, maxArcH, maxArcHBelow, scaleX, axisY, height);
 
       const genreColor = GENRE_COLOR_LIST[genreIdx % GENRE_COLOR_LIST.length];
       ctx.strokeStyle = genreColor;
