@@ -13,8 +13,11 @@ export default function StarBackground() {
     if (!ctx) return;
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
       draw();
     };
 
@@ -30,12 +33,16 @@ export default function StarBackground() {
 
     function draw() {
       if (!ctx || !canvas) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const dpr = window.devicePixelRatio || 1;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      ctx.clearRect(0, 0, w, h);
       stars.forEach((s) => {
         ctx.beginPath();
         ctx.arc(
-          s.x * canvas.width,
-          s.y * canvas.height,
+          s.x * w,
+          s.y * h,
           s.r,
           0,
           Math.PI * 2

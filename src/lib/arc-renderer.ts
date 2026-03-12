@@ -2,7 +2,7 @@ import { VERTEX_SHADER, FRAGMENT_SHADER } from "./arc-shaders";
 import { GENRE_COLORS } from "./colors";
 
 const GENRE_COLOR_LIST = Object.values(GENRE_COLORS);
-const SEGMENTS = 64; // vertices per arc (64-segment polyline)
+const SEGMENTS = 128; // vertices per arc (128-segment polyline, doubled for triangle strip)
 
 function compileShader(
   gl: WebGL2RenderingContext,
@@ -60,6 +60,9 @@ export class ArcRenderer {
   private loc_alphaDefault: WebGLUniformLocation;
   private loc_alphaHighlight: WebGLUniformLocation;
   private loc_alphaDimmed: WebGLUniformLocation;
+  private loc_lineWidth: WebGLUniformLocation;
+  private loc_dpr: WebGLUniformLocation;
+  private loc_zoomAlpha: WebGLUniformLocation;
 
   // Stored data for context restoration
   private rawArcs: number[][] | null = null;
@@ -69,7 +72,7 @@ export class ArcRenderer {
   constructor(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", {
       alpha: false,
-      antialias: false,
+      antialias: true,
       premultipliedAlpha: false,
     });
     if (!gl) throw new Error("WebGL2 not supported");
@@ -98,49 +101,67 @@ export class ArcRenderer {
     this.loc_alphaDefault = u("u_alphaDefault");
     this.loc_alphaHighlight = u("u_alphaHighlight");
     this.loc_alphaDimmed = u("u_alphaDimmed");
+    this.loc_lineWidth = u("u_lineWidth");
+    this.loc_dpr = u("u_dpr");
+    this.loc_zoomAlpha = u("u_zoomAlpha");
 
     // Create VAO
     this.vao = gl.createVertexArray()!;
     gl.bindVertexArray(this.vao);
 
-    // Shared geometry buffer: a_t parameter (0..1) with SEGMENTS points
-    const tData = new Float32Array(SEGMENTS);
+    // Shared geometry buffer: triangle strip with (a_t, a_side) pairs
+    // For each segment point, we emit two vertices: side=-1 and side=+1
+    const stripData = new Float32Array(SEGMENTS * 2 * 2); // SEGMENTS * 2 vertices * 2 floats each
     for (let i = 0; i < SEGMENTS; i++) {
-      tData[i] = i / (SEGMENTS - 1);
+      const t = i / (SEGMENTS - 1);
+      const base = i * 4; // 2 vertices * 2 floats
+      // Left vertex (side = -1)
+      stripData[base] = t;
+      stripData[base + 1] = -1.0;
+      // Right vertex (side = +1)
+      stripData[base + 2] = t;
+      stripData[base + 3] = 1.0;
     }
-    const tBuffer = gl.createBuffer()!;
-    gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, tData, gl.STATIC_DRAW);
+    const stripBuffer = gl.createBuffer()!;
+    gl.bindBuffer(gl.ARRAY_BUFFER, stripBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, stripData, gl.STATIC_DRAW);
+
+    const STRIP_STRIDE = 2 * Float32Array.BYTES_PER_ELEMENT; // 8 bytes per vertex
 
     const loc_t = gl.getAttribLocation(this.program, "a_t");
     gl.enableVertexAttribArray(loc_t);
-    gl.vertexAttribPointer(loc_t, 1, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(loc_t, 1, gl.FLOAT, false, STRIP_STRIDE, 0);
+    // divisor 0 = per vertex (default)
+
+    const loc_side = gl.getAttribLocation(this.program, "a_side");
+    gl.enableVertexAttribArray(loc_side);
+    gl.vertexAttribPointer(loc_side, 1, gl.FLOAT, false, STRIP_STRIDE, 4);
     // divisor 0 = per vertex (default)
 
     // Instance buffer: (fromIdx, toIdx, genreIdx, visible) per arc
     this.instanceBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
 
-    const STRIDE = 4 * Float32Array.BYTES_PER_ELEMENT; // 16 bytes
+    const INSTANCE_STRIDE = 4 * Float32Array.BYTES_PER_ELEMENT; // 16 bytes
 
     const loc_from = gl.getAttribLocation(this.program, "a_fromIdx");
     gl.enableVertexAttribArray(loc_from);
-    gl.vertexAttribPointer(loc_from, 1, gl.FLOAT, false, STRIDE, 0);
+    gl.vertexAttribPointer(loc_from, 1, gl.FLOAT, false, INSTANCE_STRIDE, 0);
     gl.vertexAttribDivisor(loc_from, 1);
 
     const loc_to = gl.getAttribLocation(this.program, "a_toIdx");
     gl.enableVertexAttribArray(loc_to);
-    gl.vertexAttribPointer(loc_to, 1, gl.FLOAT, false, STRIDE, 4);
+    gl.vertexAttribPointer(loc_to, 1, gl.FLOAT, false, INSTANCE_STRIDE, 4);
     gl.vertexAttribDivisor(loc_to, 1);
 
     const loc_genre = gl.getAttribLocation(this.program, "a_genreIdx");
     gl.enableVertexAttribArray(loc_genre);
-    gl.vertexAttribPointer(loc_genre, 1, gl.FLOAT, false, STRIDE, 8);
+    gl.vertexAttribPointer(loc_genre, 1, gl.FLOAT, false, INSTANCE_STRIDE, 8);
     gl.vertexAttribDivisor(loc_genre, 1);
 
     const loc_visible = gl.getAttribLocation(this.program, "a_visible");
     gl.enableVertexAttribArray(loc_visible);
-    gl.vertexAttribPointer(loc_visible, 1, gl.FLOAT, false, STRIDE, 12);
+    gl.vertexAttribPointer(loc_visible, 1, gl.FLOAT, false, INSTANCE_STRIDE, 12);
     gl.vertexAttribDivisor(loc_visible, 1);
 
     gl.bindVertexArray(null);
@@ -156,12 +177,18 @@ export class ArcRenderer {
     }
     gl.uniform3fv(this.loc_genreColors, colorArray);
 
-    // Set default alpha tiers (reduced vs Canvas 2D to compensate for
-    // WebGL lineWidth=1 vs Canvas 2D lineWidth=0.4)
-    gl.uniform1f(this.loc_alphaDefault, 0.006);
-    gl.uniform1f(this.loc_alphaHighlight, 0.035);
-    gl.uniform1f(this.loc_alphaDimmed, 0.0012);
+    // Alpha tiers — tuned for triangle-strip quad lines (~1.5px wide)
+    // Wider lines spread color over more area, so these are slightly higher
+    // than the old LINE_STRIP values (0.006, 0.035, 0.0012)
+    gl.uniform1f(this.loc_alphaDefault, 0.012);
+    gl.uniform1f(this.loc_alphaHighlight, 0.06);
+    gl.uniform1f(this.loc_alphaDimmed, 0.002);
     gl.uniform1f(this.loc_margin, 40.0);
+
+    // Line width in CSS pixels
+    gl.uniform1f(this.loc_lineWidth, 1.5);
+    gl.uniform1f(this.loc_dpr, window.devicePixelRatio || 1);
+    gl.uniform1f(this.loc_zoomAlpha, 1.0);
 
     // No selection by default
     gl.uniform1f(this.loc_selStart, -1.0);
@@ -279,10 +306,15 @@ export class ArcRenderer {
     gl.uniform1f(this.loc_axisY, axisY);
     gl.uniform1f(this.loc_maxArcHeight, axisY - 20);
     gl.uniform1f(this.loc_maxArcHeightBelow, height - axisY - 30);
+    gl.uniform1f(this.loc_dpr, dpr);
 
-    // Single instanced draw call for all arcs
+    // Zoom-dependent alpha: boost alpha when zoomed in (fewer visible arcs)
+    const zoomAlpha = Math.min(3.0, 1.0 + Math.log2(Math.max(1.0, scaleX)) * 0.3);
+    gl.uniform1f(this.loc_zoomAlpha, zoomAlpha);
+
+    // Single instanced draw call for all arcs (triangle strip: 2 vertices per segment)
     gl.bindVertexArray(this.vao);
-    gl.drawArraysInstanced(gl.LINE_STRIP, 0, SEGMENTS, this.arcCount);
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, SEGMENTS * 2, this.arcCount);
     gl.bindVertexArray(null);
   }
 
