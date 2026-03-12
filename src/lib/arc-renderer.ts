@@ -2,7 +2,7 @@ import { VERTEX_SHADER, FRAGMENT_SHADER } from "./arc-shaders";
 import { GENRE_COLORS } from "./colors";
 
 const GENRE_COLOR_LIST = Object.values(GENRE_COLORS);
-const SEGMENTS = 128; // vertices per arc (128-segment polyline, doubled for triangle strip)
+const SEGMENTS = 64; // vertices per arc (64-segment polyline, doubled for triangle strip)
 
 function compileShader(
   gl: WebGL2RenderingContext,
@@ -72,7 +72,7 @@ export class ArcRenderer {
   constructor(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", {
       alpha: false,
-      antialias: true,
+      antialias: false,
       premultipliedAlpha: false,
     });
     if (!gl) throw new Error("WebGL2 not supported");
@@ -177,16 +177,16 @@ export class ArcRenderer {
     }
     gl.uniform3fv(this.loc_genreColors, colorArray);
 
-    // Alpha tiers — tuned for triangle-strip quad lines (~1.5px wide)
-    // Wider lines spread color over more area, so these are slightly higher
-    // than the old LINE_STRIP values (0.006, 0.035, 0.0012)
-    gl.uniform1f(this.loc_alphaDefault, 0.012);
-    gl.uniform1f(this.loc_alphaHighlight, 0.06);
-    gl.uniform1f(this.loc_alphaDimmed, 0.002);
+    // Alpha tiers — tuned for triangle-strip quad lines (~1px wide)
+    // Wider lines cover more pixel area than LINE_STRIP, so alpha must be
+    // lower than the original values to avoid saturation with additive blending
+    gl.uniform1f(this.loc_alphaDefault, 0.003);
+    gl.uniform1f(this.loc_alphaHighlight, 0.018);
+    gl.uniform1f(this.loc_alphaDimmed, 0.0005);
     gl.uniform1f(this.loc_margin, 40.0);
 
     // Line width in CSS pixels
-    gl.uniform1f(this.loc_lineWidth, 1.5);
+    gl.uniform1f(this.loc_lineWidth, 1.0);
     gl.uniform1f(this.loc_dpr, window.devicePixelRatio || 1);
     gl.uniform1f(this.loc_zoomAlpha, 1.0);
 
@@ -309,7 +309,7 @@ export class ArcRenderer {
     gl.uniform1f(this.loc_dpr, dpr);
 
     // Zoom-dependent alpha: boost alpha when zoomed in (fewer visible arcs)
-    const zoomAlpha = Math.min(3.0, 1.0 + Math.log2(Math.max(1.0, scaleX)) * 0.3);
+    const zoomAlpha = Math.min(3.0, 1.0 + Math.log2(Math.max(1.0, scaleX)) * 0.15);
     gl.uniform1f(this.loc_zoomAlpha, zoomAlpha);
 
     // Single instanced draw call for all arcs (triangle strip: 2 vertices per segment)
