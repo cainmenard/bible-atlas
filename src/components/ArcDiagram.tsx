@@ -356,6 +356,19 @@ export default function ArcDiagram({
     const axisY = height * 0.52;
     const totalWidth = (width - MARGIN * 2) * scaleX;
 
+    // --- Dark gradient band behind label area for text contrast ---
+    {
+      const bandTop = axisY - 4;
+      const bandBottom = axisY + 64;
+      const bandGrad = ctx.createLinearGradient(0, bandTop, 0, bandBottom);
+      bandGrad.addColorStop(0, "rgba(2, 5, 14, 0)");
+      bandGrad.addColorStop(0.1, "rgba(2, 5, 14, 0.55)");
+      bandGrad.addColorStop(0.4, "rgba(2, 5, 14, 0.7)");
+      bandGrad.addColorStop(1, "rgba(2, 5, 14, 0.4)");
+      ctx.fillStyle = bandGrad;
+      ctx.fillRect(0, bandTop, width, bandBottom - bandTop);
+    }
+
     ctx.strokeStyle = "rgba(255,255,255,0.15)";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -446,10 +459,16 @@ export default function ArcDiagram({
     bookLabels.sort((a, b) => a.fontSize - b.fontSize);
     {
       let curFont = "";
+      ctx.lineJoin = "round";
+      ctx.miterLimit = 2;
       for (const item of bookLabels) {
-        const font = `${item.fontSize}px monospace`;
+        const font = `bold ${item.fontSize}px monospace`;
         if (font !== curFont) { ctx.font = font; curFont = font; }
         ctx.globalAlpha = item.alpha;
+        // Dark outline for contrast
+        ctx.strokeStyle = "rgba(2, 5, 14, 0.9)";
+        ctx.lineWidth = 3;
+        ctx.strokeText(item.text, item.x, item.y);
         ctx.fillStyle = item.color;
         ctx.fillText(item.text, item.x, item.y);
       }
@@ -460,10 +479,16 @@ export default function ArcDiagram({
     allChapterLabels.sort((a, b) => a.fontSize - b.fontSize);
     {
       let curFont = "";
+      ctx.lineJoin = "round";
+      ctx.miterLimit = 2;
       for (const item of allChapterLabels) {
         const font = `${item.fontSize}px monospace`;
         if (font !== curFont) { ctx.font = font; curFont = font; }
         ctx.globalAlpha = item.alpha;
+        // Dark outline for contrast
+        ctx.strokeStyle = "rgba(2, 5, 14, 0.85)";
+        ctx.lineWidth = 2.5;
+        ctx.strokeText(item.text, item.x, item.y);
         ctx.fillStyle = item.color;
         ctx.fillText(item.text, item.x, item.y);
       }
@@ -497,22 +522,29 @@ export default function ArcDiagram({
       if (versePixelWidth > 14) {
         const verseFontSize = Math.min(14, Math.max(8, Math.floor(versePixelWidth * 0.4)));
         ctx.font = `${verseFontSize}px monospace`;
-        ctx.fillStyle = "rgba(255,255,255,0.5)";
-        ctx.globalAlpha = Math.min(1, (versePixelWidth - 14) / 6);
+        ctx.lineJoin = "round";
+        ctx.miterLimit = 2;
         for (let v = visibleStartIdx; v < visibleEndIdx; v++) {
           const vx = MARGIN + offsetX + v * xScale;
           if (vx < -5 || vx > width + 5) continue;
           const ref = indexToVerseRef(v, data.books);
           if (ref) {
             const vText = `${ref.chapter}:${ref.verse}`;
+            const verseAlpha = Math.min(1, (versePixelWidth - 14) / 6);
+            ctx.globalAlpha = verseAlpha;
+            // Dark outline for contrast
+            ctx.strokeStyle = "rgba(2, 5, 14, 0.8)";
+            ctx.lineWidth = 2;
+            ctx.strokeText(vText, vx, axisY + 52);
+            ctx.fillStyle = "rgba(255,255,255,0.75)";
             ctx.fillText(vText, vx, axisY + 52);
             allVerseLabels.push({
               text: vText,
               x: vx,
               y: axisY + 52,
               fontSize: verseFontSize,
-              color: "rgba(255,255,255,0.5)",
-              alpha: Math.min(1, (versePixelWidth - 14) / 6),
+              color: "rgba(255,255,255,0.75)",
+              alpha: verseAlpha,
               type: "verse",
               bookId: ref.bookId,
               chapter: ref.chapter,

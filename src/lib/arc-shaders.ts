@@ -45,6 +45,7 @@ uniform float u_zoomAlpha;
 
 out vec4 v_color;
 out float v_side;
+out float v_axisProximity; // 0 = at axis, 1 = far from axis
 
 void main() {
   // Discard invisible arcs (canon filtering)
@@ -52,6 +53,7 @@ void main() {
     gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
     v_color = vec4(0.0);
     v_side = 0.0;
+    v_axisProximity = 1.0;
     return;
   }
 
@@ -130,6 +132,10 @@ void main() {
   px += a_side * halfWidth * normal.x;
   py += a_side * halfWidth * normal.y;
 
+  // Compute axis proximity for fade near label zone (0 = at axis, 1 = far)
+  float distFromAxis = abs(py - u_axisY);
+  v_axisProximity = smoothstep(0.0, 50.0, distFromAxis);
+
   // Convert to clip space
   gl_Position = vec4(
     (px / u_resolution.x) * 2.0 - 1.0,
@@ -162,14 +168,17 @@ precision highp float;
 
 in vec4 v_color;
 in float v_side;
+in float v_axisProximity;
 out vec4 fragColor;
 
 void main() {
   // Smooth edge falloff for anti-aliased line edges
   float edgeDist = abs(v_side);
   float edgeAlpha = 1.0 - smoothstep(0.5, 1.0, edgeDist);
+  // Fade arcs near the axis so text labels remain readable
+  float axisFade = mix(0.15, 1.0, v_axisProximity);
   // Clamp final alpha to prevent saturation from additive blending at deep zoom
-  float finalAlpha = min(v_color.a * edgeAlpha, 0.25);
+  float finalAlpha = min(v_color.a * edgeAlpha * axisFade, 0.25);
   fragColor = vec4(v_color.rgb, finalAlpha);
 }
 `;
