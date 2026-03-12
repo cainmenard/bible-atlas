@@ -62,7 +62,7 @@ export class ArcRenderer {
   private loc_alphaDimmed: WebGLUniformLocation;
 
   // Stored data for context restoration
-  private rawArcs: [number, number, number][] | null = null;
+  private rawArcs: number[][] | null = null;
   private rawVisibility: Float32Array | null = null;
   private totalVerses = 0;
 
@@ -187,7 +187,7 @@ export class ArcRenderer {
   };
 
   /** Upload arc data to the GPU. Called once after data loads. */
-  setArcData(arcs: [number, number, number][], totalVerses: number): void {
+  setArcData(arcs: number[][], totalVerses: number): void {
     this.rawArcs = arcs;
     this.totalVerses = totalVerses;
     this.arcCount = arcs.length;
