@@ -4,13 +4,25 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import { GENRE_COLORS } from "@/lib/colors";
 import { Canon } from "@/lib/types";
 import { books } from "@/data/books";
+import { CHAPTER_VERSES } from "@/data/chapter-verses";
 import { ArcRenderer } from "@/lib/arc-renderer";
+import { indexToVerseRef, formatVerseRef } from "@/lib/verse-index";
 
 interface ArcData {
   totalVerses: number;
   genres: string[];
   books: { id: string; offset: number; verses: number; genre: number }[];
-  arcs: [number, number, number][]; // [fromIndex, toIndex, genreIndex]
+  arcs: number[][]; // [fromIndex, toIndex, genreIndex] or [fromIndex, toIndex, genreIndex, votes]
+}
+
+interface SelectedArc {
+  arcIndex: number;
+  fromIdx: number;
+  toIdx: number;
+  genreIdx: number;
+  votes: number;
+  screenX: number;
+  screenY: number;
 }
 
 interface Props {
@@ -20,6 +32,91 @@ interface Props {
 }
 
 const GENRE_COLOR_LIST = Object.values(GENRE_COLORS);
+const MARGIN = 40;
+
+/** Find the arc closest to a screen point. Returns arc index or null. */
+function findArcAtPoint(
+  mouseX: number,
+  mouseY: number,
+  arcs: number[][],
+  totalVerses: number,
+  offsetX: number,
+  scaleX: number,
+  width: number,
+  height: number,
+  activeBookIds: Set<string>,
+  arcBooks: ArcData["books"],
+  activeVerseSet?: Uint8Array
+): number | null {
+  const axisY = height * 0.52;
+  const totalWidth = (width - MARGIN * 2) * scaleX;
+  const xScale = totalWidth / totalVerses;
+  const maxArcHeight = axisY - 20;
+  const maxArcHeightBelow = height - axisY - 30;
+  const clickedAbove = mouseY < axisY;
+  const threshold = 8; // pixels
+
+  let bestDist = Infinity;
+  let bestIdx = -1;
+
+  for (let i = 0; i < arcs.length; i++) {
+    const arc = arcs[i];
+    const fromIdx = arc[0];
+    const toIdx = arc[1];
+
+    // Skip invisible arcs (canon filtering)
+    if (activeVerseSet && (!activeVerseSet[fromIdx] || !activeVerseSet[toIdx]))
+      continue;
+
+    const x1 = MARGIN + offsetX + fromIdx * xScale;
+    const x2 = MARGIN + offsetX + toIdx * xScale;
+    const minX = Math.min(x1, x2);
+    const maxX = Math.max(x1, x2);
+
+    // Viewport culling
+    if (maxX < -50 || minX > width + 50) continue;
+
+    // Quick X range check
+    if (mouseX < minX - threshold || mouseX > maxX + threshold) continue;
+
+    const isForward = toIdx > fromIdx;
+    // Skip if click is on wrong side of axis
+    if (isForward && !clickedAbove) continue;
+    if (!isForward && clickedAbove) continue;
+
+    const cx = (x1 + x2) / 2;
+    const rx = (maxX - minX) / 2;
+    if (rx < 1) continue;
+
+    const distance = Math.abs(toIdx - fromIdx);
+    const normalizedDist = distance / totalVerses;
+    const ry = isForward
+      ? Math.max(3, normalizedDist * maxArcHeight * 2)
+      : Math.max(3, normalizedDist * maxArcHeightBelow * 2);
+
+    // Find arc Y at mouseX using parametric ellipse
+    const dx = mouseX - cx;
+    const cosVal = dx / rx;
+    if (Math.abs(cosVal) > 1) continue;
+
+    let arcY: number;
+    if (isForward) {
+      const angle = Math.PI - Math.acos(cosVal);
+      arcY = axisY - ry * Math.sin(angle);
+    } else {
+      const angle = Math.acos(cosVal);
+      arcY = axisY + ry * Math.sin(angle);
+    }
+
+    const dist = Math.abs(mouseY - arcY);
+    if (dist < threshold && dist < bestDist) {
+      bestDist = dist;
+      bestIdx = i;
+    }
+  }
+
+  return bestIdx >= 0 ? bestIdx : null;
+}
 
 export default function ArcDiagram({
   canon,
@@ -30,12 +127,22 @@ export default function ArcDiagram({
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<ArcRenderer | null>(null);
   const dataRef = useRef<ArcData | null>(null);
+  const activeVerseSetRef = useRef<Uint8Array | null>(null);
   const [loaded, setLoaded] = useState(false);
   const transformRef = useRef({ offsetX: 0, scaleX: 1 });
   const animRef = useRef<number>(0);
-  const dragRef = useRef<{ startX: number; startOffsetX: number } | null>(
-    null
-  );
+  const dragRef = useRef<{
+    startX: number;
+    startY: number;
+    startOffsetX: number;
+  } | null>(null);
+  const [selectedArc, setSelectedArc] = useState<SelectedArc | null>(null);
+  const selectedArcRef = useRef<SelectedArc | null>(null);
+
+  // Keep ref in sync with state for use in draw callback
+  useEffect(() => {
+    selectedArcRef.current = selectedArc;
+  }, [selectedArc]);
 
   // Track last overlay canvas size to avoid unnecessary resets
   const lastOverlaySizeRef = useRef({ width: 0, height: 0, dpr: 0 });
@@ -50,7 +157,6 @@ export default function ArcDiagram({
       renderer = new ArcRenderer(glCanvas);
       rendererRef.current = renderer;
     } catch {
-      // WebGL2 not supported — component will render nothing
       console.warn("WebGL2 not available for arc rendering");
       return;
     }
@@ -85,6 +191,7 @@ export default function ArcDiagram({
         activeSet.fill(1, b.offset, b.offset + b.verses);
       }
     }
+    activeVerseSetRef.current = activeSet;
     renderer.setVisibility(activeSet);
   }, [canon, loaded]);
 
@@ -144,35 +251,36 @@ export default function ArcDiagram({
 
     // --- Draw axis line ---
     const axisY = height * 0.52;
-    const margin = 40;
-    const totalWidth = (width - margin * 2) * scaleX;
+    const totalWidth = (width - MARGIN * 2) * scaleX;
 
     ctx.strokeStyle = "rgba(255,255,255,0.15)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(margin + offsetX, axisY);
-    ctx.lineTo(margin + offsetX + totalWidth, axisY);
+    ctx.moveTo(MARGIN + offsetX, axisY);
+    ctx.lineTo(MARGIN + offsetX + totalWidth, axisY);
     ctx.stroke();
 
-    // --- Draw book labels ---
+    // --- Draw book labels & markers ---
     const xScale = totalWidth / data.totalVerses;
     const activeBookIds = new Set(
       books.filter((b) => b.canons.includes(canon)).map((b) => b.id)
     );
 
-    ctx.font = "9px monospace";
+    const useFullNames = scaleX >= 3;
+    ctx.font = useFullNames ? "11px monospace" : "9px monospace";
     ctx.textAlign = "center";
 
     for (const b of data.books) {
       if (!activeBookIds.has(b.id)) continue;
 
-      const bookCenterX =
-        margin + offsetX + (b.offset + b.verses / 2) * xScale;
-      if (bookCenterX < -50 || bookCenterX > width + 50) continue;
+      const bookStartX = MARGIN + offsetX + b.offset * xScale;
+      const bookEndX = MARGIN + offsetX + (b.offset + b.verses) * xScale;
+      const bookCenterX = (bookStartX + bookEndX) / 2;
+      const bookPixelWidth = bookEndX - bookStartX;
 
-      const bookStartX = margin + offsetX + b.offset * xScale;
-      const bookEndX = margin + offsetX + (b.offset + b.verses) * xScale;
+      if (bookEndX < -50 || bookStartX > width + 50) continue;
 
+      // Book boundary tick
       ctx.strokeStyle = "rgba(255,255,255,0.1)";
       ctx.lineWidth = 0.5;
       ctx.beginPath();
@@ -184,9 +292,129 @@ export default function ArcDiagram({
       const genreColor = GENRE_COLOR_LIST[b.genre % GENRE_COLOR_LIST.length];
       ctx.fillStyle = isSelected ? genreColor : "rgba(255,255,255,0.4)";
 
-      if (bookEndX - bookStartX > 20) {
-        ctx.fillText(b.id, bookCenterX, axisY + 18);
+      // Book label
+      if (bookPixelWidth > 20) {
+        const fullBook = books.find((bk) => bk.id === b.id);
+        const label =
+          useFullNames && bookPixelWidth > 60 && fullBook
+            ? fullBook.name
+            : b.id;
+        ctx.fillText(label, bookCenterX, axisY + 18);
       }
+
+      // --- Chapter markers (medium zoom) ---
+      if (scaleX >= 5) {
+        const chapters = CHAPTER_VERSES[b.id];
+        if (chapters) {
+          let verseOffset = b.offset;
+          for (let ch = 0; ch < chapters.length; ch++) {
+            const chStartX = MARGIN + offsetX + verseOffset * xScale;
+            const chEndX =
+              MARGIN + offsetX + (verseOffset + chapters[ch]) * xScale;
+            const chWidth = chEndX - chStartX;
+
+            if (chStartX > width + 20) break;
+            if (chEndX > -20) {
+              // Chapter tick
+              ctx.strokeStyle = "rgba(255,255,255,0.06)";
+              ctx.lineWidth = 0.5;
+              ctx.beginPath();
+              ctx.moveTo(chStartX, axisY - 3);
+              ctx.lineTo(chStartX, axisY + 3);
+              ctx.stroke();
+
+              // Chapter number
+              if (chWidth > 14) {
+                ctx.font = "7px monospace";
+                ctx.fillStyle = "rgba(255,255,255,0.2)";
+                ctx.fillText(
+                  String(ch + 1),
+                  chStartX + chWidth / 2,
+                  axisY + 28
+                );
+              }
+            }
+            verseOffset += chapters[ch];
+          }
+          // Restore font for next book label
+          ctx.font = useFullNames ? "11px monospace" : "9px monospace";
+        }
+      }
+    }
+
+    // --- Verse ticks (deep zoom) ---
+    if (scaleX >= 50) {
+      const visibleStartIdx = Math.max(
+        0,
+        Math.floor((-offsetX - MARGIN) / xScale)
+      );
+      const visibleEndIdx = Math.min(
+        data.totalVerses,
+        Math.ceil((width - MARGIN - offsetX) / xScale)
+      );
+      ctx.strokeStyle = "rgba(255,255,255,0.04)";
+      ctx.lineWidth = 0.5;
+      for (let v = visibleStartIdx; v < visibleEndIdx; v++) {
+        const vx = MARGIN + offsetX + v * xScale;
+        if (vx < -5 || vx > width + 5) continue;
+        ctx.beginPath();
+        ctx.moveTo(vx, axisY - 2);
+        ctx.lineTo(vx, axisY + 2);
+        ctx.stroke();
+      }
+    }
+
+    // --- Draw selected arc highlight ---
+    const selArc = selectedArcRef.current;
+    if (selArc) {
+      const { fromIdx, toIdx, genreIdx } = selArc;
+      const x1 = MARGIN + offsetX + fromIdx * xScale;
+      const x2 = MARGIN + offsetX + toIdx * xScale;
+      const minX = Math.min(x1, x2);
+      const maxX = Math.max(x1, x2);
+      const cx = (x1 + x2) / 2;
+      const rx = (maxX - minX) / 2;
+      const isForward = toIdx > fromIdx;
+      const distance = Math.abs(toIdx - fromIdx);
+      const normalizedDist = distance / data.totalVerses;
+      const maxArcH = axisY - 20;
+      const maxArcHBelow = height - axisY - 30;
+      const ry = isForward
+        ? Math.max(3, normalizedDist * maxArcH * 2)
+        : Math.max(3, normalizedDist * maxArcHBelow * 2);
+
+      const genreColor = GENRE_COLOR_LIST[genreIdx % GENRE_COLOR_LIST.length];
+      ctx.strokeStyle = genreColor;
+      ctx.lineWidth = 2.5;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath();
+
+      const SEGS = 64;
+      for (let s = 0; s <= SEGS; s++) {
+        const t = s / SEGS;
+        const angle = t * Math.PI;
+        let px: number, py: number;
+        if (isForward) {
+          px = cx + rx * Math.cos(Math.PI - angle);
+          py = axisY - ry * Math.sin(angle);
+        } else {
+          px = cx + rx * Math.cos(angle);
+          py = axisY + ry * Math.sin(angle);
+        }
+        if (s === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+
+      // Draw endpoint dots
+      ctx.fillStyle = genreColor;
+      ctx.beginPath();
+      ctx.arc(x1, axisY, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x2, axisY, 3, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     // --- Draw title ---
@@ -203,7 +431,19 @@ export default function ArcDiagram({
     ctx.fillStyle = "rgba(255,255,255,0.15)";
     ctx.fillText("Above: target is later in the Bible", 16, 44);
     ctx.fillText("Below: target is earlier in the Bible", 16, 58);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- loaded triggers initial draw after data fetch
+
+    // --- Zoom indicator ---
+    if (scaleX > 1.05) {
+      ctx.font = "10px monospace";
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.textAlign = "right";
+      ctx.fillText(
+        `${scaleX < 10 ? scaleX.toFixed(1) : Math.round(scaleX)}x`,
+        width - 16,
+        height - 16
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loaded triggers initial draw after data fetch
   }, [canon, selectedBookId, loaded]);
 
   // Handle zoom and pan
@@ -215,9 +455,9 @@ export default function ArcDiagram({
       e.preventDefault();
       const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
       const t = transformRef.current;
-      const mouseX = e.clientX - 40;
+      const mouseX = e.clientX - MARGIN;
 
-      const newScale = Math.max(0.5, Math.min(20, t.scaleX * zoomFactor));
+      const newScale = Math.max(0.5, Math.min(1000, t.scaleX * zoomFactor));
       const scaleChange = newScale / t.scaleX;
       t.offsetX = mouseX - scaleChange * (mouseX - t.offsetX);
       t.scaleX = newScale;
@@ -229,6 +469,7 @@ export default function ArcDiagram({
     function handleMouseDown(e: MouseEvent) {
       dragRef.current = {
         startX: e.clientX,
+        startY: e.clientY,
         startOffsetX: transformRef.current.offsetX,
       };
     }
@@ -249,20 +490,73 @@ export default function ArcDiagram({
       if (!dataRef.current) return;
       const data = dataRef.current;
       const { offsetX, scaleX } = transformRef.current;
-      const margin = 40;
       const width = window.innerWidth;
-      const totalWidth = (width - margin * 2) * scaleX;
-      const xScale = totalWidth / data.totalVerses;
+      const height = window.innerHeight;
+
+      // Disambiguate click vs drag
+      if (dragRef.current) {
+        const dx = Math.abs(e.clientX - dragRef.current.startX);
+        const dy = Math.abs(e.clientY - dragRef.current.startY);
+        if (dx > 3 || dy > 3) return;
+      }
 
       const clickX = e.clientX;
-      const verseIdx = (clickX - margin - offsetX) / xScale;
+      const clickY = e.clientY;
+
+      // Try arc hit-test first
+      const activeBookIds = new Set(
+        books.filter((bk) => bk.canons.includes(canon)).map((bk) => bk.id)
+      );
+      const hitIdx = findArcAtPoint(
+        clickX,
+        clickY,
+        data.arcs,
+        data.totalVerses,
+        offsetX,
+        scaleX,
+        width,
+        height,
+        activeBookIds,
+        data.books,
+        activeVerseSetRef.current || undefined
+      );
+
+      if (hitIdx !== null) {
+        const arc = data.arcs[hitIdx];
+        setSelectedArc({
+          arcIndex: hitIdx,
+          fromIdx: arc[0],
+          toIdx: arc[1],
+          genreIdx: arc[2],
+          votes: arc.length > 3 ? arc[3] : 0,
+          screenX: clickX,
+          screenY: clickY,
+        });
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(draw);
+        return;
+      }
+
+      // Clear arc selection if clicking elsewhere
+      if (selectedArcRef.current) {
+        setSelectedArc(null);
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(draw);
+      }
+
+      // Fall through to book selection
+      const totalWidth = (width - MARGIN * 2) * scaleX;
+      const xScale = totalWidth / data.totalVerses;
+      const verseIdx = (clickX - MARGIN - offsetX) / xScale;
 
       for (const b of data.books) {
         if (verseIdx >= b.offset && verseIdx < b.offset + b.verses) {
-          const activeBookIds = new Set(
-            books.filter((bk) => bk.canons.includes(canon)).map((bk) => bk.id)
+          const activeIds = new Set(
+            books
+              .filter((bk) => bk.canons.includes(canon))
+              .map((bk) => bk.id)
           );
-          if (activeBookIds.has(b.id)) {
+          if (activeIds.has(b.id)) {
             onSelectBook(selectedBookId === b.id ? null : b.id);
           }
           return;
@@ -298,8 +592,30 @@ export default function ArcDiagram({
     return () => window.removeEventListener("resize", handleResize);
   }, [draw]);
 
+  // Build arc tooltip content
+  const tooltipContent = selectedArc
+    ? (() => {
+        const data = dataRef.current;
+        if (!data) return null;
+        const fromRef = indexToVerseRef(selectedArc.fromIdx, data.books);
+        const toRef = indexToVerseRef(selectedArc.toIdx, data.books);
+        if (!fromRef || !toRef) return null;
+        const genreColor =
+          GENRE_COLOR_LIST[selectedArc.genreIdx % GENRE_COLOR_LIST.length];
+        return { fromRef, toRef, genreColor };
+      })()
+    : null;
+
   return (
-    <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%" }}>
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+      }}
+    >
       <canvas
         ref={glCanvasRef}
         style={{
@@ -322,6 +638,50 @@ export default function ArcDiagram({
           cursor: "grab",
         }}
       />
+      {/* Arc info tooltip */}
+      {selectedArc && tooltipContent && (
+        <div
+          style={{
+            position: "absolute",
+            left: Math.min(
+              selectedArc.screenX + 12,
+              window.innerWidth - 280
+            ),
+            top: Math.min(
+              selectedArc.screenY - 60,
+              window.innerHeight - 120
+            ),
+            background: "rgba(8, 12, 20, 0.92)",
+            border: `1px solid ${tooltipContent.genreColor}44`,
+            borderLeft: `3px solid ${tooltipContent.genreColor}`,
+            borderRadius: "6px",
+            padding: "10px 14px",
+            color: "#e0e0e0",
+            fontFamily: "monospace",
+            fontSize: "12px",
+            pointerEvents: "none",
+            zIndex: 100,
+            maxWidth: "280px",
+            backdropFilter: "blur(8px)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+          }}
+        >
+          <div style={{ color: tooltipContent.genreColor, fontWeight: "bold", marginBottom: 4 }}>
+            {formatVerseRef(tooltipContent.fromRef)}
+          </div>
+          <div style={{ color: "rgba(255,255,255,0.4)", margin: "2px 0" }}>
+            {selectedArc.toIdx > selectedArc.fromIdx ? "→" : "←"} references
+          </div>
+          <div style={{ color: tooltipContent.genreColor, fontWeight: "bold", marginBottom: 4 }}>
+            {formatVerseRef(tooltipContent.toRef)}
+          </div>
+          {selectedArc.votes > 0 && (
+            <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "10px", marginTop: 4 }}>
+              {selectedArc.votes} community votes
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
