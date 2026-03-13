@@ -6,32 +6,68 @@ interface Props {
 }
 
 const TRANSLATIONS = [
-  { id: "web", label: "WEB", desc: "World English Bible" },
-  { id: "kjv", label: "KJV", desc: "King James Version" },
+  { id: "rsv-ce", label: "RSV-CE", desc: "Revised Standard Version Catholic Edition" },
+  { id: "jb",     label: "JB",     desc: "Jerusalem Bible" },
+  { id: "kjv",    label: "KJV",    desc: "King James Version" },
 ];
 
 export default function TranslationSelector({ translation, onChange }: Props) {
   return (
-    <div className="glass-panel rounded-xl px-4 py-3">
-      <div className="text-[10px] text-[var(--text-dim)] uppercase tracking-wider mb-2 font-mono">
-        Translation
-      </div>
-      <div className="flex gap-2">
-        {TRANSLATIONS.map((t) => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        fontFamily: "var(--font-mono)",
+        fontSize: "11px",
+        letterSpacing: "0.06em",
+      }}
+    >
+      {TRANSLATIONS.map((t, i) => (
+        <span key={t.id} style={{ display: "flex", alignItems: "center" }}>
+          {i > 0 && (
+            <span
+              aria-hidden
+              style={{
+                display: "inline-block",
+                width: "1px",
+                height: "11px",
+                background: "rgba(255,255,255,0.08)",
+                margin: "0 9px",
+                flexShrink: 0,
+              }}
+            />
+          )}
           <button
-            key={t.id}
             onClick={() => onChange(t.id)}
-            className={`px-3 py-2 rounded-md text-[11px] transition-all font-mono ${
-              translation === t.id
-                ? "bg-white/10 text-[var(--accent)] opacity-100"
-                : "text-[var(--text-secondary)] opacity-[var(--opacity-rest)] hover:opacity-[var(--opacity-hover)]"
-            }`}
             title={t.desc}
+            style={{
+              background: "none",
+              border: "none",
+              padding: "6px 0",
+              cursor: "pointer",
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              letterSpacing: "0.06em",
+              lineHeight: 1,
+              color: translation === t.id ? "var(--accent)" : "var(--text-primary)",
+              opacity: translation === t.id ? 1 : 0.3,
+              transition: "var(--transition-base)",
+            }}
+            onMouseEnter={(e) => {
+              if (translation !== t.id) {
+                (e.currentTarget as HTMLButtonElement).style.opacity = "0.6";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (translation !== t.id) {
+                (e.currentTarget as HTMLButtonElement).style.opacity = "0.3";
+              }
+            }}
           >
             {t.label}
           </button>
-        ))}
-      </div>
+        </span>
+      ))}
     </div>
   );
 }
