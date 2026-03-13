@@ -647,9 +647,9 @@ export default function ArcDiagram({
       );
     }
 
-    // --- Draw title ---
+    // --- Draw title (below fixed header bar) ---
     ctx.font = "12px 'JetBrains Mono', monospace";
-    ctx.fillStyle = "rgba(232,224,208,0.45)";
+    ctx.fillStyle = "rgba(232,224,208,0.55)";
     ctx.textAlign = "left";
     const titleY = scaleX > 2 ? 72 : 60;
     ctx.fillText(
@@ -659,7 +659,7 @@ export default function ArcDiagram({
     );
 
     ctx.font = "10px 'JetBrains Mono', monospace";
-    ctx.fillStyle = "rgba(232,224,208,0.30)";
+    ctx.fillStyle = "rgba(232,224,208,0.40)";
     ctx.fillText("Above: target is later in the Bible", 16, titleY + 16);
     ctx.fillText("Below: target is earlier in the Bible", 16, titleY + 30);
 
