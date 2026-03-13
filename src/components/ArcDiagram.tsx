@@ -998,6 +998,7 @@ export default function ArcDiagram({
           width: "100%",
           height: "100%",
           cursor: "grab",
+          touchAction: "none",
         }}
       />
 

@@ -154,6 +154,7 @@ export default function ForceGraph({
       renderer.domElement.style.position = "fixed";
       renderer.domElement.style.top = "0";
       renderer.domElement.style.left = "0";
+      renderer.domElement.style.touchAction = "none";
 
       // Label renderer (CSS2D)
       const labelRenderer = new CSS2DRenderer();

@@ -22,6 +22,7 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
   font-family: var(--font-serif);
   color: var(--text-primary);
   background: var(--bg-base);
@@ -50,6 +51,13 @@ body {
 }
 
 /* ----------------------------------------------------------
+   VISUALIZATION CANVAS UTILITY
+   ---------------------------------------------------------- */
+.viz-canvas {
+  touch-action: none;
+}
+
+/* ----------------------------------------------------------
    GLASS PANEL UTILITY
    ---------------------------------------------------------- */
 .glass-panel {
@@ -68,8 +76,10 @@ body {
   cursor: pointer;
 }
 
-.three-state-interactive:hover {
-  opacity: var(--opacity-hover);
+@media (hover: hover) {
+  .three-state-interactive:hover {
+    opacity: var(--opacity-hover);
+  }
 }
 
 .three-state-interactive:active,
