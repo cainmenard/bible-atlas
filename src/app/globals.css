@@ -205,3 +205,24 @@ input[type="range"] {
   border-radius: 2px;
   transition: width 0.3s ease;
 }
+
+/* ----------------------------------------------------------
+   READINGS CARD
+   ---------------------------------------------------------- */
+@keyframes readings-card-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.readings-card {
+  animation: readings-card-in 200ms ease-out forwards;
+}
+
+@keyframes genre-dot-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%       { transform: scale(1.8); opacity: 0.5; }
+}
+
+.genre-dot-pulse {
+  animation: genre-dot-pulse 900ms ease-in-out infinite;
+}
