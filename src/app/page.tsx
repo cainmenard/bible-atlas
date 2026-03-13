@@ -26,7 +26,7 @@ const ArcDiagram = dynamic(() => import("@/components/ArcDiagram"), {
 export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
   const [canon, setCanon] = useState<Canon>("catholic");
-  const [translation, setTranslation] = useState("web");
+  const [translation, setTranslation] = useState("rsv-ce");
   const [edgeThreshold, setEdgeThreshold] = useState(5);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [hoveredBook, setHoveredBook] = useState<{
@@ -100,8 +100,10 @@ export default function Home() {
         {viewMode === "graph" && (
           <EdgeDensitySelector value={edgeThreshold} onChange={setEdgeThreshold} />
         )}
+      </div>
 
-        {/* Translation selector */}
+      {/* Monogram translation toggle — fixed top-right */}
+      <div className="fixed top-4 right-5 z-40">
         <TranslationSelector translation={translation} onChange={setTranslation} />
       </div>
 
