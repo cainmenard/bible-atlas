@@ -8,7 +8,7 @@ interface Props {
   onChange: (mode: ViewMode) => void;
 }
 
-function GraphIcon({ active }: { active: boolean }) {
+function ConstellationIcon({ active }: { active: boolean }) {
   const color = active ? "var(--accent)" : "rgba(138, 138, 154, 0.9)";
   return (
     <svg
@@ -101,11 +101,11 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
         gap: 2,
       }}
     >
-      {/* Graph button */}
+      {/* Constellation button */}
       <button
-        onClick={() => handleClick("graph")}
+        onClick={() => handleClick("constellation")}
         onAnimationEnd={handleAnimationEnd}
-        className={`h-10 md:h-8 ${activatingMode === "graph" ? "orrery-activate" : ""}`}
+        className={`h-10 md:h-8 ${activatingMode === "constellation" ? "orrery-activate" : ""}`}
         style={{
           width: 36,
           borderRadius: 16,
@@ -113,10 +113,10 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
           alignItems: "center",
           justifyContent: "center",
           background:
-            viewMode === "graph"
+            viewMode === "constellation"
               ? "radial-gradient(circle, rgba(212,160,74,0.15) 0%, transparent 70%)"
               : "transparent",
-          opacity: viewMode === "graph" ? 1 : 0.3,
+          opacity: viewMode === "constellation" ? 1 : 0.3,
           transition: "all 200ms ease-out",
           cursor: "pointer",
           border: "none",
@@ -124,10 +124,10 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
           padding: 0,
           flexShrink: 0,
         }}
-        aria-label="Graph view"
-        aria-pressed={viewMode === "graph"}
+        aria-label="Constellation view"
+        aria-pressed={viewMode === "constellation"}
       >
-        <GraphIcon active={viewMode === "graph"} />
+        <ConstellationIcon active={viewMode === "constellation"} />
       </button>
 
       {/* Arcs button */}

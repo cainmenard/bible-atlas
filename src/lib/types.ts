@@ -14,7 +14,7 @@ export type Genre =
 
 export type Canon = "catholic" | "protestant" | "orthodox" | "ethiopian";
 
-export type ViewMode = "graph" | "arcs";
+export type ViewMode = "constellation" | "arcs";
 
 export interface BibleBook {
   id: string;
