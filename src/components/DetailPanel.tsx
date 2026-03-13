@@ -235,7 +235,7 @@ export default function DetailPanel({
               <div className="font-mono text-xs" style={{ color: "var(--text-dim)" }}>Loading verse...</div>
             ) : verse ? (
               <>
-                <p className="font-serif text-sm leading-relaxed italic mb-2" style={{ color: "var(--text-primary)", opacity: 0.8 }}>
+                <p className="font-serif text-sm leading-relaxed italic mb-2" style={{ color: "var(--text-primary)", opacity: 0.9 }}>
                   &ldquo;{verse.text.trim()}&rdquo;
                 </p>
                 <p className="text-xs font-mono" style={{ color: color + "aa" }}>
@@ -247,7 +247,7 @@ export default function DetailPanel({
         )}
 
         {/* Book-level Connections */}
-        <h3 className="text-xs uppercase tracking-wider mb-3 font-mono" style={{ color: "var(--text-dim)" }}>
+        <h3 className="text-xs uppercase tracking-wider mb-3 font-mono" style={{ color: "var(--text-secondary)" }}>
           Connected Books ({connections.length})
         </h3>
         <div className="space-y-1 mb-6">
@@ -264,7 +264,7 @@ export default function DetailPanel({
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ background: GENRE_COLORS[conn.genre] }}
               />
-              <span className="text-sm flex-1 font-serif" style={{ color: "var(--text-primary)", opacity: 0.7 }}>{conn.name}</span>
+              <span className="text-sm flex-1 font-serif" style={{ color: "var(--text-primary)", opacity: 0.85 }}>{conn.name}</span>
               <span className="text-[10px] font-mono" style={{ color: "var(--text-dim)" }}>
                 {count} refs
               </span>
@@ -294,7 +294,7 @@ export default function DetailPanel({
             <button
               onClick={() => setShowCrossRefs(!showCrossRefs)}
               className="w-full flex items-center justify-between text-xs uppercase tracking-wider mb-3 font-mono"
-              style={{ color: "var(--text-dim)", transition: "var(--transition-base)" }}
+              style={{ color: "var(--text-secondary)", transition: "var(--transition-base)" }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-dim)")}
             >

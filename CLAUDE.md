@@ -54,8 +54,8 @@ Every interactive element has exactly **three states**:
 
 | State | Appearance |
 |-------|-----------|
-| **Rest** | Dim, receding, low opacity (30–50%) |
-| **Hover** | Present, slightly brighter (60–80%), subtle transition |
+| **Rest** | Dim, receding, low opacity (40–50%) |
+| **Hover** | Present, slightly brighter (70–80%), subtle transition |
 | **Active** | Glowing, amber-tinted, full presence |
 
 - All state changes use `transition: all 200ms ease-out`. No instant switches.

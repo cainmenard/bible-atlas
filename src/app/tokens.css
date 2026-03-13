@@ -43,8 +43,8 @@
   /* ----------------------------------------------------------
      INTERACTION STATE OPACITIES
      ---------------------------------------------------------- */
-  --opacity-rest:   0.35;  /* Dim, receding (30–50%) */
-  --opacity-hover:  0.65;  /* Present, slightly brighter (60–80%) */
+  --opacity-rest:   0.45;  /* Dim, receding (40–50%) */
+  --opacity-hover:  0.75;  /* Present, slightly brighter (70–80%) */
   --opacity-active: 1;     /* Full presence */
 
   /* ----------------------------------------------------------

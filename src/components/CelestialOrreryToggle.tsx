@@ -116,7 +116,7 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
             viewMode === "constellation"
               ? "radial-gradient(circle, rgba(212,160,74,0.15) 0%, transparent 70%)"
               : "transparent",
-          opacity: viewMode === "constellation" ? 1 : 0.3,
+          opacity: viewMode === "constellation" ? 1 : 0.5,
           transition: "all 200ms ease-out",
           cursor: "pointer",
           border: "none",
@@ -145,7 +145,7 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
             viewMode === "arcs"
               ? "radial-gradient(circle, rgba(212,160,74,0.15) 0%, transparent 70%)"
               : "transparent",
-          opacity: viewMode === "arcs" ? 1 : 0.3,
+          opacity: viewMode === "arcs" ? 1 : 0.5,
           transition: "all 200ms ease-out",
           cursor: "pointer",
           border: "none",

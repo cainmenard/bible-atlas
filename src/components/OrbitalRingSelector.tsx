@@ -197,7 +197,7 @@ export default function OrbitalRingSelector({ canon, onChange }: Props) {
               x={pt.x}
               y={pt.y + 16}
               textAnchor="middle"
-              fill={isActive ? "#d4a04a" : "#6a6a7a"}
+              fill={isActive ? "#d4a04a" : "#8a8a9a"}
               fontSize="6.5"
               fontFamily="'JetBrains Mono', monospace"
               letterSpacing="0.06em"

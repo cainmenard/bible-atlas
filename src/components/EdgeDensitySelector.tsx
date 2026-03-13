@@ -34,7 +34,7 @@ export default function EdgeDensitySelector({ value, onChange }: EdgeDensitySele
           letterSpacing: "0.25em",
           color: "var(--text-dim)",
           textTransform: "uppercase",
-          opacity: 0.55,
+          opacity: 0.85,
           userSelect: "none",
         }}
       >
@@ -91,7 +91,7 @@ export default function EdgeDensitySelector({ value, onChange }: EdgeDensitySele
           fontFamily: "var(--font-mono)",
           fontSize: "10px",
           color: "var(--text-secondary)",
-          opacity: 0.5,
+          opacity: 0.8,
           lineHeight: 1,
           userSelect: "none",
         }}
