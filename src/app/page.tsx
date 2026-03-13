@@ -154,7 +154,7 @@ export default function Home() {
           <Link
             href="/about"
             className="text-[10px] font-mono three-state-interactive hidden md:inline"
-            style={{ color: "var(--text-dim)" }}
+            style={{ color: "var(--text-secondary)" }}
           >
             About
           </Link>
@@ -162,7 +162,7 @@ export default function Home() {
           <Link
             href="/about"
             className="md:hidden text-[14px] three-state-interactive"
-            style={{ color: "var(--text-dim)", lineHeight: 1 }}
+            style={{ color: "var(--text-secondary)", lineHeight: 1 }}
             aria-label="About Bible Atlas"
           >
             ⓘ
