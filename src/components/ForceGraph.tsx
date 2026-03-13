@@ -612,6 +612,8 @@ export default function ForceGraph({
 
     // ─── EVENT HANDLERS ───────────────────────────────
     const onPointerMove = (event: PointerEvent) => {
+      // Touch devices have no hover — suppress tooltip to avoid ghost hovers
+      if (event.pointerType === "touch") return;
       if (!sceneRef.current) return;
       const s = sceneRef.current;
       s.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;

@@ -1092,14 +1092,16 @@ export default function ArcDiagram({
           className="glass-panel"
           style={{
             position: "fixed",
-            left: Math.min(selectedArc.screenX + 12, window.innerWidth - 340),
-            top: Math.min(Math.max(selectedArc.screenY - 80, 8), window.innerHeight - 350),
+            left: Math.max(8, Math.min(selectedArc.screenX + 12, window.innerWidth - Math.min(320, window.innerWidth * 0.9) - 8)),
+            top: Math.max(8, Math.min(selectedArc.screenY - 80, window.innerHeight - 80)),
             borderRadius: 10,
             padding: "18px 22px",
             color: "var(--text-primary)",
             fontSize: 12,
             zIndex: 100,
-            maxWidth: 320,
+            maxWidth: Math.min(320, window.innerWidth * 0.9),
+            overflowY: "auto",
+            maxHeight: "80vh",
           }}
         >
           {/* Close button */}
