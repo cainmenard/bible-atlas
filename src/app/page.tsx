@@ -147,8 +147,26 @@ export default function Home() {
           )}
         </div>
 
-        {/* Far right: Translation Selector */}
-        <TranslationSelector translation={translation} onChange={setTranslation} />
+        {/* Far right: About link + Translation Selector */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/about"
+            className="text-[10px] font-mono three-state-interactive hidden md:inline"
+            style={{ color: "var(--text-dim)" }}
+          >
+            About
+          </Link>
+          {/* Mobile: icon-only about button */}
+          <Link
+            href="/about"
+            className="md:hidden text-[14px] three-state-interactive"
+            style={{ color: "var(--text-dim)", lineHeight: 1 }}
+            aria-label="About Bible Atlas"
+          >
+            ⓘ
+          </Link>
+          <TranslationSelector translation={translation} onChange={setTranslation} />
+        </div>
       </div>
 
       {/* Orbital ring canon selector — fixed bottom-left */}
@@ -169,15 +187,6 @@ export default function Home() {
       />
 
       <ReadingsCard data={readings} onSelectBook={setSelectedBookId} />
-
-      <Link
-        href="/about"
-        className="fixed bottom-4 right-4 z-40 text-[10px] font-mono three-state-interactive"
-        style={{ color: "var(--text-dim)" }}
-      >
-        About Bible Atlas
-      </Link>
-
 
     </main>
   );
