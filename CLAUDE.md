@@ -102,6 +102,101 @@ Zero native form controls. Every input, slider, select, button, and toggle is cu
 
 ## Constraints
 
-- **Do NOT modify the Arc visualization** — its rendering logic, data binding, and SVG generation must remain untouched. Only modify surrounding UI, text, popups, and controls.
+- **Do NOT modify the Arc visualization** — its rendering logic, data binding, and SVG generation must remain untouched. Only modify surrounding UI, text, popups, and controls. The files to leave untouched are `src/lib/arc-renderer.ts`, `src/lib/arc-shaders.ts`, and the core rendering logic in `src/components/ArcDiagram.tsx`.
 - The **Graph view visualization will be rebuilt from scratch** in a separate prompt. Do not attempt to preserve its current rendering code.
 - **Desktop-first.** Mobile responsiveness is secondary to desktop quality.
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Framework | Next.js (App Router) | 16.1.6 |
+| UI | React | 19.2.3 |
+| Arc visualization | D3.js + WebGL shaders | 7.9.0 |
+| Graph visualization | Three.js | 0.183.2 |
+| Styling | Tailwind CSS v4 + PostCSS | 4.x |
+| Language | TypeScript (strict mode) | 5.9.3 |
+| Deployment | gh-pages (static export) | 6.3.0 |
+
+**Tailwind v4 note:** This project uses Tailwind CSS v4, which has breaking changes from v3. Do not use v3 syntax or `tailwind.config.js`. Configuration is done via PostCSS (`postcss.config.mjs`).
+
+---
+
+## Developer Commands
+
+```bash
+npm run dev      # Start local dev server (localhost:3000)
+npm run build    # Production build
+npm run lint     # Run ESLint
+```
+
+There is no test suite. Verify changes by running `npm run build` — it catches TypeScript errors.
+
+---
+
+## File Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx          # Root page — all top-level state lives here
+│   ├── layout.tsx        # Root layout + metadata
+│   ├── about/page.tsx    # About page
+│   ├── globals.css       # Global reset, typography utilities, .glass-panel class
+│   └── tokens.css        # ALL CSS custom properties (fonts, colors, spacing, transitions)
+├── components/
+│   ├── ArcDiagram.tsx    # ⚠️  DO NOT MODIFY rendering logic
+│   ├── ForceGraph.tsx    # Graph view — to be rebuilt
+│   ├── ReadingsCard.tsx  # Today's liturgical readings card
+│   ├── DetailPanel.tsx   # Book detail panel with cross-references
+│   ├── OrbitalRingSelector.tsx  # Canon filter UI
+│   ├── TranslationSelector.tsx  # Translation selector UI
+│   ├── EdgeDensitySelector.tsx  # Edge density filter
+│   ├── CelestialOrreryToggle.tsx # Arc/Graph view switcher
+│   ├── CanonFilter.tsx   # Canon filter logic
+│   ├── Tooltip.tsx       # Book hover tooltip
+│   ├── VersePopover.tsx  # Verse selection popup
+│   └── StarBackground.tsx # Animated star field
+├── data/
+│   ├── books.ts          # 66 Bible books — testament, genre, chapters, canons
+│   ├── edges.ts          # 42,000+ cross-reference edges (TSK dataset)
+│   ├── chapter-verses.ts # Verse counts per chapter (lookup table)
+│   └── book-edges.json   # Pre-aggregated book-to-book edge weights
+└── lib/
+    ├── types.ts           # All TypeScript interfaces — start here when unsure
+    ├── colors.ts          # Genre and liturgical season color maps
+    ├── bible-api.ts       # External Bible API (bible-api.com) integration
+    ├── readings.ts        # Daily readings logic
+    ├── liturgical.ts      # Liturgical season calculations
+    ├── arc-renderer.ts    # ⚠️  DO NOT MODIFY
+    ├── arc-shaders.ts     # ⚠️  DO NOT MODIFY
+    ├── label-layout.ts    # Label positioning algorithm
+    └── verse-index.ts     # Verse reference indexing
+
+public/
+├── arc-crossrefs.json    # Full cross-reference dataset (4.9 MB) — do not edit
+└── crossrefs/            # Reference data
+```
+
+---
+
+## Architecture Patterns
+
+**State management:** All top-level state (view mode, selected book, canon, translation, edge density) is lifted into `src/app/page.tsx` and passed down as props. There is no global state library.
+
+**SSR disabled for visualizations:** Both `ArcDiagram` and `ForceGraph` are dynamically imported with `{ ssr: false }` because they use browser-only APIs (Canvas, WebGL, Three.js). Do the same for any new visualization components.
+
+**CSS custom properties over Tailwind for design tokens:** Colors, fonts, spacing, and transitions are defined in `tokens.css` as CSS variables (e.g., `var(--accent)`, `var(--font-serif)`). Use these variables instead of hardcoding values or using Tailwind color utilities for design-system values.
+
+**Data pipeline:** `edges.ts` (raw TSK cross-references) → `book-edges.json` (pre-aggregated book weights) → `arc-crossrefs.json` (full dataset for the arc renderer). Do not modify the JSON files directly.
+
+---
+
+## Styling Conventions
+
+- Use CSS variables from `tokens.css` for all design-system values.
+- The `.glass-panel` utility class (defined in `globals.css`) applies the standard glass morphism styles. Use it instead of repeating the CSS.
+- The `.three-state-interactive` utility class applies the standard rest/hover/active opacity pattern.
+- Tailwind utilities are acceptable for layout (flex, grid, positioning) but not for color or typography — use CSS variables for those.
