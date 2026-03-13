@@ -24,7 +24,7 @@ const ArcDiagram = dynamic(() => import("@/components/ArcDiagram"), {
 });
 
 export default function Home() {
-  const [viewMode, setViewMode] = useState<ViewMode>("graph");
+  const [viewMode, setViewMode] = useState<ViewMode>("arcs");
   const [canon, setCanon] = useState<Canon>("catholic");
   const [translation, setTranslation] = useState("rsv-ce");
   const [edgeThreshold, setEdgeThreshold] = useState(5);
@@ -60,7 +60,7 @@ export default function Home() {
   const seasonColor = season ? LITURGICAL_COLORS[season] : undefined;
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden">
+    <main className="relative w-screen h-screen overflow-hidden page-fade-in">
       {seasonColor && (
         <div
           className="fixed top-0 left-0 right-0 h-[2px] z-50"
@@ -70,23 +70,25 @@ export default function Home() {
 
       <StarBackground />
 
-      {viewMode === "graph" ? (
-        <ForceGraph
-          canon={canon}
-          selectedBookId={selectedBookId}
-          todayBookIds={todayBookIds}
-          edgeThreshold={edgeThreshold}
-          onSelectBook={handleSelectBook}
-          onHover={handleHover}
-        />
-      ) : (
-        <ArcDiagram
-          canon={canon}
-          selectedBookId={selectedBookId}
-          onSelectBook={handleSelectBook}
-          translation={translation}
-        />
-      )}
+      <div key={viewMode} className="view-crossfade" style={{ position: "fixed", inset: 0 }}>
+        {viewMode === "graph" ? (
+          <ForceGraph
+            canon={canon}
+            selectedBookId={selectedBookId}
+            todayBookIds={todayBookIds}
+            edgeThreshold={edgeThreshold}
+            onSelectBook={handleSelectBook}
+            onHover={handleHover}
+          />
+        ) : (
+          <ArcDiagram
+            canon={canon}
+            selectedBookId={selectedBookId}
+            onSelectBook={handleSelectBook}
+            translation={translation}
+          />
+        )}
+      </div>
 
       {/* Top bar: Wordmark | Orrery Toggle | Translation Selector */}
       <div

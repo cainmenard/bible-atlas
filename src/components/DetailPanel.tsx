@@ -255,7 +255,10 @@ export default function DetailPanel({
             <button
               key={conn.id}
               onClick={() => onSelectBook(conn.id)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 transition-colors text-left group"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-left group"
+              style={{ transition: "var(--transition-base)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               <span
                 className="w-2 h-2 rounded-full shrink-0"
@@ -279,7 +282,7 @@ export default function DetailPanel({
             </button>
           ))}
           {connections.length > 15 && !showCrossRefs && (
-            <div className="text-[10px] text-white/20 px-3 pt-1">
+            <div className="text-[10px] px-3 pt-1" style={{ color: "var(--text-dim)" }}>
               +{connections.length - 15} more
             </div>
           )}
@@ -290,12 +293,15 @@ export default function DetailPanel({
           <>
             <button
               onClick={() => setShowCrossRefs(!showCrossRefs)}
-              className="w-full flex items-center justify-between text-xs text-white/30 uppercase tracking-wider mb-3 hover:text-white/50 transition-colors"
+              className="w-full flex items-center justify-between text-xs uppercase tracking-wider mb-3 font-mono"
+              style={{ color: "var(--text-dim)", transition: "var(--transition-base)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-dim)")}
             >
               <span>
                 Verse Cross-References ({filterBook ? `${filteredRefs.length} to ${BIBLE_API_NAMES[filterBook] || filterBook}` : totalCrossRefs.toLocaleString()})
               </span>
-              <span className="text-white/20">{showCrossRefs ? "▲" : "▼"}</span>
+              <span style={{ color: "var(--text-dim)" }}>{showCrossRefs ? "▲" : "▼"}</span>
             </button>
 
             {showCrossRefs && (
@@ -312,7 +318,7 @@ export default function DetailPanel({
                 )}
 
                 {crossRefsLoading ? (
-                  <div className="text-white/30 text-xs py-2">Loading cross-references...</div>
+                  <div className="text-xs py-2 font-mono" style={{ color: "var(--text-dim)" }}>Loading cross-references...</div>
                 ) : (
                   <div className="space-y-0.5 mb-4">
                     {pagedRefs.map((ref, i) => {
@@ -322,12 +328,15 @@ export default function DetailPanel({
                       return (
                         <div
                           key={`${ref.from}-${ref.to}-${i}`}
-                          className="flex items-start gap-2 px-2 py-1.5 rounded hover:bg-white/5 text-[11px] leading-tight"
+                          className="flex items-start gap-2 px-2 py-1.5 rounded text-[11px] leading-tight"
+                          style={{ transition: "var(--transition-base)" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                         >
-                          <span className="text-white/50 shrink-0 font-mono">
+                          <span className="shrink-0 font-mono" style={{ color: "var(--text-secondary)" }}>
                             {formatRef(ref.from)}
                           </span>
-                          <span className="text-white/20 shrink-0">&rarr;</span>
+                          <span className="shrink-0" style={{ color: "var(--text-dim)" }}>&rarr;</span>
                           <button
                             onClick={() => {
                               if (targetBook) onSelectBook(targetBookId);
@@ -338,7 +347,8 @@ export default function DetailPanel({
                             {formatRef(ref.to)}
                           </button>
                           <span
-                            className="ml-auto text-[9px] shrink-0 opacity-40"
+                            className="ml-auto text-[9px] shrink-0 font-mono"
+                            style={{ color: "var(--text-dim)" }}
                             title={`${ref.votes} community votes`}
                           >
                             {ref.votes > 0 ? `+${ref.votes}` : ref.votes}
@@ -350,7 +360,10 @@ export default function DetailPanel({
                     {hasMore && (
                       <button
                         onClick={() => setCrossRefPage((p) => p + 1)}
-                        className="w-full text-center text-[10px] py-2 text-white/30 hover:text-white/50 transition-colors"
+                        className="w-full text-center text-[10px] py-2 font-mono"
+                        style={{ color: "var(--text-dim)", transition: "var(--transition-base)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-dim)")}
                       >
                         Show more ({filteredRefs.length - pagedRefs.length} remaining)
                       </button>
@@ -367,8 +380,8 @@ export default function DetailPanel({
           href={bgUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block text-xs hover:opacity-100 transition-opacity"
-          style={{ color: ACCENT, opacity: 0.7 }}
+          className="inline-block text-xs font-mono three-state-interactive"
+          style={{ color: ACCENT }}
         >
           Read on Bible Gateway &rarr;
         </a>
