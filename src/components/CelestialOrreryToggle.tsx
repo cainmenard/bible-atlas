@@ -93,10 +93,9 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
 
   return (
     <div
-      className="glass-panel flex items-center"
+      className="glass-panel flex items-center h-11 md:h-9"
       style={{
         width: 80,
-        height: 36,
         borderRadius: 18,
         padding: "2px 2px",
         gap: 2,
@@ -106,10 +105,9 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
       <button
         onClick={() => handleClick("graph")}
         onAnimationEnd={handleAnimationEnd}
-        className={activatingMode === "graph" ? "orrery-activate" : ""}
+        className={`h-10 md:h-8 ${activatingMode === "graph" ? "orrery-activate" : ""}`}
         style={{
           width: 36,
-          height: 32,
           borderRadius: 16,
           display: "flex",
           alignItems: "center",
@@ -136,10 +134,9 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
       <button
         onClick={() => handleClick("arcs")}
         onAnimationEnd={handleAnimationEnd}
-        className={activatingMode === "arcs" ? "orrery-activate" : ""}
+        className={`h-10 md:h-8 ${activatingMode === "arcs" ? "orrery-activate" : ""}`}
         style={{
           width: 36,
-          height: 32,
           borderRadius: 16,
           display: "flex",
           alignItems: "center",
