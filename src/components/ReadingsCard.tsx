@@ -71,7 +71,7 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
               className="font-mono"
               style={{
                 color: "var(--accent)",
-                fontSize: "10px",
+                fontSize: "12px",
                 letterSpacing: "0.15em",
                 fontVariantCaps: "small-caps",
                 textTransform: "uppercase",
@@ -83,8 +83,9 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
             <span
               className="font-mono"
               style={{
-                color: "var(--text-secondary)",
-                fontSize: "10px",
+                color: "var(--text-primary)",
+                opacity: 0.6,
+                fontSize: "11px",
                 letterSpacing: "0.08em",
                 display: "block",
                 marginTop: "5px",
@@ -99,7 +100,7 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
             style={{ color: "var(--text-primary)", padding: "2px", lineHeight: 0 }}
             aria-label="Close readings card"
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="12" height="12" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
               <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
               <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
             </svg>
@@ -148,11 +149,12 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
                 <span
                   className="font-mono"
                   style={{
-                    fontSize: "9px",
+                    fontSize: "11px",
                     textTransform: "uppercase",
                     letterSpacing: "0.1em",
-                    color: "var(--text-secondary)",
-                    width: "96px",
+                    color: "var(--text-primary)",
+                    opacity: 0.55,
+                    width: "104px",
                     flexShrink: 0,
                     lineHeight: 1.2,
                   }}
@@ -163,9 +165,9 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
                 <span
                   className="font-serif"
                   style={{
-                    fontSize: "15px",
+                    fontSize: "16px",
                     color: "var(--text-primary)",
-                    opacity: isHovered ? 1 : 0.8,
+                    opacity: isHovered ? 1 : 0.85,
                     transition: "opacity 200ms ease-out",
                     lineHeight: 1.3,
                   }}
@@ -191,10 +193,11 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
           <span
             className="font-mono"
             style={{
-              fontSize: "9px",
+              fontSize: "11px",
               textTransform: "uppercase",
               letterSpacing: "0.12em",
-              color: "var(--text-secondary)",
+              color: "var(--text-primary)",
+              opacity: 0.55,
             }}
           >
             {data.season}
