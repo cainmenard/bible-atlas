@@ -39,7 +39,7 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="fixed bottom-4 left-4 z-40 px-4 py-3 rounded-lg text-xs
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 md:left-4 md:translate-x-0 px-4 py-3 rounded-lg text-xs
           glass-panel three-state-interactive font-mono"
         style={{ color: "var(--text-secondary)" }}
       >
@@ -50,9 +50,8 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
 
   return (
     <div
-      className="fixed bottom-4 left-4 z-40 w-80 readings-card"
+      className="fixed bottom-0 left-0 right-0 z-40 w-full rounded-t-[5px] md:bottom-4 md:left-4 md:right-auto md:w-80 md:rounded-[5px] readings-card"
       style={{
-        borderRadius: "5px",
         backgroundColor: "rgba(14, 14, 28, 0.88)",
         backgroundImage: NOISE_SVG,
         backdropFilter: "blur(12px)",
