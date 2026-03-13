@@ -84,8 +84,8 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
               className="font-mono"
               style={{
                 color: "var(--text-primary)",
-                opacity: 0.6,
-                fontSize: "11px",
+                opacity: 0.75,
+                fontSize: "12px",
                 letterSpacing: "0.08em",
                 display: "block",
                 marginTop: "5px",
@@ -149,11 +149,11 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
                 <span
                   className="font-mono"
                   style={{
-                    fontSize: "11px",
+                    fontSize: "12px",
                     textTransform: "uppercase",
                     letterSpacing: "0.1em",
                     color: "var(--text-primary)",
-                    opacity: 0.55,
+                    opacity: 0.7,
                     width: "104px",
                     flexShrink: 0,
                     lineHeight: 1.2,
@@ -165,9 +165,10 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
                 <span
                   className="font-serif"
                   style={{
-                    fontSize: "16px",
+                    fontSize: "17px",
                     color: "var(--text-primary)",
-                    opacity: isHovered ? 1 : 0.85,
+                    opacity: isHovered ? 1 : 0.92,
+                    fontWeight: 500,
                     transition: "opacity 200ms ease-out",
                     lineHeight: 1.3,
                   }}
@@ -193,11 +194,11 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
           <span
             className="font-mono"
             style={{
-              fontSize: "11px",
+              fontSize: "12px",
               textTransform: "uppercase",
               letterSpacing: "0.12em",
               color: "var(--text-primary)",
-              opacity: 0.55,
+              opacity: 0.7,
             }}
           >
             {data.season}
