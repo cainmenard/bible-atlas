@@ -24,7 +24,7 @@ const ArcDiagram = dynamic(() => import("@/components/ArcDiagram"), {
 });
 
 export default function Home() {
-  const [viewMode, setViewMode] = useState<ViewMode>("arcs");
+  const [viewMode, setViewMode] = useState<ViewMode>("constellation");
   const [canon, setCanon] = useState<Canon>("catholic");
   const [translation, setTranslation] = useState("rsv-ce");
   const [edgeThreshold, setEdgeThreshold] = useState(5);
@@ -71,7 +71,7 @@ export default function Home() {
       <StarBackground />
 
       <div key={viewMode} className="view-crossfade" style={{ position: "fixed", inset: 0 }}>
-        {viewMode === "graph" ? (
+        {viewMode === "constellation" ? (
           <ForceGraph
             canon={canon}
             selectedBookId={selectedBookId}
@@ -139,7 +139,7 @@ export default function Home() {
         {/* Center: Orrery Toggle + Edge Density */}
         <div className="flex items-center gap-4">
           <CelestialOrreryToggle viewMode={viewMode} onChange={setViewMode} />
-          {viewMode === "graph" && (
+          {viewMode === "constellation" && (
             <div className="hidden md:block">
               <EdgeDensitySelector
                 value={edgeThreshold}

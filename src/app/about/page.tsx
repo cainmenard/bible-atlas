@@ -43,7 +43,7 @@ export default function AboutPage() {
             </p>
             <p>
               The denser the scholarly connection between two books, the closer they
-              pull together in the graph. The result is a living constellation of
+              pull together in the constellation. The result is a living map of
               Scripture — a visual representation of how the Bible&apos;s 66+ books form
               a single, interconnected whole.
             </p>
@@ -66,7 +66,7 @@ export default function AboutPage() {
             </p>
             <p>
               In Bible Atlas, these are aggregated at the book level — each edge in
-              the graph represents the density of cross-reference connections between
+              the constellation represents the density of cross-reference connections between
               two books, weighted from 1 (occasional) to 10 (extremely strong). For
               example, Hebrews draws so heavily from Psalms and Leviticus that these
               connections receive the maximum weight of 10.
@@ -94,11 +94,11 @@ export default function AboutPage() {
               default), Protestant (66 books), Eastern Orthodox (~76 books), and
               Ethiopian Orthodox (~81 books). The Catholic canon includes the seven
               Deuterocanonical books — Tobit, Judith, 1 &amp; 2 Maccabees, Wisdom,
-              Sirach, and Baruch — which are fully integrated into the graph with
+              Sirach, and Baruch — which are fully integrated into the constellation with
               their own cross-reference connections.
             </p>
             <p>
-              Switching canons gracefully adds or removes books from the graph,
+              Switching canons gracefully adds or removes books from the constellation,
               allowing you to explore how different traditions understand the scope
               of Scripture.
             </p>
@@ -121,7 +121,7 @@ export default function AboutPage() {
             </p>
             <p>
               Bible Atlas highlights the books corresponding to today&apos;s readings
-              with a pulsing glow on the graph, and shows the day&apos;s reading list
+              with a pulsing glow on the constellation, and shows the day&apos;s reading list
               in a floating card. The liturgical season — Advent, Christmas, Lent,
               Easter, or Ordinary Time — is reflected in a subtle color accent
               throughout the interface.

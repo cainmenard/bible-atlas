@@ -8,8 +8,8 @@ Every change to this project must follow these rules without exception.
 
 Bible Atlas is a web app that visualizes cross-references between books of the Bible. It has two views:
 
-- **Arc view** — chord diagram (default)
-- **Graph view** — node-link graph
+- **Constellation view** — node-link graph (default)
+- **Arc view** — chord diagram
 
 The app fetches daily liturgical readings and displays them in a card. Users can filter by:
 - Canon: Catholic, Protestant, Ethiopian, Orthodox
@@ -95,15 +95,15 @@ Zero native form controls. Every input, slider, select, button, and toggle is cu
 
 ## Tabs / View Order
 
-1. **Arc view** — first tab, default view on page load
-2. **Graph view** — second tab
+1. **Constellation view** — first tab, default view on page load
+2. **Arc view** — second tab
 
 ---
 
 ## Constraints
 
 - **Do NOT modify the Arc visualization** — its rendering logic, data binding, and SVG generation must remain untouched. Only modify surrounding UI, text, popups, and controls. The files to leave untouched are `src/lib/arc-renderer.ts`, `src/lib/arc-shaders.ts`, and the core rendering logic in `src/components/ArcDiagram.tsx`.
-- The **Graph view visualization will be rebuilt from scratch** in a separate prompt. Do not attempt to preserve its current rendering code.
+- The **Constellation view visualization will be rebuilt from scratch** in a separate prompt. Do not attempt to preserve its current rendering code.
 - **Desktop-first.** Mobile responsiveness is secondary to desktop quality.
 
 ---
@@ -115,7 +115,7 @@ Zero native form controls. Every input, slider, select, button, and toggle is cu
 | Framework | Next.js (App Router) | 16.1.6 |
 | UI | React | 19.2.3 |
 | Arc visualization | D3.js + WebGL shaders | 7.9.0 |
-| Graph visualization | Three.js | 0.183.2 |
+| Constellation visualization | Three.js | 0.183.2 |
 | Styling | Tailwind CSS v4 + PostCSS | 4.x |
 | Language | TypeScript (strict mode) | 5.9.3 |
 | Deployment | gh-pages (static export) | 6.3.0 |
@@ -148,13 +148,13 @@ src/
 │   └── tokens.css        # ALL CSS custom properties (fonts, colors, spacing, transitions)
 ├── components/
 │   ├── ArcDiagram.tsx    # ⚠️  DO NOT MODIFY rendering logic
-│   ├── ForceGraph.tsx    # Graph view — to be rebuilt
+│   ├── ForceGraph.tsx    # Constellation view — to be rebuilt
 │   ├── ReadingsCard.tsx  # Today's liturgical readings card
 │   ├── DetailPanel.tsx   # Book detail panel with cross-references
 │   ├── OrbitalRingSelector.tsx  # Canon filter UI
 │   ├── TranslationSelector.tsx  # Translation selector UI
 │   ├── EdgeDensitySelector.tsx  # Edge density filter
-│   ├── CelestialOrreryToggle.tsx # Arc/Graph view switcher
+│   ├── CelestialOrreryToggle.tsx # Constellation/Arc view switcher
 │   ├── CanonFilter.tsx   # Canon filter logic
 │   ├── Tooltip.tsx       # Book hover tooltip
 │   ├── VersePopover.tsx  # Verse selection popup
