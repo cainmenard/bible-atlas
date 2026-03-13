@@ -88,24 +88,69 @@ export default function Home() {
         />
       )}
 
-      {/* Orbital ring canon selector — fixed bottom-left */}
-      <OrbitalRingSelector canon={canon} onChange={setCanon} />
+      {/* Top bar: Wordmark | Orrery Toggle | Translation Selector */}
+      <div
+        className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between"
+        style={{ padding: "14px 20px" }}
+      >
+        {/* Far left: Wordmark */}
+        <div
+          className="flex items-center gap-2"
+          style={{
+            opacity: "var(--opacity-rest)",
+            transition: "var(--transition-base)",
+            cursor: "default",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.opacity = "var(--opacity-hover)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.opacity = "var(--opacity-rest)")
+          }
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "22px",
+              color: "var(--accent)",
+              lineHeight: 1,
+              userSelect: "none",
+            }}
+          >
+            ☧
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "19px",
+              fontVariant: "small-caps",
+              letterSpacing: "0.12em",
+              color: "var(--accent)",
+              lineHeight: 1,
+              userSelect: "none",
+            }}
+          >
+            Bible Atlas
+          </span>
+        </div>
 
-      {/* Unified compact toolbar */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4">
-        {/* View mode toggle — Celestial Orrery */}
-        <CelestialOrreryToggle viewMode={viewMode} onChange={setViewMode} />
+        {/* Center: Orrery Toggle + Edge Density */}
+        <div className="flex items-center gap-4">
+          <CelestialOrreryToggle viewMode={viewMode} onChange={setViewMode} />
+          {viewMode === "graph" && (
+            <EdgeDensitySelector
+              value={edgeThreshold}
+              onChange={setEdgeThreshold}
+            />
+          )}
+        </div>
 
-        {/* Edge density selector (graph mode only) */}
-        {viewMode === "graph" && (
-          <EdgeDensitySelector value={edgeThreshold} onChange={setEdgeThreshold} />
-        )}
-      </div>
-
-      {/* Monogram translation toggle — fixed top-right */}
-      <div className="fixed top-4 right-5 z-40">
+        {/* Far right: Translation Selector */}
         <TranslationSelector translation={translation} onChange={setTranslation} />
       </div>
+
+      {/* Orbital ring canon selector — fixed bottom-left */}
+      <OrbitalRingSelector canon={canon} onChange={setCanon} />
 
       <Tooltip
         book={hoveredBook?.book ?? null}
@@ -131,11 +176,7 @@ export default function Home() {
         About Bible Atlas
       </Link>
 
-      <div className="fixed top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none text-center">
-        <h1 className="text-[var(--accent)] opacity-[0.07] text-3xl font-light tracking-[0.3em] uppercase font-serif">
-          Bible Atlas
-        </h1>
-      </div>
+
     </main>
   );
 }
