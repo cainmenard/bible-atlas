@@ -651,7 +651,7 @@ export default function ArcDiagram({
     ctx.font = "12px 'JetBrains Mono', monospace";
     ctx.fillStyle = "rgba(232,224,208,0.45)";
     ctx.textAlign = "left";
-    const titleY = scaleX > 2 ? 52 : 28;
+    const titleY = scaleX > 2 ? 72 : 60;
     ctx.fillText(
       `${data.arcs.length.toLocaleString()} Cross References`,
       16,
