@@ -285,9 +285,11 @@ export default function ForceGraph({
         }
       }
 
-      // Raycaster
+      // Raycaster — use a larger threshold on touch devices for easier tap targeting
       const raycaster = new THREE.Raycaster();
-      raycaster.params.Points = { threshold: 10 };
+      const isTouchPrimary =
+        typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
+      raycaster.params.Points = { threshold: isTouchPrimary ? 22 : 10 };
       const mouse = new THREE.Vector2();
 
       const state = {

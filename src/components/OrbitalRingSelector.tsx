@@ -56,7 +56,7 @@ export default function OrbitalRingSelector({ canon, onChange }: Props) {
 
   return (
     <div
-      className="fixed bottom-6 left-6 z-[40] select-none max-md:bottom-auto max-md:top-[60px] max-md:left-4"
+      className="fixed bottom-6 left-6 z-[40] select-none max-md:bottom-auto max-md:top-20 max-md:left-4"
     >
       <svg
         width="140"
