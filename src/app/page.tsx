@@ -90,8 +90,7 @@ export default function Home() {
 
       {/* Top bar: Wordmark | Orrery Toggle | Translation Selector */}
       <div
-        className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between"
-        style={{ padding: "14px 20px" }}
+        className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-3 py-[14px] md:px-5"
       >
         {/* Far left: Wordmark */}
         <div
@@ -120,6 +119,7 @@ export default function Home() {
             ☧
           </span>
           <span
+            className="hidden md:inline"
             style={{
               fontFamily: "var(--font-serif)",
               fontSize: "19px",
@@ -138,10 +138,12 @@ export default function Home() {
         <div className="flex items-center gap-4">
           <CelestialOrreryToggle viewMode={viewMode} onChange={setViewMode} />
           {viewMode === "graph" && (
-            <EdgeDensitySelector
-              value={edgeThreshold}
-              onChange={setEdgeThreshold}
-            />
+            <div className="hidden md:block">
+              <EdgeDensitySelector
+                value={edgeThreshold}
+                onChange={setEdgeThreshold}
+              />
+            </div>
           )}
         </div>
 
