@@ -772,22 +772,12 @@ export default function ArcDiagram({
       overlay!.style.cursor = "grab";
     }
 
-    function handleClick(e: MouseEvent) {
+    function performClick(clickX: number, clickY: number) {
       if (!dataRef.current) return;
       const data = dataRef.current;
       const { offsetX, scaleX } = transformRef.current;
       const width = window.innerWidth;
       const height = window.innerHeight;
-
-      // Disambiguate click vs drag
-      if (dragRef.current) {
-        const dx = Math.abs(e.clientX - dragRef.current.startX);
-        const dy = Math.abs(e.clientY - dragRef.current.startY);
-        if (dx > 3 || dy > 3) return;
-      }
-
-      const clickX = e.clientX;
-      const clickY = e.clientY;
 
       // 1. Check label hit-test first
       const hitLabel = findLabelAtPoint(clickX, clickY, renderedLabelsRef.current);
@@ -898,6 +888,15 @@ export default function ArcDiagram({
       onSelectBook(null);
     }
 
+    function handleClick(e: MouseEvent) {
+      if (dragRef.current) {
+        const dx = Math.abs(e.clientX - dragRef.current.startX);
+        const dy = Math.abs(e.clientY - dragRef.current.startY);
+        if (dx > 3 || dy > 3) return;
+      }
+      performClick(e.clientX, e.clientY);
+    }
+
     function handleKeyDown(e: KeyboardEvent) {
       const centerX = window.innerWidth / 2;
       if (e.key === "=" || e.key === "+") {
@@ -922,12 +921,94 @@ export default function ArcDiagram({
       }
     }
 
+    // --- Touch support ---
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let lastPinchDist = 0;
+
+    function getTouchDist(touches: TouchList): number {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function handleTouchStart(e: TouchEvent) {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        dragRef.current = {
+          startX: t.clientX,
+          startY: t.clientY,
+          startOffsetX: transformRef.current.offsetX,
+        };
+      } else if (e.touches.length === 2) {
+        dragRef.current = null;
+        lastPinchDist = getTouchDist(e.touches);
+      }
+    }
+
+    function handleTouchMove(e: TouchEvent) {
+      e.preventDefault();
+      if (e.touches.length === 1 && dragRef.current) {
+        const t = e.touches[0];
+        const dx = t.clientX - dragRef.current.startX;
+        transformRef.current.offsetX = dragRef.current.startOffsetX + dx;
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(draw);
+      } else if (e.touches.length === 2) {
+        const newDist = getTouchDist(e.touches);
+        if (lastPinchDist > 0) {
+          const factor = newDist / lastPinchDist;
+          const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const tr = transformRef.current;
+          const mx = midX - MARGIN;
+          const newScale = Math.max(0.5, Math.min(1000, tr.scaleX * factor));
+          const scaleChange = newScale / tr.scaleX;
+          tr.offsetX = mx - scaleChange * (mx - tr.offsetX);
+          tr.scaleX = newScale;
+          cancelAnimationFrame(animRef.current);
+          animRef.current = requestAnimationFrame(draw);
+        }
+        lastPinchDist = newDist;
+      }
+    }
+
+    function handleTouchEnd(e: TouchEvent) {
+      e.preventDefault();
+      if (e.touches.length === 0) {
+        const changed = e.changedTouches[0];
+        if (changed) {
+          const dx = Math.abs(changed.clientX - touchStartX);
+          const dy = Math.abs(changed.clientY - touchStartY);
+          if (dx <= 8 && dy <= 8) {
+            // Tap with no significant movement — treat as a click
+            performClick(changed.clientX, changed.clientY);
+          }
+        }
+        dragRef.current = null;
+        lastPinchDist = 0;
+      } else if (e.touches.length === 1) {
+        // One finger lifted from a two-finger gesture — resume single-finger pan
+        dragRef.current = {
+          startX: e.touches[0].clientX,
+          startY: e.touches[0].clientY,
+          startOffsetX: transformRef.current.offsetX,
+        };
+        lastPinchDist = 0;
+      }
+    }
+
     overlay.addEventListener("wheel", handleWheel, { passive: false });
     overlay.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
     overlay.addEventListener("click", handleClick);
     window.addEventListener("keydown", handleKeyDown);
+    overlay.addEventListener("touchstart", handleTouchStart, { passive: false });
+    overlay.addEventListener("touchmove", handleTouchMove, { passive: false });
+    overlay.addEventListener("touchend", handleTouchEnd, { passive: false });
 
     return () => {
       overlay.removeEventListener("wheel", handleWheel);
@@ -936,6 +1017,9 @@ export default function ArcDiagram({
       window.removeEventListener("mouseup", handleMouseUp);
       overlay.removeEventListener("click", handleClick);
       window.removeEventListener("keydown", handleKeyDown);
+      overlay.removeEventListener("touchstart", handleTouchStart);
+      overlay.removeEventListener("touchmove", handleTouchMove);
+      overlay.removeEventListener("touchend", handleTouchEnd);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draw, applyZoom, resetZoom, zoomToRange, canon, selectedBookId, onSelectBook, versePopover]);
