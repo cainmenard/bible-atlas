@@ -98,15 +98,15 @@ export default function Home() {
         <div
           className="flex items-center gap-2"
           style={{
-            opacity: "var(--opacity-rest)",
+            opacity: 0.7,
             transition: "var(--transition-base)",
             cursor: "default",
           }}
           onMouseEnter={(e) =>
-            (e.currentTarget.style.opacity = "var(--opacity-hover)")
+            (e.currentTarget.style.opacity = "0.85")
           }
           onMouseLeave={(e) =>
-            (e.currentTarget.style.opacity = "var(--opacity-rest)")
+            (e.currentTarget.style.opacity = "0.7")
           }
         >
           <span

@@ -649,7 +649,7 @@ export default function ArcDiagram({
 
     // --- Draw title ---
     ctx.font = "12px 'JetBrains Mono', monospace";
-    ctx.fillStyle = "rgba(232,224,208,0.25)";
+    ctx.fillStyle = "rgba(232,224,208,0.45)";
     ctx.textAlign = "left";
     const titleY = scaleX > 2 ? 52 : 28;
     ctx.fillText(
@@ -659,7 +659,7 @@ export default function ArcDiagram({
     );
 
     ctx.font = "10px 'JetBrains Mono', monospace";
-    ctx.fillStyle = "rgba(232,224,208,0.15)";
+    ctx.fillStyle = "rgba(232,224,208,0.30)";
     ctx.fillText("Above: target is later in the Bible", 16, titleY + 16);
     ctx.fillText("Below: target is earlier in the Bible", 16, titleY + 30);
 
@@ -671,7 +671,7 @@ export default function ArcDiagram({
       const endRef = indexToVerseRef(visEndIdx, data.books);
 
       ctx.font = "11px 'JetBrains Mono', monospace";
-      ctx.fillStyle = "rgba(232,224,208,0.5)";
+      ctx.fillStyle = "rgba(232,224,208,0.65)";
       ctx.textAlign = "right";
 
       const zoomText = `${scaleX < 10 ? scaleX.toFixed(1) : Math.round(scaleX)}x`;
