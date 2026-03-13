@@ -93,6 +93,9 @@ export default function Home() {
       {/* Top bar: Wordmark | Orrery Toggle | Translation Selector */}
       <div
         className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-3 py-[14px] md:px-5"
+        style={{
+          background: "linear-gradient(to bottom, rgba(10,10,18,0.85) 0%, rgba(10,10,18,0.4) 70%, transparent 100%)",
+        }}
       >
         {/* Far left: Wordmark */}
         <div
@@ -153,16 +156,30 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <Link
             href="/about"
-            className="text-[10px] font-mono three-state-interactive hidden md:inline"
-            style={{ color: "var(--text-secondary)" }}
+            className="text-[11px] font-mono hidden md:inline"
+            style={{
+              color: "var(--text-secondary)",
+              opacity: 0.8,
+              transition: "var(--transition-base)",
+              letterSpacing: "0.06em",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.8")}
           >
             About
           </Link>
           {/* Mobile: icon-only about button */}
           <Link
             href="/about"
-            className="md:hidden text-[14px] three-state-interactive"
-            style={{ color: "var(--text-secondary)", lineHeight: 1 }}
+            className="md:hidden text-[14px]"
+            style={{
+              color: "var(--text-secondary)",
+              opacity: 0.8,
+              transition: "var(--transition-base)",
+              lineHeight: 1,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.8")}
             aria-label="About Bible Atlas"
           >
             ⓘ
