@@ -1266,15 +1266,7 @@ export default function ArcDiagram({
 
       {/* Zoom controls */}
       <div
-        style={{
-          position: "absolute",
-          bottom: 16,
-          left: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-          zIndex: 50,
-        }}
+        className="absolute bottom-4 left-4 flex flex-col gap-1 z-50 max-md:bottom-auto max-md:left-auto max-md:right-4 max-md:top-1/2 max-md:-translate-y-1/2"
       >
         {[
           { label: "+", action: () => applyZoom(1.3, window.innerWidth / 2) },
@@ -1284,10 +1276,8 @@ export default function ArcDiagram({
           <button
             key={label}
             onClick={action}
-            className="glass-panel three-state-interactive font-mono"
+            className="glass-panel three-state-interactive font-mono w-9 h-9 max-md:w-11 max-md:h-11"
             style={{
-              width: 36,
-              height: 36,
               borderRadius: 6,
               fontSize: label === "1:1" ? 10 : 16,
               cursor: "pointer",
