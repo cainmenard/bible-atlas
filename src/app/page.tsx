@@ -9,6 +9,7 @@ import ReadingsCard from "@/components/ReadingsCard";
 import OrbitalRingSelector from "@/components/OrbitalRingSelector";
 import TranslationSelector from "@/components/TranslationSelector";
 import CelestialOrreryToggle from "@/components/CelestialOrreryToggle";
+import EdgeDensitySelector from "@/components/EdgeDensitySelector";
 import { BibleBook, Canon, LiturgicalSeason, ViewMode } from "@/lib/types";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
@@ -95,20 +96,9 @@ export default function Home() {
         {/* View mode toggle — Celestial Orrery */}
         <CelestialOrreryToggle viewMode={viewMode} onChange={setViewMode} />
 
-        {/* Edge threshold slider (graph mode only) */}
+        {/* Edge density selector (graph mode only) */}
         {viewMode === "graph" && (
-          <div className="glass-panel rounded-full px-4 py-2 flex items-center gap-3">
-            <span className="text-[10px] text-[var(--text-dim)] font-mono whitespace-nowrap">Edges</span>
-            <input
-              type="range"
-              min={1}
-              max={10}
-              value={edgeThreshold}
-              onChange={(e) => setEdgeThreshold(Number(e.target.value))}
-              className="w-16 h-1 cursor-pointer"
-            />
-            <span className="text-[10px] text-[var(--text-secondary)] font-mono w-4 text-center">{edgeThreshold}</span>
-          </div>
+          <EdgeDensitySelector value={edgeThreshold} onChange={setEdgeThreshold} />
         )}
 
         {/* Translation selector */}
