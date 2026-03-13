@@ -46,9 +46,10 @@ export default function VersePopover({
     });
   }, [bookId, chapter, verse, translation]);
 
-  // Position: keep within viewport
-  const left = Math.min(screenX + 12, window.innerWidth - 320);
-  const top = Math.min(Math.max(screenY - 40, 8), window.innerHeight - 200);
+  // Position: keep within viewport, respecting min(320px, 90vw) width
+  const maxWidth = Math.min(320, window.innerWidth * 0.9);
+  const left = Math.max(8, Math.min(screenX + 12, window.innerWidth - maxWidth - 8));
+  const top = Math.max(8, Math.min(screenY - 40, window.innerHeight - 80));
 
   return (
     <div
@@ -62,7 +63,9 @@ export default function VersePopover({
         padding: "16px 20px",
         color: "var(--text-primary)",
         zIndex: 110,
-        maxWidth: 300,
+        maxWidth,
+        overflowY: "auto",
+        maxHeight: "80vh",
       }}
     >
       <button

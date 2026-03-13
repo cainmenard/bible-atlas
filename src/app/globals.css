@@ -187,8 +187,15 @@ input[type="range"] {
   padding: 14px 18px;
   font-size: 12px;
   line-height: 1.5;
-  max-width: 240px;
+  max-width: min(240px, 90vw);
   color: var(--text-primary);
+}
+
+/* Touch devices have no hover — hide hover-only tooltip entirely */
+@media (hover: none) {
+  .tooltip {
+    display: none;
+  }
 }
 
 /* ----------------------------------------------------------
