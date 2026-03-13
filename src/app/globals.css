@@ -133,6 +133,19 @@ input[type="range"] {
 }
 
 /* ----------------------------------------------------------
+   ORRERY TOGGLE PULSE
+   ---------------------------------------------------------- */
+@keyframes orrery-pulse {
+  0%   { transform: scale(1);    opacity: 1; }
+  40%  { transform: scale(1.18); opacity: 0.85; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.orrery-activate {
+  animation: orrery-pulse 260ms ease-out forwards;
+}
+
+/* ----------------------------------------------------------
    DETAIL PANEL SLIDE
    ---------------------------------------------------------- */
 .panel-enter {

@@ -8,6 +8,7 @@ import DetailPanel from "@/components/DetailPanel";
 import ReadingsCard from "@/components/ReadingsCard";
 import OrbitalRingSelector from "@/components/OrbitalRingSelector";
 import TranslationSelector from "@/components/TranslationSelector";
+import CelestialOrreryToggle from "@/components/CelestialOrreryToggle";
 import { BibleBook, Canon, LiturgicalSeason, ViewMode } from "@/lib/types";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
@@ -91,29 +92,8 @@ export default function Home() {
 
       {/* Unified compact toolbar */}
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4">
-        {/* View mode toggle */}
-        <div className="glass-panel rounded-full p-1 flex gap-1">
-          <button
-            onClick={() => setViewMode("graph")}
-            className={`px-4 py-2 text-[11px] rounded-full transition-all font-mono ${
-              viewMode === "graph"
-                ? "bg-white/15 text-[var(--accent)] opacity-100"
-                : "text-[var(--text-secondary)] opacity-[var(--opacity-rest)] hover:opacity-[var(--opacity-hover)]"
-            }`}
-          >
-            Graph
-          </button>
-          <button
-            onClick={() => setViewMode("arcs")}
-            className={`px-4 py-2 text-[11px] rounded-full transition-all font-mono ${
-              viewMode === "arcs"
-                ? "bg-white/15 text-[var(--accent)] opacity-100"
-                : "text-[var(--text-secondary)] opacity-[var(--opacity-rest)] hover:opacity-[var(--opacity-hover)]"
-            }`}
-          >
-            Arc
-          </button>
-        </div>
+        {/* View mode toggle — Celestial Orrery */}
+        <CelestialOrreryToggle viewMode={viewMode} onChange={setViewMode} />
 
         {/* Edge threshold slider (graph mode only) */}
         {viewMode === "graph" && (
