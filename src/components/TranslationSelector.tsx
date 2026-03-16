@@ -50,17 +50,17 @@ export default function TranslationSelector({ translation, onChange }: Props) {
               letterSpacing: "0.06em",
               lineHeight: 1,
               color: translation === t.id ? "var(--accent)" : "var(--text-primary)",
-              opacity: translation === t.id ? 1 : 0.5,
+              opacity: translation === t.id ? 1 : 0.6,
               transition: "var(--transition-base)",
             }}
             onMouseEnter={(e) => {
               if (translation !== t.id) {
-                (e.currentTarget as HTMLButtonElement).style.opacity = "0.8";
+                (e.currentTarget as HTMLButtonElement).style.opacity = "0.9";
               }
             }}
             onMouseLeave={(e) => {
               if (translation !== t.id) {
-                (e.currentTarget as HTMLButtonElement).style.opacity = "0.5";
+                (e.currentTarget as HTMLButtonElement).style.opacity = "0.6";
               }
             }}
           >
