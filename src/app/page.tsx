@@ -159,15 +159,15 @@ export default function Home() {
             className="text-[11px] font-mono hidden md:inline"
             style={{
               color: "var(--text-primary)",
-              opacity: 0.5,
+              opacity: 0.7,
               transition: "var(--transition-base)",
               letterSpacing: "0.06em",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = "0.8";
+              e.currentTarget.style.opacity = "1";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = "0.5";
+              e.currentTarget.style.opacity = "0.7";
             }}
           >
             About
@@ -178,15 +178,15 @@ export default function Home() {
             className="md:hidden text-[14px]"
             style={{
               color: "var(--text-primary)",
-              opacity: 0.5,
+              opacity: 0.7,
               transition: "var(--transition-base)",
               lineHeight: 1,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = "0.8";
+              e.currentTarget.style.opacity = "1";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = "0.5";
+              e.currentTarget.style.opacity = "0.7";
             }}
             aria-label="About Bible Atlas"
           >
