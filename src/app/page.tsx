@@ -158,13 +158,17 @@ export default function Home() {
             href="/about"
             className="text-[11px] font-mono hidden md:inline"
             style={{
-              color: "var(--text-secondary)",
-              opacity: 0.8,
+              color: "var(--text-primary)",
+              opacity: 0.5,
               transition: "var(--transition-base)",
               letterSpacing: "0.06em",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.8")}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "0.8";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "0.5";
+            }}
           >
             About
           </Link>
@@ -173,13 +177,17 @@ export default function Home() {
             href="/about"
             className="md:hidden text-[14px]"
             style={{
-              color: "var(--text-secondary)",
-              opacity: 0.8,
+              color: "var(--text-primary)",
+              opacity: 0.5,
               transition: "var(--transition-base)",
               lineHeight: 1,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.8")}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "0.8";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "0.5";
+            }}
             aria-label="About Bible Atlas"
           >
             ⓘ

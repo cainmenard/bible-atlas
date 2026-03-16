@@ -31,7 +31,7 @@ export default function TranslationSelector({ translation, onChange }: Props) {
                 display: "inline-block",
                 width: "1px",
                 height: "11px",
-                background: "rgba(255,255,255,0.15)",
+                background: "rgba(255,255,255,0.25)",
                 margin: "0 9px",
                 flexShrink: 0,
               }}
@@ -49,18 +49,18 @@ export default function TranslationSelector({ translation, onChange }: Props) {
               fontSize: "11px",
               letterSpacing: "0.06em",
               lineHeight: 1,
-              color: translation === t.id ? "var(--accent)" : "var(--text-secondary)",
-              opacity: translation === t.id ? 1 : 0.9,
+              color: translation === t.id ? "var(--accent)" : "var(--text-primary)",
+              opacity: translation === t.id ? 1 : 0.5,
               transition: "var(--transition-base)",
             }}
             onMouseEnter={(e) => {
               if (translation !== t.id) {
-                (e.currentTarget as HTMLButtonElement).style.opacity = "1";
+                (e.currentTarget as HTMLButtonElement).style.opacity = "0.8";
               }
             }}
             onMouseLeave={(e) => {
               if (translation !== t.id) {
-                (e.currentTarget as HTMLButtonElement).style.opacity = "0.9";
+                (e.currentTarget as HTMLButtonElement).style.opacity = "0.5";
               }
             }}
           >

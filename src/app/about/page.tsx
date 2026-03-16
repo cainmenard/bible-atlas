@@ -91,7 +91,7 @@ export default function AboutPage() {
           href="/"
           className="inline-flex items-center gap-2 font-mono three-state-interactive mb-16"
           style={{
-            color: "var(--text-dim)",
+            color: "var(--text-secondary)",
             fontSize: "12px",
             letterSpacing: "0.06em",
           }}
@@ -221,7 +221,7 @@ export default function AboutPage() {
             style={{
               fontSize: "13px",
               lineHeight: 2,
-              color: "var(--text-dim)",
+              color: "var(--text-secondary)",
             }}
           >
             <p>
@@ -259,15 +259,22 @@ export default function AboutPage() {
         {/* Inspiration */}
         <SectionCard label="Inspiration" className="mb-6">
           <p>
-            The visual language of Bible Atlas was inspired by{" "}
+            Bible Atlas was inspired by{" "}
             <ExternalLink href="https://www.chrisharrison.net/index.php/visualizations/BibleViz">
-              Chris Harrison &amp; Christoph R&ouml;mhild&apos;s Bible
-              cross-reference visualization
+              Chris Harrison &amp; Christoph R&ouml;mhild&apos;s BibleViz
             </ExternalLink>
-            — a stunning arc diagram that maps every cross-reference in Scripture
-            as a single, sweeping image. Their work revealed the hidden density of
-            connections woven through the Bible and planted the seed for turning
-            that static image into a living, interactive experience.
+            — an arc diagram that renders all 63,779 biblical cross-references
+            as colored arcs on a single canvas. Created in 2007, it remains one
+            of the most recognized data visualizations of Scripture, revealing
+            at a glance the extraordinary density of connections woven through
+            the Bible.
+          </p>
+          <p style={{ marginTop: "16px" }}>
+            Harrison&apos;s work demonstrated that the Bible could be understood
+            as the first &ldquo;hyperlinked&rdquo; text — a web of quotations,
+            allusions, and prophecies that binds its books into a single fabric.
+            Bible Atlas takes that insight and turns the static image into a
+            living, interactive experience you can explore.
           </p>
           <div
             className="mt-6 overflow-hidden rounded-lg"
@@ -296,15 +303,16 @@ export default function AboutPage() {
             Bible Atlas was designed and built by{" "}
             <ExternalLink href="https://cainmenard.com">
               Cain Menard
-            </ExternalLink>
-            .
+            </ExternalLink>{" "}
+            — a software engineer and designer who builds tools at the
+            intersection of data, faith, and visual storytelling.
           </p>
           <p style={{ marginTop: "16px" }}>
-            The Bible has over 340,000 cross-references across the biblical
-            stories and is considered by many to be the first
-            &ldquo;hyperlinked&rdquo; text. My goal is to enable users to
-            visualize, explore, and interact with the complexity of the Bible in a
-            simplified and user-friendly manner.
+            The Bible contains over 340,000 cross-references and is considered
+            by many to be the first &ldquo;hyperlinked&rdquo; text. Bible Atlas
+            aims to make that hidden structure visible — letting anyone
+            visualize, explore, and interact with the complexity of Scripture in
+            an intuitive, beautiful way.
           </p>
         </SectionCard>
 
