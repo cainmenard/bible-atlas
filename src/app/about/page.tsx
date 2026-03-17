@@ -63,18 +63,11 @@ function ExternalLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      className="three-state-interactive"
       style={{
         color: "var(--accent)",
         textDecoration: "underline",
         textUnderlineOffset: "3px",
-        opacity: 0.85,
-        transition: "var(--transition-base)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.opacity = "1";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.opacity = "0.85";
       }}
     >
       {children}
@@ -97,21 +90,11 @@ export default function AboutPage() {
         {/* Back navigation */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 font-mono mb-16"
+          className="inline-flex items-center gap-2 font-mono three-state-interactive mb-16"
           style={{
             color: "var(--text-primary)",
             fontSize: "12px",
             letterSpacing: "0.06em",
-            opacity: 0.85,
-            transition: "var(--transition-base)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = "1";
-            e.currentTarget.style.color = "var(--accent)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = "0.85";
-            e.currentTarget.style.color = "var(--text-primary)";
           }}
         >
           &larr; Back to Atlas
