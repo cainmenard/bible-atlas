@@ -41,7 +41,8 @@ function SectionCard({
         style={{
           fontSize: "16px",
           lineHeight: 1.8,
-          color: "var(--text-secondary)",
+          color: "var(--text-primary)",
+          opacity: 0.85,
         }}
       >
         {children}
@@ -66,14 +67,14 @@ function ExternalLink({
         color: "var(--accent)",
         textDecoration: "underline",
         textUnderlineOffset: "3px",
-        opacity: 0.7,
+        opacity: 0.85,
         transition: "var(--transition-base)",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.opacity = "1";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.opacity = "0.7";
+        e.currentTarget.style.opacity = "0.85";
       }}
     >
       {children}
@@ -98,10 +99,10 @@ export default function AboutPage() {
           href="/"
           className="inline-flex items-center gap-2 font-mono mb-16"
           style={{
-            color: "var(--text-secondary)",
+            color: "var(--text-primary)",
             fontSize: "12px",
             letterSpacing: "0.06em",
-            opacity: 0.7,
+            opacity: 0.85,
             transition: "var(--transition-base)",
           }}
           onMouseEnter={(e) => {
@@ -109,8 +110,8 @@ export default function AboutPage() {
             e.currentTarget.style.color = "var(--accent)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = "0.7";
-            e.currentTarget.style.color = "var(--text-secondary)";
+            e.currentTarget.style.opacity = "0.85";
+            e.currentTarget.style.color = "var(--text-primary)";
           }}
         >
           &larr; Back to Atlas
@@ -146,7 +147,8 @@ export default function AboutPage() {
             className="font-serif mt-3"
             style={{
               fontSize: "18px",
-              color: "var(--text-secondary)",
+              color: "var(--text-primary)",
+              opacity: 0.7,
               fontStyle: "italic",
               maxWidth: "480px",
               margin: "12px auto 0",
@@ -238,7 +240,8 @@ export default function AboutPage() {
             style={{
               fontSize: "13px",
               lineHeight: 2,
-              color: "var(--text-secondary)",
+              color: "var(--text-primary)",
+              opacity: 0.85,
             }}
           >
             <p>
