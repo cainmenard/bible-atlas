@@ -251,6 +251,8 @@ export default function Home() {
             selectedBookId={selectedBookId}
             onSelectBook={handleSelectBook}
             translation={translation}
+            selectedChapter={selectedChapter}
+            selectedVerse={selectedVerse}
           />
         )}
       </div>
