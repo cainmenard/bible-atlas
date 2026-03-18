@@ -28,6 +28,9 @@ html, body {
   background: var(--bg-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.01em;
+  line-height: 1.55;
+  font-feature-settings: 'liga' 1, 'kern' 1;
 }
 
 body {
@@ -61,10 +64,21 @@ body {
    GLASS PANEL UTILITY
    ---------------------------------------------------------- */
 .glass-panel {
-  background: var(--glass-bg);
+  background: var(--glass-bg-heavy);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+}
+
+/* ----------------------------------------------------------
+   GLASS HEADER UTILITY
+   ---------------------------------------------------------- */
+.glass-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--glass-border);
 }
 
 /* ----------------------------------------------------------
