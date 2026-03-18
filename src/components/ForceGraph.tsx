@@ -14,6 +14,7 @@ interface Props {
   selectedBookId: string | null;
   todayBookIds: string[];
   edgeThreshold: number;
+  drillDownTargetBooks: { bookId: string; count: number }[] | null;
   onSelectBook: (id: string | null) => void;
   onHover: (book: BibleBook | null, x: number, y: number) => void;
   onReady?: () => void;
@@ -102,6 +103,7 @@ export default function ForceGraph({
   selectedBookId,
   todayBookIds,
   edgeThreshold,
+  drillDownTargetBooks,
   onSelectBook,
   onHover,
   onReady,
@@ -590,6 +592,61 @@ export default function ForceGraph({
     });
   }
 
+  // ─── DRILL-DOWN HIGHLIGHTING ─────────────────────────
+  function applyDrillDown(
+    state: NonNullable<typeof sceneRef.current>,
+    selectedId: string | null,
+    targets: { bookId: string; count: number }[] | null
+  ) {
+    if (!selectedId || !targets) return;
+
+    // Build a set of target book IDs with weights
+    const targetSet = new Map<string, number>();
+    const maxCount = Math.max(...targets.map((t) => t.count), 1);
+    targets.forEach((t) => {
+      targetSet.set(t.bookId, t.count / maxCount);
+    });
+    targetSet.set(selectedId, 1);
+
+    // Narrow highlighting to only drill-down-relevant books
+    state.nodes.forEach((nd, id) => {
+      const isSelected = id === selectedId;
+      const targetWeight = targetSet.get(id);
+      const isTarget = targetWeight !== undefined;
+
+      (nd.sphere.material as THREE.MeshBasicMaterial).opacity = isSelected
+        ? 1.0
+        : isTarget
+          ? 0.4 + targetWeight! * 0.4
+          : 0.06;
+      (nd.glow.material as THREE.SpriteMaterial).opacity = isSelected
+        ? 0.8
+        : isTarget
+          ? 0.15 + targetWeight! * 0.25
+          : 0.02;
+      nd.labelEl.style.opacity = isSelected
+        ? "1.0"
+        : isTarget
+          ? String(0.3 + targetWeight! * 0.5)
+          : "0.04";
+    });
+
+    state.edgeLines.forEach((ed) => {
+      const mat = ed.line.material as THREE.LineBasicMaterial;
+      const isFromSelected =
+        ed.sourceId === selectedId || ed.targetId === selectedId;
+      const otherEnd =
+        ed.sourceId === selectedId ? ed.targetId : ed.sourceId;
+      const isRelevant = isFromSelected && targetSet.has(otherEnd);
+
+      mat.opacity = isRelevant ? 0.25 + (ed.weight / 10) * 0.45 : 0.01;
+      // Override edge threshold visibility for relevant drill-down edges
+      if (isRelevant) {
+        ed.line.visible = true;
+      }
+    });
+  }
+
   // ─── TODAY PULSE ──────────────────────────────────────
   function applyTodayPulse(
     state: NonNullable<typeof sceneRef.current>,
@@ -825,7 +882,11 @@ export default function ForceGraph({
   useEffect(() => {
     if (!sceneRef.current) return;
     applySelection(sceneRef.current, selectedBookId);
-  }, [selectedBookId]);
+    // If drill-down targets exist, apply narrower highlighting on top
+    if (drillDownTargetBooks) {
+      applyDrillDown(sceneRef.current, selectedBookId, drillDownTargetBooks);
+    }
+  }, [selectedBookId, drillDownTargetBooks]);
 
   // ─── REACT TO TODAY IDS ──────────────────────────────
   useEffect(() => {
