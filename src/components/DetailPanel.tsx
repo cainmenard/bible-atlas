@@ -111,7 +111,7 @@ export default function DetailPanel({
 
     const controller = new AbortController();
     const ref = FEATURED_VERSES[bookId];
-    const url = `https://bible-api.com/${encodeURIComponent(ref)}?translation=${translation}`;
+    const url = `/api/verse?ref=${encodeURIComponent(ref)}&translation=${translation}`;
 
     // 6-second timeout
     const timeoutId = setTimeout(() => {
@@ -128,7 +128,7 @@ export default function DetailPanel({
         }
         // Try WEB fallback
         if (translation !== "web") {
-          const fallbackUrl = `https://bible-api.com/${encodeURIComponent(ref)}?translation=web`;
+          const fallbackUrl = `/api/verse?ref=${encodeURIComponent(ref)}&translation=web`;
           const r2 = await fetch(fallbackUrl, { signal: controller.signal });
           const d2 = await r2.json();
           if (d2.text) {
