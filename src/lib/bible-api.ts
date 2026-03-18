@@ -62,10 +62,14 @@ export async function fetchVerseText(
   }
 
   const ref = `${bookName} ${chapter}:${verse}`;
-  const url = `https://bible-api.com/${encodeURIComponent(ref)}?translation=${translation}`;
+
+  // Route through /api/verse to avoid CORS restrictions in production.
+  // The proxy fetches bible-api.com server-side where CORS does not apply.
+  const makeUrl = (t: string) =>
+    `/api/verse?ref=${encodeURIComponent(ref)}&translation=${t}`;
 
   try {
-    const res = await fetch(url);
+    const res = await fetch(makeUrl(translation));
     const data = await res.json();
     if (data.text) {
       const result = { text: data.text.trim(), reference: data.reference || ref };
@@ -85,9 +89,7 @@ export async function fetchVerseText(
       return cached;
     }
     try {
-      const res = await fetch(
-        `https://bible-api.com/${encodeURIComponent(ref)}?translation=web`,
-      );
+      const res = await fetch(makeUrl("web"));
       const data = await res.json();
       if (data.text) {
         const result = { text: data.text.trim(), reference: data.reference || ref };
