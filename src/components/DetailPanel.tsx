@@ -1,17 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { bookMap } from "@/data/books";
 import { edges } from "@/data/edges";
 import { GENRE_COLORS, ACCENT } from "@/lib/colors";
-import { BibleBook, Canon, VerseCrossRef } from "@/lib/types";
-import { BIBLE_API_NAMES, formatRef } from "@/lib/bible-api";
+import { BibleBook, Canon, VerseCrossRef, NavigationEntry } from "@/lib/types";
+import { BIBLE_API_NAMES, getBookName } from "@/lib/bible-api";
+import { getChapterSummaries } from "@/lib/crossref-utils";
+import BreadcrumbNav from "./BreadcrumbNav";
+import ChapterGrid from "./ChapterGrid";
+import ChapterView from "./ChapterView";
+import VerseView from "./VerseView";
 
 interface Props {
   bookId: string | null;
   canon: Canon;
   translation: string;
+  selectedChapter: number | null;
+  selectedVerse: number | null;
+  navigationStack: NavigationEntry[];
   onSelectBook: (id: string) => void;
+  onSelectChapter: (chapter: number | null) => void;
+  onSelectVerse: (verse: number | null) => void;
+  onNavigateBack: (entry: NavigationEntry | null) => void;
+  onNavigateTo: (bookId: string, chapter: number, verse: number) => void;
   onClose: () => void;
 }
 
@@ -48,7 +60,6 @@ const FEATURED_VERSES: Record<string, string> = {
   "1PE": "1 Peter 5:7", "2PE": "2 Peter 3:9",
   "1JN": "1 John 4:8", "2JN": "2 John 1:6", "3JN": "3 John 1:4",
   JUD: "Jude 1:3", REV: "Revelation 21:4",
-  // Deuterocanonical
   TOB: "Tobit 4:15", JDT: "Judith 13:18-19", WIS: "Wisdom 3:1",
   SIR: "Sirach 2:1", BAR: "Baruch 4:4",
   "1MA": "1 Maccabees 2:51", "2MA": "2 Maccabees 7:28",
@@ -76,13 +87,18 @@ function getConnections(bookId: string, canon: Canon) {
   return connections;
 }
 
-const CROSSREFS_PER_PAGE = 20;
-
 export default function DetailPanel({
   bookId,
   canon,
   translation,
+  selectedChapter,
+  selectedVerse,
+  navigationStack,
   onSelectBook,
+  onSelectChapter,
+  onSelectVerse,
+  onNavigateBack,
+  onNavigateTo,
   onClose,
 }: Props) {
   const [verse, setVerse] = useState<VerseData | null>(null);
@@ -91,9 +107,6 @@ export default function DetailPanel({
   const [verseRetryKey, setVerseRetryKey] = useState(0);
   const [crossRefs, setCrossRefs] = useState<VerseCrossRef[]>([]);
   const [crossRefsLoading, setCrossRefsLoading] = useState(false);
-  const [showCrossRefs, setShowCrossRefs] = useState(false);
-  const [crossRefPage, setCrossRefPage] = useState(1);
-  const [filterBook, setFilterBook] = useState<string | null>(null);
 
   const book = bookId ? bookMap.get(bookId) : null;
 
@@ -113,7 +126,6 @@ export default function DetailPanel({
     const ref = FEATURED_VERSES[bookId];
     const url = `/api/verse?ref=${encodeURIComponent(ref)}&translation=${translation}`;
 
-    // 6-second timeout
     const timeoutId = setTimeout(() => {
       controller.abort();
     }, 6000);
@@ -126,7 +138,6 @@ export default function DetailPanel({
           setVerse({ reference: data.reference || ref, text: data.text });
           return;
         }
-        // Try WEB fallback
         if (translation !== "web") {
           const fallbackUrl = `/api/verse?ref=${encodeURIComponent(ref)}&translation=web`;
           const r2 = await fetch(fallbackUrl, { signal: controller.signal });
@@ -159,9 +170,6 @@ export default function DetailPanel({
   useEffect(() => {
     if (!bookId) {
       setCrossRefs([]);
-      setShowCrossRefs(false);
-      setCrossRefPage(1);
-      setFilterBook(null);
       return;
     }
 
@@ -185,10 +193,11 @@ export default function DetailPanel({
     return () => controller.abort();
   }, [bookId]);
 
-  // Reset page when filter changes
-  useEffect(() => {
-    setCrossRefPage(1);
-  }, [filterBook]);
+  // Chapter summaries for the heat map grid
+  const chapterSummaries = useMemo(() => {
+    if (!book || crossRefs.length === 0) return [];
+    return getChapterSummaries(crossRefs, book.chapters);
+  }, [crossRefs, book]);
 
   if (!book || !bookId) {
     return null;
@@ -200,12 +209,284 @@ export default function DetailPanel({
   const apiName = BIBLE_API_NAMES[bookId] || book.name;
   const bgUrl = `https://www.biblegateway.com/passage/?search=${encodeURIComponent(apiName)}+1&version=RSVCE`;
 
-  // Filter cross-refs by target book if selected
-  const filteredRefs = filterBook
-    ? crossRefs.filter((r) => r.to.startsWith(filterBook + "."))
-    : crossRefs;
-  const pagedRefs = filteredRefs.slice(0, crossRefPage * CROSSREFS_PER_PAGE);
-  const hasMore = pagedRefs.length < filteredRefs.length;
+  // Determine current drill-down level
+  const drillLevel = selectedVerse !== null ? "verse" : selectedChapter !== null ? "chapter" : "book";
+
+  // Header with back navigation
+  const renderHeader = () => {
+    const bookName = getBookName(bookId);
+    let title = book.name;
+    let subtitle = "";
+
+    if (drillLevel === "chapter") {
+      title = `${bookName} ${selectedChapter}`;
+      subtitle = `Chapter ${selectedChapter} of ${book.chapters}`;
+    } else if (drillLevel === "verse") {
+      title = `${bookName} ${selectedChapter}:${selectedVerse}`;
+      subtitle = `Chapter ${selectedChapter}, Verse ${selectedVerse}`;
+    }
+
+    return (
+      <>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-lg three-state-interactive"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          &times;
+        </button>
+
+        <div className="p-6 pb-0">
+          {/* Breadcrumb navigation (shown when drilled in) */}
+          {(drillLevel !== "book" || navigationStack.length > 0) && (
+            <BreadcrumbNav
+              bookId={bookId}
+              chapter={selectedChapter}
+              verse={selectedVerse}
+              navigationStack={navigationStack}
+              onNavigateBack={onNavigateBack}
+              onGoToBook={() => {
+                onSelectChapter(null);
+                onSelectVerse(null);
+              }}
+              onGoToChapter={() => {
+                onSelectVerse(null);
+              }}
+            />
+          )}
+
+          {/* Badge */}
+          <div
+            className="inline-block px-3 py-1 rounded-md text-sm font-bold mb-3 font-mono"
+            style={{ background: color + "25", color: color }}
+          >
+            {bookId}
+          </div>
+
+          {/* Title */}
+          <h2
+            className="text-xl font-semibold mb-1 font-serif"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {title}
+          </h2>
+          <p
+            className="text-xs mb-4 font-mono"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {drillLevel === "book" ? (
+              <>
+                {book.genre} &middot;{" "}
+                {book.testament === "DC"
+                  ? "Deuterocanonical"
+                  : book.testament === "OT"
+                    ? "Old Testament"
+                    : "New Testament"}
+                {book.testament === "DC" && (
+                  <span
+                    className="ml-2"
+                    style={{ color: "var(--text-dim)" }}
+                  >
+                    ({book.canons.join(", ")})
+                  </span>
+                )}
+              </>
+            ) : (
+              subtitle
+            )}
+          </p>
+        </div>
+      </>
+    );
+  };
+
+  // ─── BOOK VIEW (Level 1) ───
+  const renderBookView = () => (
+    <>
+      {/* Stats */}
+      <div className="flex gap-6 mb-6 text-xs">
+        <div className="text-center">
+          <div
+            className="font-semibold text-lg font-mono"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {book.chapters}
+          </div>
+          <div className="font-mono" style={{ color: "var(--text-dim)" }}>
+            Chapters
+          </div>
+        </div>
+        <div className="text-center">
+          <div
+            className="font-semibold text-lg font-mono"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {book.verses.toLocaleString()}
+          </div>
+          <div className="font-mono" style={{ color: "var(--text-dim)" }}>
+            Verses
+          </div>
+        </div>
+        <div className="text-center">
+          <div
+            className="font-semibold text-lg font-mono"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {totalCrossRefs.toLocaleString()}
+          </div>
+          <div className="font-mono" style={{ color: "var(--text-dim)" }}>
+            Cross-refs
+          </div>
+        </div>
+      </div>
+
+      {/* Featured Verse */}
+      {(loading || verse || verseError) && (
+        <div
+          className="rounded-lg p-4 mb-6"
+          style={{
+            background: color + "08",
+            border: `1px solid ${color}15`,
+          }}
+        >
+          {loading ? (
+            <div
+              className="font-mono text-xs"
+              style={{ color: "var(--text-dim)" }}
+            >
+              Loading verse...
+            </div>
+          ) : verseError ? (
+            <div className="flex items-center gap-3">
+              <span
+                className="font-mono text-xs"
+                style={{ color: "var(--text-dim)" }}
+              >
+                Verse unavailable
+              </span>
+              <button
+                onClick={() => setVerseRetryKey((k) => k + 1)}
+                className="font-mono text-xs three-state-interactive"
+                style={{
+                  color: "var(--accent)",
+                  padding: "2px 6px",
+                  border: `1px solid ${color}30`,
+                  borderRadius: 4,
+                }}
+              >
+                ↺ Retry
+              </button>
+            </div>
+          ) : verse ? (
+            <>
+              <p
+                className="font-serif text-sm leading-relaxed italic mb-2"
+                style={{ color: "var(--text-primary)", opacity: 0.9 }}
+              >
+                &ldquo;{verse.text.trim()}&rdquo;
+              </p>
+              <p
+                className="text-xs font-mono"
+                style={{ color: color + "aa" }}
+              >
+                {verse.reference}
+              </p>
+            </>
+          ) : null}
+        </div>
+      )}
+
+      {/* Connected Books */}
+      <h3
+        className="text-xs uppercase tracking-wider mb-3 font-mono"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        Connected Books ({connections.length})
+      </h3>
+      <div className="space-y-1 mb-6">
+        {connections.slice(0, 15).map(({ book: conn, weight, count }) => (
+          <button
+            key={conn.id}
+            onClick={() => onSelectBook(conn.id)}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-left group"
+            style={{ transition: "var(--transition-base)" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background =
+                "rgba(255, 255, 255, 0.05)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
+          >
+            <span
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ background: GENRE_COLORS[conn.genre] }}
+            />
+            <span
+              className="text-sm flex-1 font-serif"
+              style={{ color: "var(--text-primary)", opacity: 0.85 }}
+            >
+              {conn.name}
+            </span>
+            <span
+              className="text-[10px] font-mono"
+              style={{ color: "var(--text-dim)" }}
+            >
+              {count} refs
+            </span>
+            <div className="w-12">
+              <div className="strength-bar">
+                <div
+                  className="strength-fill"
+                  style={{
+                    width: `${weight * 10}%`,
+                    background: GENRE_COLORS[conn.genre],
+                  }}
+                />
+              </div>
+            </div>
+          </button>
+        ))}
+        {connections.length > 15 && (
+          <div
+            className="text-[10px] px-3 pt-1"
+            style={{ color: "var(--text-dim)" }}
+          >
+            +{connections.length - 15} more
+          </div>
+        )}
+      </div>
+
+      {/* Chapter Grid (replaces old flat cross-ref list) */}
+      {!crossRefsLoading && chapterSummaries.length > 0 && (
+        <ChapterGrid
+          summaries={chapterSummaries}
+          genreColor={color}
+          onSelectChapter={onSelectChapter}
+        />
+      )}
+      {crossRefsLoading && (
+        <div
+          className="text-xs py-2 font-mono"
+          style={{ color: "var(--text-dim)" }}
+        >
+          Loading cross-references...
+        </div>
+      )}
+
+      {/* Read more link */}
+      <a
+        href={bgUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-block text-xs font-mono three-state-interactive"
+        style={{ color: ACCENT }}
+      >
+        Read on Bible Gateway &rarr;
+      </a>
+    </>
+  );
 
   return (
     <div
@@ -214,221 +495,34 @@ export default function DetailPanel({
         max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:max-h-[65vh] max-md:rounded-t-2xl max-md:border-t max-md:border-l-0
         panel-active`}
     >
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 text-lg three-state-interactive"
-        style={{ color: "var(--text-secondary)" }}
-      >
-        &times;
-      </button>
+      {renderHeader()}
 
-      <div className="p-6">
-        {/* Badge */}
-        <div
-          className="inline-block px-3 py-1 rounded-md text-sm font-bold mb-3 font-mono"
-          style={{ background: color + "25", color: color }}
-        >
-          {bookId}
-        </div>
+      <div className="px-6 pb-6">
+        {drillLevel === "book" && renderBookView()}
 
-        {/* Title */}
-        <h2 className="text-xl font-semibold mb-1 font-serif" style={{ color: "var(--text-primary)" }}>{book.name}</h2>
-        <p className="text-xs mb-4 font-mono" style={{ color: "var(--text-secondary)" }}>
-          {book.genre} &middot;{" "}
-          {book.testament === "DC" ? "Deuterocanonical" : book.testament === "OT" ? "Old Testament" : "New Testament"}
-          {book.testament === "DC" && (
-            <span className="ml-2" style={{ color: "var(--text-dim)" }}>({book.canons.join(", ")})</span>
-          )}
-        </p>
-
-        {/* Stats */}
-        <div className="flex gap-6 mb-6 text-xs">
-          <div className="text-center">
-            <div className="font-semibold text-lg font-mono" style={{ color: "var(--text-primary)" }}>{book.chapters}</div>
-            <div className="font-mono" style={{ color: "var(--text-dim)" }}>Chapters</div>
-          </div>
-          <div className="text-center">
-            <div className="font-semibold text-lg font-mono" style={{ color: "var(--text-primary)" }}>{book.verses.toLocaleString()}</div>
-            <div className="font-mono" style={{ color: "var(--text-dim)" }}>Verses</div>
-          </div>
-          <div className="text-center">
-            <div className="font-semibold text-lg font-mono" style={{ color: "var(--text-primary)" }}>{totalCrossRefs.toLocaleString()}</div>
-            <div className="font-mono" style={{ color: "var(--text-dim)" }}>Cross-refs</div>
-          </div>
-        </div>
-
-        {/* Featured Verse */}
-        {(loading || verse || verseError) && (
-          <div
-            className="rounded-lg p-4 mb-6"
-            style={{ background: color + "08", border: `1px solid ${color}15` }}
-          >
-            {loading ? (
-              <div className="font-mono text-xs" style={{ color: "var(--text-dim)" }}>Loading verse...</div>
-            ) : verseError ? (
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-xs" style={{ color: "var(--text-dim)" }}>Verse unavailable</span>
-                <button
-                  onClick={() => setVerseRetryKey((k) => k + 1)}
-                  className="font-mono text-xs three-state-interactive"
-                  style={{ color: "var(--accent)", padding: "2px 6px", border: `1px solid ${color}30`, borderRadius: 4 }}
-                >
-                  ↺ Retry
-                </button>
-              </div>
-            ) : verse ? (
-              <>
-                <p className="font-serif text-sm leading-relaxed italic mb-2" style={{ color: "var(--text-primary)", opacity: 0.9 }}>
-                  &ldquo;{verse.text.trim()}&rdquo;
-                </p>
-                <p className="text-xs font-mono" style={{ color: color + "aa" }}>
-                  {verse.reference}
-                </p>
-              </>
-            ) : null}
-          </div>
+        {drillLevel === "chapter" && selectedChapter !== null && (
+          <ChapterView
+            bookId={bookId}
+            chapter={selectedChapter}
+            crossRefs={crossRefs}
+            genreColor={color}
+            onSelectVerse={onSelectVerse}
+            onSelectBook={onSelectBook}
+          />
         )}
 
-        {/* Book-level Connections */}
-        <h3 className="text-xs uppercase tracking-wider mb-3 font-mono" style={{ color: "var(--text-secondary)" }}>
-          Connected Books ({connections.length})
-        </h3>
-        <div className="space-y-1 mb-6">
-          {connections.slice(0, 15).map(({ book: conn, weight, count }) => (
-            <button
-              key={conn.id}
-              onClick={() => onSelectBook(conn.id)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-left group"
-              style={{ transition: "var(--transition-base)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ background: GENRE_COLORS[conn.genre] }}
-              />
-              <span className="text-sm flex-1 font-serif" style={{ color: "var(--text-primary)", opacity: 0.85 }}>{conn.name}</span>
-              <span className="text-[10px] font-mono" style={{ color: "var(--text-dim)" }}>
-                {count} refs
-              </span>
-              <div className="w-12">
-                <div className="strength-bar">
-                  <div
-                    className="strength-fill"
-                    style={{
-                      width: `${weight * 10}%`,
-                      background: GENRE_COLORS[conn.genre],
-                    }}
-                  />
-                </div>
-              </div>
-            </button>
-          ))}
-          {connections.length > 15 && !showCrossRefs && (
-            <div className="text-[10px] px-3 pt-1" style={{ color: "var(--text-dim)" }}>
-              +{connections.length - 15} more
-            </div>
+        {drillLevel === "verse" &&
+          selectedChapter !== null &&
+          selectedVerse !== null && (
+            <VerseView
+              bookId={bookId}
+              chapter={selectedChapter}
+              verse={selectedVerse}
+              crossRefs={crossRefs}
+              translation={translation}
+              onNavigateTo={onNavigateTo}
+            />
           )}
-        </div>
-
-        {/* Verse Cross-References */}
-        {totalCrossRefs > 0 && (
-          <>
-            <button
-              onClick={() => setShowCrossRefs(!showCrossRefs)}
-              className="w-full flex items-center justify-between text-xs uppercase tracking-wider mb-3 font-mono"
-              style={{ color: "var(--text-secondary)", transition: "var(--transition-base)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-dim)")}
-            >
-              <span>
-                Verse Cross-References ({filterBook ? `${filteredRefs.length} to ${BIBLE_API_NAMES[filterBook] || filterBook}` : totalCrossRefs.toLocaleString()})
-              </span>
-              <span style={{ color: "var(--text-dim)" }}>{showCrossRefs ? "▲" : "▼"}</span>
-            </button>
-
-            {showCrossRefs && (
-              <>
-                {/* Filter by target book */}
-                {filterBook && (
-                  <button
-                    onClick={() => setFilterBook(null)}
-                    className="text-[10px] px-2 py-1 rounded mb-2 inline-block"
-                    style={{ background: color + "15", color: color }}
-                  >
-                    Showing refs to {BIBLE_API_NAMES[filterBook] || filterBook} &times;
-                  </button>
-                )}
-
-                {crossRefsLoading ? (
-                  <div className="text-xs py-2 font-mono" style={{ color: "var(--text-dim)" }}>Loading cross-references...</div>
-                ) : (
-                  <div className="space-y-0.5 mb-4">
-                    {pagedRefs.map((ref, i) => {
-                      const targetBookId = ref.to.split(".")[0];
-                      const targetBook = bookMap.get(targetBookId);
-                      const targetColor = targetBook ? GENRE_COLORS[targetBook.genre] : "#888";
-                      return (
-                        <div
-                          key={`${ref.from}-${ref.to}-${i}`}
-                          className="flex items-start gap-2 px-2 py-1.5 rounded text-[11px] leading-tight"
-                          style={{ transition: "var(--transition-base)" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)")}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                        >
-                          <span className="shrink-0 font-mono" style={{ color: "var(--text-secondary)" }}>
-                            {formatRef(ref.from)}
-                          </span>
-                          <span className="shrink-0" style={{ color: "var(--text-dim)" }}>&rarr;</span>
-                          <button
-                            onClick={() => {
-                              if (targetBook) onSelectBook(targetBookId);
-                            }}
-                            className="text-left shrink-0 hover:underline font-mono"
-                            style={{ color: targetColor + "cc" }}
-                          >
-                            {formatRef(ref.to)}
-                          </button>
-                          <span
-                            className="ml-auto text-[9px] shrink-0 font-mono"
-                            style={{ color: "var(--text-dim)" }}
-                            title={`${ref.votes} community votes`}
-                          >
-                            {ref.votes > 0 ? `+${ref.votes}` : ref.votes}
-                          </span>
-                        </div>
-                      );
-                    })}
-
-                    {hasMore && (
-                      <button
-                        onClick={() => setCrossRefPage((p) => p + 1)}
-                        className="w-full text-center text-[10px] py-2 font-mono"
-                        style={{ color: "var(--text-dim)", transition: "var(--transition-base)" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-dim)")}
-                      >
-                        Show more ({filteredRefs.length - pagedRefs.length} remaining)
-                      </button>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
-
-        {/* Read more link */}
-        <a
-          href={bgUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block text-xs font-mono three-state-interactive"
-          style={{ color: ACCENT }}
-        >
-          Read on Bible Gateway &rarr;
-        </a>
       </div>
     </div>
   );

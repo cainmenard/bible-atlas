@@ -7,6 +7,7 @@ import { useState } from "react";
 interface Props {
   data: DailyReadingsData | null;
   onSelectBook: (id: string) => void;
+  onSelectChapter?: (chapter: number) => void;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -20,7 +21,7 @@ const DEFAULT_TYPE_COLOR = "#8a8a9a";
 
 const NOISE_SVG = `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n' x='0' y='0'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.04'/></svg>")`;
 
-export default function ReadingsCard({ data, onSelectBook }: Props) {
+export default function ReadingsCard({ data, onSelectBook, onSelectChapter }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -118,7 +119,18 @@ export default function ReadingsCard({ data, onSelectBook }: Props) {
             return (
               <button
                 key={i}
-                onClick={() => r.bookId && onSelectBook(r.bookId)}
+                onClick={() => {
+                  if (!r.bookId) return;
+                  onSelectBook(r.bookId);
+                  // Try to parse chapter from reference (e.g., "Genesis 3:9-15" → 3)
+                  if (onSelectChapter) {
+                    const match = r.reference.match(/(\d+)[:.\-]/);
+                    if (match) {
+                      const ch = parseInt(match[1], 10);
+                      if (!isNaN(ch)) onSelectChapter(ch);
+                    }
+                  }
+                }}
                 onMouseEnter={() => setHoveredIndex(i)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 style={{

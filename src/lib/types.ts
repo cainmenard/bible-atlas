@@ -72,4 +72,19 @@ export type LiturgicalSeason =
   | "ordinary"
   | "pentecost";
 
+export interface NavigationEntry {
+  bookId: string;
+  chapter?: number;
+  verse?: number;
+  label: string; // e.g. "Genesis", "Genesis 3", "Genesis 3:15"
+}
+
+export interface ChapterCrossRefSummary {
+  chapter: number;
+  totalRefs: number;
+  topTargetBooks: { bookId: string; count: number }[];
+}
+
+export type DrillDownLevel = "book" | "chapter" | "verse";
+
 import * as d3 from "d3";
