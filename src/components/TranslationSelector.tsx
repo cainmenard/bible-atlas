@@ -59,7 +59,7 @@ export default function TranslationSelector({ translation, onChange }: Props) {
                 letterSpacing: "0.06em",
                 lineHeight: 1,
                 color: isActive ? "var(--accent)" : "var(--text-primary)",
-                opacity: isActive ? 1 : isHovered ? 0.75 : 0.45,
+                opacity: isActive ? 1 : isHovered ? 0.75 : 0.6,
                 transition: "var(--transition-base)",
               }}
             >

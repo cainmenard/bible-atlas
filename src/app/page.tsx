@@ -197,21 +197,41 @@ export default function Home() {
         </div>
 
         {/* Far right: About link + Translation Selector */}
-        <div className="flex items-center gap-3">
+        <div
+          className="flex items-center gap-2"
+          style={{
+            background: "rgba(20, 20, 40, 0.4)",
+            border: "1px solid rgba(255, 255, 255, 0.05)",
+            borderRadius: "24px",
+            padding: "4px 6px",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+          }}
+        >
           <Link
             href="/about"
-            className="text-[11px] font-mono hidden md:inline"
+            className="text-[12px] font-mono hidden md:inline-block"
             style={{
               color: "var(--text-primary)",
               opacity: 0.85,
               transition: "var(--transition-base)",
               letterSpacing: "0.06em",
+              background: "rgba(255, 255, 255, 0.06)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "20px",
+              padding: "6px 14px",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.opacity = "1";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+              e.currentTarget.style.color = "var(--accent)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.opacity = "0.85";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+              e.currentTarget.style.color = "var(--text-primary)";
             }}
           >
             About
@@ -225,12 +245,18 @@ export default function Home() {
               opacity: 0.85,
               transition: "var(--transition-base)",
               lineHeight: 1,
+              background: "rgba(255, 255, 255, 0.06)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "20px",
+              padding: "6px 10px",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.opacity = "1";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.opacity = "0.85";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
             }}
             aria-label="About Bible Atlas"
           >
