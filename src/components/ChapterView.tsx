@@ -5,7 +5,6 @@ import { VerseCrossRef } from "@/lib/types";
 import { bookMap } from "@/data/books";
 import { CHAPTER_VERSES } from "@/data/chapter-verses";
 import { getVerseCrossRefs, getVerseRefCounts, getTargetBookCounts } from "@/lib/crossref-utils";
-import { getBookName, formatRef } from "@/lib/bible-api";
 import { GENRE_COLORS } from "@/lib/colors";
 
 interface Props {
@@ -25,8 +24,6 @@ export default function ChapterView({
   onSelectVerse,
   onSelectBook,
 }: Props) {
-  const book = bookMap.get(bookId);
-  const bookName = getBookName(bookId);
   const verseCount = CHAPTER_VERSES[bookId]?.[chapter - 1] ?? 0;
 
   // Cross-refs from this chapter

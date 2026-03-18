@@ -32,9 +32,13 @@ export default function VerseView({
   const bookName = getBookName(bookId);
   const genreColor = book ? GENRE_COLORS[book.genre] : "#888";
 
+  // Key that changes when verse identity changes — used to reset derived state
+  const verseKey = `${bookId}.${chapter}.${verse}`;
+
   // Verse text
   const [verseText, setVerseText] = useState<string | null>(null);
   const [textLoading, setTextLoading] = useState(true);
+  const [loadedVerseKey, setLoadedVerseKey] = useState("");
 
   // Inbound refs
   const [inboundRefs, setInboundRefs] = useState<VerseCrossRef[]>([]);
@@ -45,6 +49,17 @@ export default function VerseView({
   const [outboundPage, setOutboundPage] = useState(1);
   const [inboundPage, setInboundPage] = useState(1);
 
+  // Reset state when verse identity changes (derived state pattern)
+  if (loadedVerseKey !== verseKey) {
+    setLoadedVerseKey(verseKey);
+    setVerseText(null);
+    setTextLoading(true);
+    setOutboundPage(1);
+    setInboundPage(1);
+    setShowInbound(false);
+    setInboundRefs([]);
+  }
+
   // Outbound cross-refs for this specific verse
   const outboundRefs = useMemo(
     () => getVerseCrossRefs(crossRefs, chapter, verse),
@@ -53,8 +68,6 @@ export default function VerseView({
 
   // Load verse text
   useEffect(() => {
-    setTextLoading(true);
-    setVerseText(null);
     let cancelled = false;
 
     fetchVerseText(bookId, chapter, verse, translation).then((result) => {
@@ -68,14 +81,6 @@ export default function VerseView({
       cancelled = true;
     };
   }, [bookId, chapter, verse, translation]);
-
-  // Reset pagination when verse changes
-  useEffect(() => {
-    setOutboundPage(1);
-    setInboundPage(1);
-    setShowInbound(false);
-    setInboundRefs([]);
-  }, [bookId, chapter, verse]);
 
   // Load inbound refs when requested
   const handleShowInbound = async () => {

@@ -14,7 +14,7 @@ import { BibleBook, Canon, LiturgicalSeason, NavigationEntry, ViewMode, VerseCro
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
 import { getBookName } from "@/lib/bible-api";
-import { getVerseCrossRefs, getTargetBookCounts, groupCrossRefsByChapter } from "@/lib/crossref-utils";
+import { getVerseCrossRefs, getTargetBookCounts } from "@/lib/crossref-utils";
 import { bookMap } from "@/data/books";
 import Link from "next/link";
 
@@ -52,13 +52,17 @@ export default function Home() {
 
   // Cross-refs for the selected book (loaded by DetailPanel, cached here for ForceGraph)
   const [bookCrossRefs, setBookCrossRefs] = useState<VerseCrossRef[]>([]);
+  const [crossRefBookId, setCrossRefBookId] = useState<string | null>(null);
 
-  // Load cross-refs when book changes (mirrors DetailPanel's loading)
+  // Reset cross-refs when book changes (derived state pattern)
+  if (crossRefBookId !== selectedBookId) {
+    setCrossRefBookId(selectedBookId);
+    setBookCrossRefs([]);
+  }
+
+  // Load cross-refs when book changes
   useEffect(() => {
-    if (!selectedBookId) {
-      setBookCrossRefs([]);
-      return;
-    }
+    if (!selectedBookId) return;
     let cancelled = false;
     fetch(`/crossrefs/${selectedBookId}.json`)
       .then((r) => r.ok ? r.json() : [])
@@ -200,8 +204,10 @@ export default function Home() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selectedBookId, selectedChapter, selectedVerse]);
 
-  // Reset drill-down state when canon changes and selected book is excluded
-  useEffect(() => {
+  // Reset drill-down state when canon changes and selected book is excluded (derived state pattern)
+  const [lastCanon, setLastCanon] = useState(canon);
+  if (lastCanon !== canon) {
+    setLastCanon(canon);
     if (selectedBookId) {
       const book = bookMap.get(selectedBookId);
       if (book && !book.canons.includes(canon)) {
@@ -211,7 +217,7 @@ export default function Home() {
         setNavigationStack([]);
       }
     }
-  }, [canon, selectedBookId]);
+  }
 
   const season = readings?.season as LiturgicalSeason | undefined;
   const seasonColor = season ? LITURGICAL_COLORS[season] : undefined;
