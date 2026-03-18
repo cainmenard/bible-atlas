@@ -253,7 +253,7 @@ function ExternalLink({
 export default function AboutPage() {
   return (
     <main
-      className="min-h-screen overflow-y-auto relative page-fade-in"
+      className="h-screen overflow-y-auto relative page-fade-in"
       style={{
         background:
           "radial-gradient(ellipse at 50% 50%, var(--bg-elevated) 0%, var(--bg-base) 70%)",
@@ -343,11 +343,10 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Content grid — asymmetric 3-column */}
+        {/* Content grid — 2-column layout */}
         <div className="max-w-7xl mx-auto px-8 md:px-16 mb-20 md:mb-28">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7">
-            {/* Row 1: "What is Bible Atlas?" spans 2, "Cross-References" spans 1 */}
-            <RevealSection className="xl:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
+            <RevealSection>
               <SectionCard label="What is Bible Atlas?">
                 <p>
                   Bible Atlas is an interactive visualization of the Bible&apos;s
@@ -391,7 +390,6 @@ export default function AboutPage() {
               </SectionCard>
             </RevealSection>
 
-            {/* Row 2: "Canon System" spans 1, "Daily Readings" spans 2 */}
             <RevealSection>
               <SectionCard label="Canon System">
                 <p>
@@ -410,7 +408,7 @@ export default function AboutPage() {
               </SectionCard>
             </RevealSection>
 
-            <RevealSection className="xl:col-span-2" delay={120}>
+            <RevealSection delay={120}>
               <SectionCard label="Daily Readings">
                 <p>
                   Each day, the Catholic Church assigns a set of readings for the
