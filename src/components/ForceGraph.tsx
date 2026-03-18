@@ -16,6 +16,7 @@ interface Props {
   edgeThreshold: number;
   onSelectBook: (id: string | null) => void;
   onHover: (book: BibleBook | null, x: number, y: number) => void;
+  onReady?: () => void;
 }
 
 // ─── RING CONFIG ──────────────────────────────────────────
@@ -103,6 +104,7 @@ export default function ForceGraph({
   edgeThreshold,
   onSelectBook,
   onHover,
+  onReady,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<{
@@ -127,11 +129,13 @@ export default function ForceGraph({
   // Stable refs for callbacks used in event listeners
   const onSelectBookRef = useRef(onSelectBook);
   const onHoverRef = useRef(onHover);
+  const onReadyRef = useRef(onReady);
   const selectedBookIdRef = useRef(selectedBookId);
   const edgeThresholdRef = useRef(edgeThreshold);
   const todayBookIdsRef = useRef(todayBookIds);
   onSelectBookRef.current = onSelectBook;
   onHoverRef.current = onHover;
+  onReadyRef.current = onReady;
   selectedBookIdRef.current = selectedBookId;
   edgeThresholdRef.current = edgeThreshold;
   todayBookIdsRef.current = todayBookIds;
@@ -722,6 +726,7 @@ export default function ForceGraph({
     glRenderer.domElement.addEventListener("click", onClick);
     window.addEventListener("resize", onResize);
 
+    let firstFrame = true;
     const animate = () => {
       state.animationId = requestAnimationFrame(animate);
       glControls.update();
@@ -742,6 +747,12 @@ export default function ForceGraph({
 
       glRenderer.render(glScene, glCamera);
       glLabelRenderer.render(glScene, glCamera);
+
+      // Notify parent that the first frame has rendered
+      if (firstFrame) {
+        firstFrame = false;
+        onReadyRef.current?.();
+      }
     };
     animate();
 

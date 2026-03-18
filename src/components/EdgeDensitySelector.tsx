@@ -41,13 +41,38 @@ export default function EdgeDensitySelector({ value, onChange }: EdgeDensitySele
         EDGES
       </span>
 
-      {/* Tick marks — signal-strength meter */}
+      {/* Tick marks — signal-strength meter (keyboard-accessible slider) */}
       <div
+        role="slider"
+        aria-label="Edge density"
+        aria-valuemin={1}
+        aria-valuemax={10}
+        aria-valuenow={value}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+            e.preventDefault();
+            onChange(Math.min(10, value + 1));
+          } else if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+            e.preventDefault();
+            onChange(Math.max(1, value - 1));
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            onChange(1);
+          } else if (e.key === "End") {
+            e.preventDefault();
+            onChange(10);
+          }
+        }}
         style={{
           display: "flex",
           alignItems: "center",
           gap: 10,
+          outline: "none",
+          borderRadius: 4,
         }}
+        onFocus={(e) => { e.currentTarget.style.outline = "1px solid rgba(212,160,74,0.4)"; }}
+        onBlur={(e) => { e.currentTarget.style.outline = "none"; }}
       >
         {Array.from({ length: 10 }, (_, i) => {
           const level = i + 1;

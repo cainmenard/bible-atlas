@@ -39,8 +39,12 @@ export function getBookName(bookId: string): string {
   return BIBLE_API_NAMES[bookId] || bookMap.get(bookId)?.name || bookId;
 }
 
+/** In-memory cache: key → settled result. Prevents redundant network calls. */
+const verseCache = new Map<string, { text: string; reference: string } | null>();
+
 /**
  * Fetch the text of a single verse from bible-api.com.
+ * Results are cached in memory for the lifetime of the page session.
  * Falls back to WEB translation if the requested translation fails.
  */
 export async function fetchVerseText(
@@ -52,6 +56,11 @@ export async function fetchVerseText(
   const bookName = BIBLE_API_NAMES[bookId];
   if (!bookName) return null;
 
+  const cacheKey = `${bookId}:${chapter}:${verse}:${translation}`;
+  if (verseCache.has(cacheKey)) {
+    return verseCache.get(cacheKey)!;
+  }
+
   const ref = `${bookName} ${chapter}:${verse}`;
   const url = `https://bible-api.com/${encodeURIComponent(ref)}?translation=${translation}`;
 
@@ -59,7 +68,9 @@ export async function fetchVerseText(
     const res = await fetch(url);
     const data = await res.json();
     if (data.text) {
-      return { text: data.text.trim(), reference: data.reference || ref };
+      const result = { text: data.text.trim(), reference: data.reference || ref };
+      verseCache.set(cacheKey, result);
+      return result;
     }
   } catch {
     // ignore
@@ -67,19 +78,29 @@ export async function fetchVerseText(
 
   // Fallback to WEB translation
   if (translation !== "web") {
+    const webKey = `${bookId}:${chapter}:${verse}:web`;
+    if (verseCache.has(webKey)) {
+      const cached = verseCache.get(webKey)!;
+      verseCache.set(cacheKey, cached);
+      return cached;
+    }
     try {
       const res = await fetch(
         `https://bible-api.com/${encodeURIComponent(ref)}?translation=web`,
       );
       const data = await res.json();
       if (data.text) {
-        return { text: data.text.trim(), reference: data.reference || ref };
+        const result = { text: data.text.trim(), reference: data.reference || ref };
+        verseCache.set(cacheKey, result);
+        verseCache.set(webKey, result);
+        return result;
       }
     } catch {
       // ignore
     }
   }
 
+  verseCache.set(cacheKey, null);
   return null;
 }
 
