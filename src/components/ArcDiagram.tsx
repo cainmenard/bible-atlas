@@ -46,10 +46,49 @@ interface Props {
   selectedBookId: string | null;
   onSelectBook: (id: string | null) => void;
   translation?: string;
+  selectedChapter?: number | null;
+  selectedVerse?: number | null;
 }
 
 const GENRE_COLOR_LIST = Object.values(GENRE_COLORS);
 const MARGIN = 40;
+
+/**
+ * Compute the global verse index range for a book, chapter, or specific verse.
+ * Returns [startIdx, endIdx] or null if the book isn't found in arc data.
+ */
+function computeVerseRange(
+  arcBooks: ArcData["books"],
+  bookId: string,
+  chapter: number | null,
+  verse: number | null,
+): [number, number] | null {
+  const bd = arcBooks.find((b) => b.id === bookId);
+  if (!bd) return null;
+
+  if (chapter === null) {
+    return [bd.offset, bd.offset + bd.verses];
+  }
+
+  const chapters = CHAPTER_VERSES[bookId];
+  if (!chapters || chapter < 1 || chapter > chapters.length) {
+    return [bd.offset, bd.offset + bd.verses];
+  }
+
+  let chapterStart = bd.offset;
+  for (let i = 0; i < chapter - 1; i++) {
+    chapterStart += chapters[i];
+  }
+  const chapterVerseCount = chapters[chapter - 1];
+  const chapterEnd = chapterStart + chapterVerseCount;
+
+  if (verse !== null && verse >= 1 && verse <= chapterVerseCount) {
+    const verseStart = chapterStart + (verse - 1);
+    return [verseStart, verseStart + 1];
+  }
+
+  return [chapterStart, chapterEnd];
+}
 
 /** Find the label at a screen point. Returns the label or null. */
 function findLabelAtPoint(
@@ -180,6 +219,8 @@ export default function ArcDiagram({
   selectedBookId,
   onSelectBook,
   translation = "web",
+  selectedChapter = null,
+  selectedVerse = null,
 }: Props) {
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -298,23 +339,28 @@ export default function ArcDiagram({
     renderer.setVisibility(activeSet);
   }, [canon, loaded]);
 
-  // Update selection uniforms when selectedBookId changes
+  // Update selection uniforms when selectedBookId/chapter/verse changes
   useEffect(() => {
     const data = dataRef.current;
     const renderer = rendererRef.current;
     if (!data || !renderer) return;
 
     if (selectedBookId) {
-      const bd = data.books.find((b) => b.id === selectedBookId);
-      if (bd) {
-        renderer.setSelection(bd.offset, bd.offset + bd.verses);
+      const range = computeVerseRange(
+        data.books,
+        selectedBookId,
+        selectedChapter ?? null,
+        selectedVerse ?? null,
+      );
+      if (range) {
+        renderer.setSelection(range[0], range[1]);
       } else {
         renderer.setSelection(-1, -1);
       }
     } else {
       renderer.setSelection(-1, -1);
     }
-  }, [selectedBookId, loaded]);
+  }, [selectedBookId, selectedChapter, selectedVerse, loaded]);
 
   // Draw function: WebGL arcs + Canvas 2D overlay
   const draw = useCallback(() => {
@@ -376,8 +422,19 @@ export default function ArcDiagram({
     ctx.lineTo(MARGIN + offsetX + totalWidth, axisY);
     ctx.stroke();
 
-    // --- Draw book labels & markers ---
+    // --- Draw drill-down highlight band ---
     const xScale = totalWidth / data.totalVerses;
+    if (selectedBookId && selectedChapter !== null) {
+      const range = computeVerseRange(data.books, selectedBookId, selectedChapter, selectedVerse ?? null);
+      if (range) {
+        const rangeStartX = MARGIN + offsetX + range[0] * xScale;
+        const rangeEndX = MARGIN + offsetX + range[1] * xScale;
+        ctx.fillStyle = "rgba(212, 160, 74, 0.08)";
+        ctx.fillRect(rangeStartX, 0, rangeEndX - rangeStartX, height);
+      }
+    }
+
+    // --- Draw book labels & markers ---
     const activeBookIds = new Set(
       books.filter((b) => b.canons.includes(canon)).map((b) => b.id)
     );
@@ -687,7 +744,7 @@ export default function ArcDiagram({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loaded triggers initial draw after data fetch
-  }, [canon, selectedBookId, loaded]);
+  }, [canon, selectedBookId, selectedChapter, selectedVerse, loaded]);
 
   // Reusable zoom helpers for controls and keyboard
   const applyZoom = useCallback((factor: number, centerX: number) => {
@@ -723,6 +780,22 @@ export default function ArcDiagram({
     cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(draw);
   }, [draw]);
+
+  // Auto-zoom to chapter/verse range when drilling down
+  useEffect(() => {
+    const data = dataRef.current;
+    if (!data || !selectedBookId || selectedChapter === null) return;
+
+    const range = computeVerseRange(
+      data.books,
+      selectedBookId,
+      selectedChapter,
+      selectedVerse ?? null,
+    );
+    if (range) {
+      zoomToRange(range[0], range[1]);
+    }
+  }, [selectedBookId, selectedChapter, selectedVerse, zoomToRange]);
 
   // Handle zoom and pan
   useEffect(() => {
@@ -1021,7 +1094,6 @@ export default function ArcDiagram({
       overlay.removeEventListener("touchmove", handleTouchMove);
       overlay.removeEventListener("touchend", handleTouchEnd);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draw, applyZoom, resetZoom, zoomToRange, canon, selectedBookId, onSelectBook, versePopover]);
 
   // Redraw on data load, resize, or prop changes
