@@ -267,3 +267,16 @@ input[type="range"] {
 .view-crossfade {
   animation: view-crossfade-in 300ms ease-out both;
 }
+
+/* ----------------------------------------------------------
+   REDUCED MOTION
+   Users who prefer reduced motion get no transitions or
+   keyframe animations — content is still fully accessible.
+   ---------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

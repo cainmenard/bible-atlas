@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import StarBackground from "@/components/StarBackground";
 import Tooltip from "@/components/Tooltip";
@@ -34,11 +34,10 @@ export default function Home() {
     x: number;
     y: number;
   } | null>(null);
+  const [constellationReady, setConstellationReady] = useState(false);
   const [readings] = useState(() => getDailyReadings());
   const [todayBookIds] = useState(() =>
-    getDailyReadings()
-      .readings.map((r) => r.bookId)
-      .filter((id): id is string => !!id)
+    readings.readings.map((r) => r.bookId).filter((id): id is string => !!id)
   );
 
   const handleHover = useCallback(
@@ -55,6 +54,17 @@ export default function Home() {
   const handleSelectBook = useCallback((id: string | null) => {
     setSelectedBookId(id);
   }, []);
+
+  // ESC key dismisses the selected book panel
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectedBookId !== null) {
+        setSelectedBookId(null);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedBookId]);
 
   const season = readings?.season as LiturgicalSeason | undefined;
   const seasonColor = season ? LITURGICAL_COLORS[season] : undefined;
@@ -79,6 +89,7 @@ export default function Home() {
             edgeThreshold={edgeThreshold}
             onSelectBook={handleSelectBook}
             onHover={handleHover}
+            onReady={() => setConstellationReady(true)}
           />
         ) : (
           <ArcDiagram
@@ -89,6 +100,39 @@ export default function Home() {
           />
         )}
       </div>
+
+      {/* Loading overlay: shown until Three.js renders its first frame */}
+      {viewMode === "constellation" && !constellationReady && (
+        <div
+          className="fixed inset-0 z-30 flex items-center justify-center pointer-events-none"
+        >
+          <div
+            className="glass-panel flex flex-col items-center gap-4"
+            style={{ padding: "32px 48px", borderRadius: 16 }}
+          >
+            <div
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: "var(--accent)",
+                animation: "pulse-glow 1.4s ease-in-out infinite",
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "11px",
+                letterSpacing: "0.2em",
+                color: "var(--text-dim)",
+                textTransform: "uppercase",
+              }}
+            >
+              Initializing constellation
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Top bar: Wordmark | Orrery Toggle | Translation Selector */}
       <div

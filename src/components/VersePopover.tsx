@@ -40,11 +40,24 @@ export default function VersePopover({
       return;
     }
     setLoading(true);
+    let cancelled = false;
     fetchVerseText(bookId, chapter, verse, translation).then((result) => {
-      setText(result?.text || null);
-      setLoading(false);
+      if (!cancelled) {
+        setText(result?.text || null);
+        setLoading(false);
+      }
     });
+    return () => { cancelled = true; };
   }, [bookId, chapter, verse, translation]);
+
+  // ESC key closes the popover
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   // Position: keep within viewport, respecting min(320px, 90vw) width
   const maxWidth = Math.min(320, window.innerWidth * 0.9);

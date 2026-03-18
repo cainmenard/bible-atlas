@@ -87,6 +87,8 @@ export default function DetailPanel({
 }: Props) {
   const [verse, setVerse] = useState<VerseData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [verseError, setVerseError] = useState(false);
+  const [verseRetryKey, setVerseRetryKey] = useState(0);
   const [crossRefs, setCrossRefs] = useState<VerseCrossRef[]>([]);
   const [crossRefsLoading, setCrossRefsLoading] = useState(false);
   const [showCrossRefs, setShowCrossRefs] = useState(false);
@@ -99,33 +101,59 @@ export default function DetailPanel({
   useEffect(() => {
     if (!bookId || !FEATURED_VERSES[bookId]) {
       setVerse(null);
+      setVerseError(false);
       return;
     }
 
     setLoading(true);
+    setVerseError(false);
+    setVerse(null);
+
+    const controller = new AbortController();
     const ref = FEATURED_VERSES[bookId];
     const url = `https://bible-api.com/${encodeURIComponent(ref)}?translation=${translation}`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((data) => {
+
+    // 6-second timeout
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 6000);
+
+    const doFetch = async () => {
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        const data = await res.json();
         if (data.text) {
           setVerse({ reference: data.reference || ref, text: data.text });
+          return;
         }
-      })
-      .catch(() => {
+        // Try WEB fallback
         if (translation !== "web") {
-          fetch(`https://bible-api.com/${encodeURIComponent(ref)}?translation=web`)
-            .then((r) => r.json())
-            .then((data) => {
-              if (data.text) setVerse({ reference: data.reference || ref, text: data.text });
-            })
-            .catch(() => setVerse(null));
-        } else {
-          setVerse(null);
+          const fallbackUrl = `https://bible-api.com/${encodeURIComponent(ref)}?translation=web`;
+          const r2 = await fetch(fallbackUrl, { signal: controller.signal });
+          const d2 = await r2.json();
+          if (d2.text) {
+            setVerse({ reference: d2.reference || ref, text: d2.text });
+            return;
+          }
         }
-      })
-      .finally(() => setLoading(false));
-  }, [bookId, translation]);
+        setVerseError(true);
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          setVerseError(true);
+        }
+      } finally {
+        clearTimeout(timeoutId);
+        setLoading(false);
+      }
+    };
+
+    doFetch();
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [bookId, translation, verseRetryKey]);
 
   // Load verse-level cross-references from per-book JSON
   useEffect(() => {
@@ -137,8 +165,9 @@ export default function DetailPanel({
       return;
     }
 
+    const controller = new AbortController();
     setCrossRefsLoading(true);
-    fetch(`/crossrefs/${bookId}.json`)
+    fetch(`/crossrefs/${bookId}.json`, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error("Not found");
         return r.json();
@@ -146,10 +175,14 @@ export default function DetailPanel({
       .then((data: VerseCrossRef[]) => {
         setCrossRefs(data);
       })
-      .catch(() => {
-        setCrossRefs([]);
+      .catch((err) => {
+        if ((err as Error).name !== "AbortError") {
+          setCrossRefs([]);
+        }
       })
       .finally(() => setCrossRefsLoading(false));
+
+    return () => controller.abort();
   }, [bookId]);
 
   // Reset page when filter changes
@@ -226,13 +259,24 @@ export default function DetailPanel({
         </div>
 
         {/* Featured Verse */}
-        {(loading || verse) && (
+        {(loading || verse || verseError) && (
           <div
             className="rounded-lg p-4 mb-6"
             style={{ background: color + "08", border: `1px solid ${color}15` }}
           >
             {loading ? (
               <div className="font-mono text-xs" style={{ color: "var(--text-dim)" }}>Loading verse...</div>
+            ) : verseError ? (
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-xs" style={{ color: "var(--text-dim)" }}>Verse unavailable</span>
+                <button
+                  onClick={() => setVerseRetryKey((k) => k + 1)}
+                  className="font-mono text-xs three-state-interactive"
+                  style={{ color: "var(--accent)", padding: "2px 6px", border: `1px solid ${color}30`, borderRadius: 4 }}
+                >
+                  ↺ Retry
+                </button>
+              </div>
             ) : verse ? (
               <>
                 <p className="font-serif text-sm leading-relaxed italic mb-2" style={{ color: "var(--text-primary)", opacity: 0.9 }}>
