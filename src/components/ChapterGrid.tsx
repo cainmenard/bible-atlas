@@ -81,6 +81,16 @@ export default function ChapterGrid({
           outline: 2px solid var(--color-accent);
           outline-offset: 2px;
         }
+
+        @media (max-width: 480px) {
+          .chapter-grid {
+            grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+          }
+          .chapter-grid-btn {
+            min-width: 38px;
+            min-height: 38px;
+          }
+        }
       `}</style>
 
       <div className="chapter-grid-header">Chapters</div>

@@ -21,51 +21,51 @@ export default function TranslationSelector({ translation, onChange }: Props) {
       style={{
         display: "flex",
         alignItems: "center",
+        gap: "2px",
         fontFamily: "var(--font-mono)",
-        fontSize: "11px",
+        fontSize: "var(--text-xs)",
         letterSpacing: "0.06em",
+        background: "var(--color-surface-1)",
+        borderRadius: "9999px",
+        padding: "2px",
       }}
     >
-      {TRANSLATIONS.map((t, i) => {
+      {TRANSLATIONS.map((t) => {
         const isActive = translation === t.id;
         const isHovered = hovered === t.id;
         return (
-          <span key={t.id} style={{ display: "flex", alignItems: "center" }}>
-            {i > 0 && (
-              <span
-                aria-hidden
-                style={{
-                  display: "inline-block",
-                  width: "1px",
-                  height: "11px",
-                  background: "var(--glass-border)",
-                  margin: "0 9px",
-                  flexShrink: 0,
-                }}
-              />
-            )}
-            <button
-              onClick={() => onChange(t.id)}
-              title={t.desc}
-              onMouseEnter={() => setHovered(t.id)}
-              onMouseLeave={() => setHovered(null)}
-              style={{
-                background: "none",
-                border: "none",
-                padding: "6px 0",
-                cursor: "pointer",
-                fontFamily: "var(--font-mono)",
-                fontSize: "11px",
-                letterSpacing: "0.06em",
-                lineHeight: 1,
-                color: isActive ? "var(--accent)" : "var(--text-primary)",
-                opacity: isActive ? 1 : isHovered ? 0.75 : 0.6,
-                transition: "var(--transition-base)",
-              }}
-            >
-              {t.label}
-            </button>
-          </span>
+          <button
+            key={t.id}
+            onClick={() => onChange(t.id)}
+            title={t.desc}
+            onMouseEnter={() => setHovered(t.id)}
+            onMouseLeave={() => setHovered(null)}
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "var(--text-xs)",
+              letterSpacing: "0.06em",
+              lineHeight: 1,
+              padding: "6px 12px",
+              borderRadius: "9999px",
+              cursor: "pointer",
+              transition: "all var(--transition-fast)",
+              border: isActive
+                ? "1px solid var(--color-accent)"
+                : "1px solid transparent",
+              background: isActive
+                ? "var(--color-accent-muted)"
+                : isHovered
+                  ? "var(--color-surface-3)"
+                  : "transparent",
+              color: isActive
+                ? "var(--color-accent)"
+                : isHovered
+                  ? "var(--color-text-primary)"
+                  : "var(--color-text-muted)",
+            }}
+          >
+            {t.label}
+          </button>
         );
       })}
     </div>
