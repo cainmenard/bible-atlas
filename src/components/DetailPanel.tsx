@@ -116,8 +116,7 @@ export default function DetailPanel({
     prevSelectedBook.current = selectedBook;
 
     if (selectedBook) {
-      dispatch({ type: "RESET" });
-      dispatch({ type: "SELECT_BOOK", book: selectedBook });
+      dispatch({ type: "INIT_BOOK", book: selectedBook });
     } else {
       dispatch({ type: "RESET" });
     }
@@ -310,7 +309,7 @@ export default function DetailPanel({
           <BookDetailView
             book={{
               name: book.name,
-              testament: book.testament as "OT" | "NT",
+              testament: book.testament === "DC" ? "OT" : book.testament,
               category: book.genre,
               totalChapters: book.chapters,
               totalVerses: book.verses,
