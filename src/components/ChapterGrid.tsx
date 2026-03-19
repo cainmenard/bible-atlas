@@ -1,96 +1,126 @@
 "use client";
 
-import { ChapterCrossRefSummary } from "@/lib/types";
+import { useState, useCallback } from "react";
 
-interface Props {
-  summaries: ChapterCrossRefSummary[];
-  genreColor: string;
+interface ChapterGridProps {
+  bookName: string;
+  totalChapters: number;
+  selectedChapter?: number | null;
   onSelectChapter: (chapter: number) => void;
 }
 
 export default function ChapterGrid({
-  summaries,
-  genreColor,
+  bookName,
+  totalChapters,
+  selectedChapter,
   onSelectChapter,
-}: Props) {
-  if (summaries.length === 0) return null;
+}: ChapterGridProps) {
+  const [hoveredChapter, setHoveredChapter] = useState<number | null>(null);
+  const [pressedChapter, setPressedChapter] = useState<number | null>(null);
+  const [focusedChapter, setFocusedChapter] = useState<number | null>(null);
 
-  // Find max ref count for heat map scaling
-  const maxRefs = Math.max(...summaries.map((s) => s.totalRefs), 1);
+  const handleMouseEnter = useCallback((chapter: number) => {
+    setHoveredChapter(chapter);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredChapter(null);
+    setPressedChapter(null);
+  }, []);
+
+  const chapters = Array.from({ length: totalChapters }, (_, i) => i + 1);
 
   return (
-    <div className="mb-6">
-      <h3
-        className="text-xs uppercase tracking-wider mb-3 font-mono"
-        style={{ color: "var(--text-secondary)" }}
-      >
-        Chapters ({summaries.length})
-      </h3>
+    <div style={{ padding: "var(--space-lg)" }}>
       <div
-        className="grid gap-[3px]"
         style={{
-          gridTemplateColumns: "repeat(auto-fill, minmax(38px, 1fr))",
+          fontFamily: "var(--font-mono)",
+          fontSize: "var(--text-xs)",
+          color: "var(--color-text-muted)",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          marginBottom: "var(--space-md)",
         }}
       >
-        {summaries.map((s) => {
-          const intensity = s.totalRefs / maxRefs;
-          // Map intensity to opacity range 0.08 - 0.7
-          const bgAlpha = 0.08 + intensity * 0.62;
-          // Parse genre color hex to rgb for rgba
-          const r = parseInt(genreColor.slice(1, 3), 16);
-          const g = parseInt(genreColor.slice(3, 5), 16);
-          const b = parseInt(genreColor.slice(5, 7), 16);
+        Chapters
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
+          gap: "var(--space-sm)",
+        }}
+      >
+        {chapters.map((chapter) => {
+          const isSelected = selectedChapter === chapter;
+          const isHovered = hoveredChapter === chapter;
+          const isPressed = pressedChapter === chapter;
+          const isFocusVisible = focusedChapter === chapter;
 
           return (
             <button
-              key={s.chapter}
-              onClick={() => onSelectChapter(s.chapter)}
-              className="relative rounded-[3px] font-mono text-[11px] leading-none"
+              key={chapter}
+              type="button"
+              aria-label={`${bookName} chapter ${chapter}`}
+              aria-pressed={isSelected}
+              onClick={() => onSelectChapter(chapter)}
+              onMouseEnter={() => handleMouseEnter(chapter)}
+              onMouseLeave={handleMouseLeave}
+              onMouseDown={() => setPressedChapter(chapter)}
+              onMouseUp={() => setPressedChapter(null)}
+              onFocus={(e) => {
+                if (e.target.matches(":focus-visible")) {
+                  setFocusedChapter(chapter);
+                }
+              }}
+              onBlur={() => setFocusedChapter(null)}
               style={{
-                background: `rgba(${r}, ${g}, ${b}, ${bgAlpha})`,
+                minWidth: 44,
+                minHeight: 44,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: "var(--text-sm)",
+                fontWeight: isSelected ? 600 : 500,
                 color:
-                  intensity > 0.4
-                    ? "var(--text-primary)"
-                    : "var(--text-secondary)",
-                padding: "8px 4px",
-                textAlign: "center",
-                transition: "var(--transition-base)",
-                border: "1px solid transparent",
+                  isSelected || isPressed
+                    ? "var(--color-accent)"
+                    : isHovered
+                      ? "var(--color-text-primary)"
+                      : "var(--color-text-secondary)",
+                background:
+                  isSelected
+                    ? "var(--color-accent-muted)"
+                    : isPressed
+                      ? "var(--color-surface-4)"
+                      : isHovered
+                        ? "var(--color-surface-3)"
+                        : "var(--color-surface-2)",
+                border: `1px solid ${
+                  isSelected
+                    ? "var(--color-accent)"
+                    : isHovered
+                      ? "var(--color-accent-border)"
+                      : "transparent"
+                }`,
+                borderRadius: "var(--radius-sm)",
+                cursor: "pointer",
+                transition: "var(--transition-fast)",
+                transform: isPressed ? "scale(0.95)" : "scale(1)",
+                outline: isFocusVisible
+                  ? "2px solid var(--color-accent)"
+                  : "none",
+                outlineOffset: isFocusVisible ? 2 : 0,
+                padding: 0,
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-              title={`Chapter ${s.chapter}: ${s.totalRefs} cross-references`}
             >
-              {s.chapter}
-              {s.totalRefs > 0 && (
-                <span
-                  className="block text-[8px] mt-0.5"
-                  style={{
-                    color:
-                      intensity > 0.3
-                        ? "var(--text-secondary)"
-                        : "var(--text-dim)",
-                  }}
-                >
-                  {s.totalRefs}
-                </span>
-              )}
+              {chapter}
             </button>
           );
         })}
       </div>
-      <p
-        className="text-[9px] mt-2 font-mono"
-        style={{ color: "var(--text-dim)" }}
-      >
-        Brightness indicates cross-reference density
-      </p>
     </div>
   );
 }
