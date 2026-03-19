@@ -16,6 +16,7 @@ export interface PanelNavigationState {
 }
 
 export type PanelNavigationAction =
+  | { type: 'INIT_BOOK'; book: string }
   | { type: 'SELECT_BOOK'; book: string }
   | { type: 'SELECT_CHAPTER'; chapter: number }
   | { type: 'SELECT_VERSE'; verse: number }
@@ -37,10 +38,20 @@ export function panelNavigationReducer(
   action: PanelNavigationAction,
 ): PanelNavigationState {
   switch (action.type) {
+    case 'INIT_BOOK': {
+      // Initial book selection from visualization — stay at book level
+      return {
+        ...initialPanelNavigationState,
+        level: 'book',
+        selectedBook: action.book,
+      };
+    }
+
     case 'SELECT_BOOK': {
+      // Navigate to a different book (e.g. connected book click) — stay at book level
       return {
         ...state,
-        level: 'chapter',
+        level: 'book',
         selectedBook: action.book,
         selectedChapter: null,
         selectedVerse: null,
@@ -53,9 +64,10 @@ export function panelNavigationReducer(
     }
 
     case 'SELECT_CHAPTER': {
+      // Drill from book → chapter level
       return {
         ...state,
-        level: 'verse',
+        level: 'chapter',
         selectedChapter: action.chapter,
         selectedVerse: null,
         history: [
@@ -67,9 +79,15 @@ export function panelNavigationReducer(
     }
 
     case 'SELECT_VERSE': {
+      // Drill from chapter → verse level
       return {
         ...state,
+        level: 'verse',
         selectedVerse: action.verse,
+        history: [
+          ...state.history,
+          { level: state.level, book: state.selectedBook, chapter: state.selectedChapter },
+        ],
         animationDirection: 'forward',
       };
     }
