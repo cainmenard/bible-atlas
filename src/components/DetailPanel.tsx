@@ -459,10 +459,11 @@ export default function DetailPanel({
       </div>
 
       {/* Chapter Grid (replaces old flat cross-ref list) */}
-      {!crossRefsLoading && chapterSummaries.length > 0 && (
+      {!crossRefsLoading && book.chapters > 0 && (
         <ChapterGrid
-          summaries={chapterSummaries}
-          genreColor={color}
+          bookName={book.name}
+          totalChapters={book.chapters}
+          selectedChapter={selectedChapter}
           onSelectChapter={onSelectChapter}
         />
       )}
