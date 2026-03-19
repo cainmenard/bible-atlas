@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@tanstack/react-virtual": "^3.13.23",
     "@types/d3": "^7.4.3",
     "@types/three": "^0.183.1",
     "d3": "^7.9.0",
