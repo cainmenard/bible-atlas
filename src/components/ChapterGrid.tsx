@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import React from "react";
 
 interface ChapterGridProps {
   bookName: string;
@@ -15,111 +15,90 @@ export default function ChapterGrid({
   selectedChapter,
   onSelectChapter,
 }: ChapterGridProps) {
-  const [hoveredChapter, setHoveredChapter] = useState<number | null>(null);
-  const [pressedChapter, setPressedChapter] = useState<number | null>(null);
-  const [focusedChapter, setFocusedChapter] = useState<number | null>(null);
-
-  const handleMouseEnter = useCallback((chapter: number) => {
-    setHoveredChapter(chapter);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setHoveredChapter(null);
-    setPressedChapter(null);
-  }, []);
-
   const chapters = Array.from({ length: totalChapters }, (_, i) => i + 1);
 
   return (
-    <div style={{ padding: "var(--space-lg)" }}>
-      <div
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "var(--text-xs)",
-          color: "var(--color-text-muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          marginBottom: "var(--space-md)",
-        }}
-      >
-        Chapters
-      </div>
+    <div className="chapter-grid-container">
+      <style>{`
+        .chapter-grid-container {
+          padding: var(--space-lg);
+        }
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
-          gap: "var(--space-sm)",
-        }}
-      >
-        {chapters.map((chapter) => {
-          const isSelected = selectedChapter === chapter;
-          const isHovered = hoveredChapter === chapter;
-          const isPressed = pressedChapter === chapter;
-          const isFocusVisible = focusedChapter === chapter;
+        .chapter-grid-header {
+          font-family: var(--font-mono);
+          font-size: var(--text-xs);
+          color: var(--color-text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          margin-bottom: var(--space-md);
+        }
 
-          return (
-            <button
-              key={chapter}
-              type="button"
-              aria-label={`${bookName} chapter ${chapter}`}
-              aria-pressed={isSelected}
-              onClick={() => onSelectChapter(chapter)}
-              onMouseEnter={() => handleMouseEnter(chapter)}
-              onMouseLeave={handleMouseLeave}
-              onMouseDown={() => setPressedChapter(chapter)}
-              onMouseUp={() => setPressedChapter(null)}
-              onFocus={(e) => {
-                if (e.target.matches(":focus-visible")) {
-                  setFocusedChapter(chapter);
-                }
-              }}
-              onBlur={() => setFocusedChapter(null)}
-              style={{
-                minWidth: 44,
-                minHeight: 44,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "var(--font-mono)",
-                fontSize: "var(--text-sm)",
-                fontWeight: isSelected ? 600 : 500,
-                color:
-                  isSelected || isPressed
-                    ? "var(--color-accent)"
-                    : isHovered
-                      ? "var(--color-text-primary)"
-                      : "var(--color-text-secondary)",
-                background:
-                  isSelected
-                    ? "var(--color-accent-muted)"
-                    : isPressed
-                      ? "var(--color-surface-4)"
-                      : isHovered
-                        ? "var(--color-surface-3)"
-                        : "var(--color-surface-2)",
-                border: `1px solid ${
-                  isSelected
-                    ? "var(--color-accent)"
-                    : isHovered
-                      ? "var(--color-accent-border)"
-                      : "transparent"
-                }`,
-                borderRadius: "var(--radius-sm)",
-                cursor: "pointer",
-                transition: "var(--transition-fast)",
-                transform: isPressed ? "scale(0.95)" : "scale(1)",
-                outline: isFocusVisible
-                  ? "2px solid var(--color-accent)"
-                  : "none",
-                outlineOffset: isFocusVisible ? 2 : 0,
-                padding: 0,
-              }}
-            >
-              {chapter}
-            </button>
-          );
-        })}
+        .chapter-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+          gap: var(--space-sm);
+        }
+
+        .chapter-grid-btn {
+          min-width: 44px;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--color-surface-2);
+          color: var(--color-text-secondary);
+          border: 1px solid transparent;
+          border-radius: var(--radius-sm);
+          font-family: var(--font-mono);
+          font-size: var(--text-sm);
+          font-weight: 500;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          padding: 0;
+          line-height: 1;
+        }
+
+        .chapter-grid-btn:hover {
+          background: var(--color-surface-3);
+          color: var(--color-text-primary);
+          border-color: var(--color-accent-border);
+        }
+
+        .chapter-grid-btn:active {
+          background: var(--color-surface-4);
+          color: var(--color-accent);
+          transform: scale(0.95);
+        }
+
+        .chapter-grid-btn[data-selected="true"] {
+          background: var(--color-accent-muted);
+          color: var(--color-accent);
+          border-color: var(--color-accent);
+          font-weight: 600;
+        }
+
+        .chapter-grid-btn:focus-visible {
+          outline: 2px solid var(--color-accent);
+          outline-offset: 2px;
+        }
+      `}</style>
+
+      <div className="chapter-grid-header">Chapters</div>
+
+      <div className="chapter-grid" role="grid" aria-label={`${bookName} chapters`}>
+        {chapters.map((chapter) => (
+          <button
+            key={chapter}
+            type="button"
+            className="chapter-grid-btn"
+            data-selected={selectedChapter === chapter ? "true" : undefined}
+            onClick={() => onSelectChapter(chapter)}
+            aria-label={`${bookName} chapter ${chapter}`}
+            aria-pressed={selectedChapter === chapter}
+          >
+            {chapter}
+          </button>
+        ))}
       </div>
     </div>
   );
