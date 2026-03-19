@@ -72,9 +72,9 @@ export default function VersePopover({
         left,
         top,
         borderLeft: `3px solid ${color}`,
-        borderRadius: 10,
-        padding: "16px 20px",
-        color: "var(--text-primary)",
+        borderRadius: "var(--radius-md)",
+        padding: "var(--space-lg) var(--space-xl)",
+        color: "var(--color-text-primary)",
         zIndex: 110,
         maxWidth,
         overflowY: "auto",
@@ -90,7 +90,7 @@ export default function VersePopover({
           right: 10,
           background: "none",
           border: "none",
-          color: "var(--text-secondary)",
+          color: "var(--color-text-secondary)",
           cursor: "pointer",
           fontSize: 14,
           padding: 0,
@@ -101,11 +101,11 @@ export default function VersePopover({
 
       <button
         onClick={() => onSelectBook(bookId)}
-        className="font-serif"
         style={{
           background: "none",
           border: "none",
           color,
+          fontFamily: "var(--font-display)",
           fontWeight: "bold",
           fontSize: 15,
           cursor: "pointer",
@@ -118,7 +118,12 @@ export default function VersePopover({
       </button>
 
       {book && (
-        <div className="font-mono" style={{ color: "var(--text-dim)", fontSize: 10, marginTop: 4 }}>
+        <div style={{
+          fontFamily: "var(--font-mono)",
+          color: "var(--color-text-muted)",
+          fontSize: "var(--text-xs)",
+          marginTop: 4,
+        }}>
           {book.genre} &middot; {book.testament === "OT" ? "Old Testament" : book.testament === "NT" ? "New Testament" : "Deuterocanonical"}
         </div>
       )}
@@ -126,12 +131,18 @@ export default function VersePopover({
       {verse && (
         <div style={{ marginTop: 10 }}>
           {loading ? (
-            <div className="font-mono" style={{ color: "var(--text-dim)", fontStyle: "italic", fontSize: 11 }}>
+            <div style={{
+              fontFamily: "var(--font-mono)",
+              color: "var(--color-text-muted)",
+              fontStyle: "italic",
+              fontSize: "var(--text-xs)",
+            }}>
               Loading scripture...
             </div>
           ) : text ? (
-            <p className="font-serif" style={{
-              color: "var(--text-primary)",
+            <p style={{
+              fontFamily: "var(--font-display)",
+              color: "var(--color-text-primary)",
               opacity: 0.8,
               fontSize: 13,
               lineHeight: "1.6",
@@ -141,7 +152,11 @@ export default function VersePopover({
               &ldquo;{text}&rdquo;
             </p>
           ) : (
-            <div className="font-mono" style={{ color: "var(--text-dim)", fontSize: 10 }}>
+            <div style={{
+              fontFamily: "var(--font-mono)",
+              color: "var(--color-text-muted)",
+              fontSize: "var(--text-xs)",
+            }}>
               Verse text unavailable
             </div>
           )}
@@ -149,7 +164,12 @@ export default function VersePopover({
       )}
 
       {!verse && (
-        <div className="font-mono" style={{ marginTop: 8, color: "var(--text-secondary)", fontSize: 11 }}>
+        <div style={{
+          fontFamily: "var(--font-mono)",
+          marginTop: 8,
+          color: "var(--color-text-secondary)",
+          fontSize: "var(--text-xs)",
+        }}>
           {book ? `${book.chapters} chapters \u00b7 ${book.verses.toLocaleString()} verses` : ""}
         </div>
       )}
@@ -158,12 +178,13 @@ export default function VersePopover({
         href={getBibleGatewayUrl(bookId, chapter, verse)}
         target="_blank"
         rel="noopener noreferrer"
-        className="three-state-interactive font-mono"
+        className="three-state-interactive"
         style={{
           display: "inline-block",
           marginTop: 10,
+          fontFamily: "var(--font-mono)",
           color,
-          fontSize: 10,
+          fontSize: "var(--text-xs)",
           textDecoration: "none",
         }}
       >

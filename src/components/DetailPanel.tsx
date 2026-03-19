@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useEffect, useMemo, useCallback, useRef, useState } from "react";
+import { useReducer, useEffect, useMemo, useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { bookMap } from "@/data/books";
 import { books } from "@/data/books";
@@ -86,6 +86,21 @@ function findBookIdByName(name: string): string | null {
 
 const AVAILABLE_TRANSLATIONS = ["rsv-ce", "kjv", "web"];
 
+/* ─── Mobile detection ─── */
+const MOBILE_QUERY = "(max-width: 768px)";
+
+function subscribeMobile(cb: () => void) {
+  const mql = window.matchMedia(MOBILE_QUERY);
+  mql.addEventListener("change", cb);
+  return () => mql.removeEventListener("change", cb);
+}
+
+function getIsMobile() {
+  return window.matchMedia(MOBILE_QUERY).matches;
+}
+
+const getIsMobileServer = () => false;
+
 /* ─── Component ─── */
 
 export default function DetailPanel({
@@ -102,6 +117,8 @@ export default function DetailPanel({
     panelNavigationReducer,
     initialPanelNavigationState,
   );
+
+  const isMobile = useSyncExternalStore(subscribeMobile, getIsMobile, getIsMobileServer);
 
   const panelRef = useRef<HTMLDivElement>(null);
   const prevSelectedBook = useRef<string | null>(null);
@@ -366,9 +383,9 @@ export default function DetailPanel({
           role="complementary"
           aria-label="Scripture details"
           tabIndex={-1}
-          initial={{ x: "100%" }}
-          animate={{ x: "0%" }}
-          exit={{ x: "100%" }}
+          initial={isMobile ? { y: "100%" } : { x: "100%" }}
+          animate={isMobile ? { y: "0%" } : { x: "0%" }}
+          exit={isMobile ? { y: "100%" } : { x: "100%" }}
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="detail-panel-container"
           style={{
@@ -416,25 +433,6 @@ export default function DetailPanel({
             </AnimatedPanelContent>
           </div>
 
-          {/* Custom scrollbar styles */}
-          <style>{`
-            .detail-panel-scroll::-webkit-scrollbar {
-              width: 6px;
-            }
-            .detail-panel-scroll::-webkit-scrollbar-track {
-              background: transparent;
-            }
-            .detail-panel-scroll::-webkit-scrollbar-thumb {
-              background: var(--color-surface-3);
-              border-radius: 3px;
-            }
-            .detail-panel-scroll::-webkit-scrollbar-thumb:hover {
-              background: var(--color-surface-4);
-            }
-            .detail-panel-container:focus {
-              outline: none;
-            }
-          `}</style>
         </motion.div>
       )}
     </AnimatePresence>
