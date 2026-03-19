@@ -10,10 +10,9 @@ import OrbitalRingSelector from "@/components/OrbitalRingSelector";
 import TranslationSelector from "@/components/TranslationSelector";
 import CelestialOrreryToggle from "@/components/CelestialOrreryToggle";
 import EdgeDensitySelector from "@/components/EdgeDensitySelector";
-import { BibleBook, Canon, LiturgicalSeason, NavigationEntry, ViewMode, VerseCrossRef } from "@/lib/types";
+import { BibleBook, Canon, LiturgicalSeason, ViewMode, VerseCrossRef } from "@/lib/types";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
-import { getBookName } from "@/lib/bible-api";
 import { getVerseCrossRefs, getTargetBookCounts } from "@/lib/crossref-utils";
 import { bookMap } from "@/data/books";
 import Link from "next/link";
@@ -25,8 +24,6 @@ const ForceGraph = dynamic(() => import("@/components/ForceGraph"), {
 const ArcDiagram = dynamic(() => import("@/components/ArcDiagram"), {
   ssr: false,
 });
-
-const NAV_STACK_MAX = 50;
 
 export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>("constellation");
@@ -45,12 +42,14 @@ export default function Home() {
     readings.readings.map((r) => r.bookId).filter((id): id is string => !!id)
   );
 
-  // ─── DRILL-DOWN STATE ───
-  const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
-  const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
-  const [navigationStack, setNavigationStack] = useState<NavigationEntry[]>([]);
+  // ─── DRILL-DOWN STATE (reported from DetailPanel) ───
+  const [drillState, setDrillState] = useState<{
+    bookId: string | null;
+    chapter: number | null;
+    verse: number | null;
+  } | null>(null);
 
-  // Cross-refs for the selected book (loaded by DetailPanel, cached here for ForceGraph)
+  // Cross-refs for the selected book (shared between ForceGraph and DetailPanel)
   const [bookCrossRefs, setBookCrossRefs] = useState<VerseCrossRef[]>([]);
   const [crossRefBookId, setCrossRefBookId] = useState<string | null>(null);
 
@@ -76,22 +75,22 @@ export default function Home() {
   }, [selectedBookId]);
 
   // Compute drill-down target books for ForceGraph highlighting
+  const selectedChapter = drillState?.chapter ?? null;
+  const selectedVerse = drillState?.verse ?? null;
+
   const drillDownTargetBooks = useMemo(() => {
     if (!selectedBookId || bookCrossRefs.length === 0) return null;
 
     if (selectedVerse !== null && selectedChapter !== null) {
-      // Verse level: only books referenced by this specific verse
       const verseRefs = getVerseCrossRefs(bookCrossRefs, selectedChapter, selectedVerse);
       return getTargetBookCounts(verseRefs);
     }
 
     if (selectedChapter !== null) {
-      // Chapter level: books referenced by this chapter
       const chapterRefs = getVerseCrossRefs(bookCrossRefs, selectedChapter);
       return getTargetBookCounts(chapterRefs);
     }
 
-    // Book level: no drill-down filtering
     return null;
   }, [selectedBookId, selectedChapter, selectedVerse, bookCrossRefs]);
 
@@ -108,101 +107,24 @@ export default function Home() {
 
   const handleSelectBook = useCallback((id: string | null) => {
     setSelectedBookId(id);
-    // Reset drill-down when changing books
-    setSelectedChapter(null);
-    setSelectedVerse(null);
+    setDrillState(null);
   }, []);
 
   const handleSelectChapter = useCallback((chapter: number | null) => {
-    setSelectedChapter(chapter);
-    setSelectedVerse(null);
+    setDrillState((prev) => prev ? { ...prev, chapter, verse: null } : null);
   }, []);
 
-  const handleSelectVerse = useCallback((verse: number | null) => {
-    setSelectedVerse(verse);
-  }, []);
-
-  // Navigate to a specific verse (used by cross-ref "Go to" buttons)
-  const handleNavigateTo = useCallback(
-    (bookId: string, chapter: number, verse: number) => {
-      // Push current location onto navigation stack
-      if (selectedBookId) {
-        const bookName = getBookName(selectedBookId);
-        let label = bookName;
-        if (selectedChapter !== null) label += ` ${selectedChapter}`;
-        if (selectedVerse !== null) label += `:${selectedVerse}`;
-
-        setNavigationStack((prev) => {
-          const next = [
-            ...prev,
-            {
-              bookId: selectedBookId,
-              chapter: selectedChapter ?? undefined,
-              verse: selectedVerse ?? undefined,
-              label,
-            },
-          ];
-          // Cap at max
-          if (next.length > NAV_STACK_MAX) next.shift();
-          return next;
-        });
-      }
-
-      // Navigate to the target
-      setSelectedBookId(bookId);
-      setSelectedChapter(chapter);
-      setSelectedVerse(verse);
-    },
-    [selectedBookId, selectedChapter, selectedVerse]
-  );
-
-  // Navigate back to a previous entry in the stack
-  const handleNavigateBack = useCallback(
-    (entry: NavigationEntry | null) => {
-      if (!entry) {
-        // Clear everything
-        setSelectedBookId(null);
-        setSelectedChapter(null);
-        setSelectedVerse(null);
-        setNavigationStack([]);
-        return;
-      }
-
-      // Pop stack to this entry
-      setNavigationStack((prev) => {
-        const idx = prev.findIndex(
-          (e) =>
-            e.bookId === entry.bookId &&
-            e.chapter === entry.chapter &&
-            e.verse === entry.verse
-        );
-        return idx >= 0 ? prev.slice(0, idx) : prev;
-      });
-
-      setSelectedBookId(entry.bookId);
-      setSelectedChapter(entry.chapter ?? null);
-      setSelectedVerse(entry.verse ?? null);
+  const handleNavigationChange = useCallback(
+    (state: { bookId: string | null; chapter: number | null; verse: number | null }) => {
+      setDrillState(state);
     },
     []
   );
 
-  // ESC key: step back one drill-down level
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (selectedVerse !== null) {
-          setSelectedVerse(null);
-        } else if (selectedChapter !== null) {
-          setSelectedChapter(null);
-        } else if (selectedBookId !== null) {
-          setSelectedBookId(null);
-          setNavigationStack([]);
-        }
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedBookId, selectedChapter, selectedVerse]);
+  const handleClosePanel = useCallback(() => {
+    setSelectedBookId(null);
+    setDrillState(null);
+  }, []);
 
   // Reset drill-down state when canon changes and selected book is excluded (derived state pattern)
   const [lastCanon, setLastCanon] = useState(canon);
@@ -212,9 +134,7 @@ export default function Home() {
       const book = bookMap.get(selectedBookId);
       if (book && !book.canons.includes(canon)) {
         setSelectedBookId(null);
-        setSelectedChapter(null);
-        setSelectedVerse(null);
-        setNavigationStack([]);
+        setDrillState(null);
       }
     }
   }
@@ -432,23 +352,14 @@ export default function Home() {
       />
 
       <DetailPanel
-        bookId={selectedBookId}
+        isOpen={selectedBookId !== null}
+        selectedBook={selectedBookId}
         canon={canon}
         translation={translation}
-        selectedChapter={selectedChapter}
-        selectedVerse={selectedVerse}
-        navigationStack={navigationStack}
+        crossReferenceData={bookCrossRefs}
         onSelectBook={handleSelectBook}
-        onSelectChapter={handleSelectChapter}
-        onSelectVerse={handleSelectVerse}
-        onNavigateBack={handleNavigateBack}
-        onNavigateTo={handleNavigateTo}
-        onClose={() => {
-          setSelectedBookId(null);
-          setSelectedChapter(null);
-          setSelectedVerse(null);
-          setNavigationStack([]);
-        }}
+        onNavigationChange={handleNavigationChange}
+        onClose={handleClosePanel}
       />
 
       <ReadingsCard
