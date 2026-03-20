@@ -5,8 +5,8 @@ import dynamic from "next/dynamic";
 import StarBackground from "@/components/StarBackground";
 import Tooltip from "@/components/Tooltip";
 import DetailPanel from "@/components/DetailPanel";
-import ReadingsCard from "@/components/ReadingsCard";
-import OrbitalRingSelector from "@/components/OrbitalRingSelector";
+import CanonChip from "@/components/CanonChip";
+import ReadingsPill from "@/components/ReadingsPill";
 import TranslationSelector from "@/components/TranslationSelector";
 import CelestialOrreryToggle from "@/components/CelestialOrreryToggle";
 import EdgeDensitySelector from "@/components/EdgeDensitySelector";
@@ -342,9 +342,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Orbital ring canon selector */}
-      <OrbitalRingSelector canon={canon} onChange={setCanon} />
-
       <Tooltip
         book={hoveredBook?.book ?? null}
         x={hoveredBook?.x ?? 0}
@@ -362,11 +359,25 @@ export default function Home() {
         onClose={handleClosePanel}
       />
 
-      <ReadingsCard
-        data={readings}
-        onSelectBook={handleSelectBook}
-        onSelectChapter={handleSelectChapter}
-      />
+      {/* Bottom-left control dock */}
+      <div
+        className="fixed z-40"
+        style={{
+          bottom: 16,
+          left: 16,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: 8,
+        }}
+      >
+        <CanonChip canon={canon} onChange={setCanon} />
+        <ReadingsPill
+          data={readings}
+          onSelectBook={handleSelectBook}
+          onSelectChapter={handleSelectChapter}
+        />
+      </div>
 
     </main>
   );
