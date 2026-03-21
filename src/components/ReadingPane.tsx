@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, useSyncExternalStore } from "react";
+import { useState, useEffect, useMemo, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { fetchPassageText, getBookName, type PassageResult } from "@/lib/bible-api";
+import { VerseCrossRef } from "@/lib/types";
+import { getVerseRefCounts } from "@/lib/crossref-utils";
 
 /* ─── Reading type colors (matches ReadingsPill) ─── */
 
@@ -46,6 +48,8 @@ interface ReadingPaneProps {
   onClose: () => void;
   onNavigateReading: (index: number) => void;
   onExploreBook: (bookId: string) => void;
+  crossReferenceData?: VerseCrossRef[];
+  onSelectVerse?: (bookId: string, chapter: number, verse: number) => void;
 }
 
 /* ─── Component ─── */
@@ -59,8 +63,23 @@ export default function ReadingPane({
   onClose,
   onNavigateReading,
   onExploreBook,
+  crossReferenceData,
+  onSelectVerse,
 }: ReadingPaneProps) {
   const isMobile = useSyncExternalStore(subscribeMobile, getIsMobile, getIsMobileServer);
+
+  /* Extract chapter number from reference (e.g. "Genesis 1:1-5" → 1) */
+  const chapterFromRef = useMemo(() => {
+    if (!reading) return null;
+    const m = reading.reference.match(/(\d+):/);
+    return m ? parseInt(m[1], 10) : null;
+  }, [reading?.reference]);
+
+  /* Verse-level cross-ref counts for indicator dots */
+  const verseRefCounts = useMemo(() => {
+    if (!crossReferenceData || !chapterFromRef) return null;
+    return getVerseRefCounts(crossReferenceData, chapterFromRef);
+  }, [crossReferenceData, chapterFromRef]);
 
   const [passage, setPassage] = useState<PassageResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -335,25 +354,73 @@ export default function ReadingPane({
                     color: "var(--color-text-primary)",
                   }}
                 >
-                  {passage.verses.map((v) => (
-                    <span key={v.verse}>
-                      <sup
-                        style={{
-                          display: "inline",
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "0.65em",
-                          verticalAlign: "super",
-                          color: "var(--color-accent)",
-                          opacity: 0.6,
-                          marginRight: 2,
-                          userSelect: "none",
-                        }}
-                      >
-                        {v.verse}
-                      </sup>
-                      {v.text}{" "}
-                    </span>
-                  ))}
+                  {passage.verses.map((v) => {
+                    const refCount = verseRefCounts?.get(v.verse) ?? 0;
+                    const hasRefs = refCount > 0 && onSelectVerse && chapterFromRef !== null;
+
+                    return (
+                      <span key={v.verse}>
+                        {hasRefs ? (
+                          <sup
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => onSelectVerse(reading.bookId, chapterFromRef, v.verse)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onSelectVerse(reading.bookId, chapterFromRef, v.verse);
+                              }
+                            }}
+                            className="crossref-verse-indicator"
+                            style={{
+                              display: "inline",
+                              fontFamily: "var(--font-mono)",
+                              fontSize: "0.65em",
+                              verticalAlign: "super",
+                              color: "var(--color-accent)",
+                              opacity: 0.4,
+                              marginRight: 2,
+                              userSelect: "none",
+                              cursor: "pointer",
+                              transition: "opacity 200ms ease-out",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.4"; }}
+                            title={`${refCount} cross-reference${refCount > 1 ? "s" : ""}`}
+                          >
+                            {v.verse}
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: 4,
+                                height: 4,
+                                borderRadius: "50%",
+                                background: "var(--color-accent)",
+                                marginLeft: 1,
+                                verticalAlign: "super",
+                              }}
+                            />
+                          </sup>
+                        ) : (
+                          <sup
+                            style={{
+                              display: "inline",
+                              fontFamily: "var(--font-mono)",
+                              fontSize: "0.65em",
+                              verticalAlign: "super",
+                              color: "var(--color-accent)",
+                              opacity: 0.6,
+                              marginRight: 2,
+                              userSelect: "none",
+                            }}
+                          >
+                            {v.verse}
+                          </sup>
+                        )}
+                        {v.text}{" "}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
             </div>
