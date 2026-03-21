@@ -52,6 +52,9 @@ export default function Home() {
     reading: { type: string; reference: string; bookId: string };
   } | null>(null);
 
+  // ─── READING PANE CROSS-REFS ───
+  const [readingPaneCrossRefs, setReadingPaneCrossRefs] = useState<VerseCrossRef[]>([]);
+
   // ─── DRILL-DOWN STATE (reported from DetailPanel) ───
   const [drillState, setDrillState] = useState<{
     bookId: string | null;
@@ -83,6 +86,25 @@ export default function Home() {
       });
     return () => { cancelled = true; };
   }, [selectedBookId]);
+
+  // Load cross-refs for reading pane
+  useEffect(() => {
+    const bookId = activeReading?.reading.bookId;
+    if (!bookId) {
+      setReadingPaneCrossRefs([]);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/crossrefs/${bookId}.json`)
+      .then((r) => r.ok ? r.json() : [])
+      .then((data: VerseCrossRef[]) => {
+        if (!cancelled) setReadingPaneCrossRefs(data);
+      })
+      .catch(() => {
+        if (!cancelled) setReadingPaneCrossRefs([]);
+      });
+    return () => { cancelled = true; };
+  }, [activeReading?.reading.bookId]);
 
   // Compute drill-down target books for ForceGraph highlighting
   const selectedChapter = drillState?.chapter ?? null;
@@ -164,6 +186,12 @@ export default function Home() {
     setActiveReading(null);
     handleSelectBook(bookId);
   }, [handleSelectBook]);
+
+  const handleVerseFromReading = useCallback((bookId: string, chapter: number, verse: number) => {
+    setActiveReading(null);
+    setSelectedBookId(bookId);
+    setDrillState({ bookId, chapter, verse });
+  }, []);
 
   // Reset drill-down state when canon changes and selected book is excluded (derived state pattern)
   const [lastCanon, setLastCanon] = useState(canon);
@@ -409,6 +437,8 @@ export default function Home() {
         onClose={handleCloseReading}
         onNavigateReading={handleNavigateReading}
         onExploreBook={handleExploreFromReading}
+        crossReferenceData={readingPaneCrossRefs}
+        onSelectVerse={handleVerseFromReading}
       />
 
       {/* Bottom-left control dock */}
