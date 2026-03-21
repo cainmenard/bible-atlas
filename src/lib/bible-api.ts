@@ -42,6 +42,15 @@ export function getBookName(bookId: string): string {
 /** In-memory cache: key → settled result. Prevents redundant network calls. */
 const verseCache = new Map<string, { text: string; reference: string } | null>();
 
+export interface PassageResult {
+  reference: string;
+  verses: Array<{ verse: number; text: string }>;
+  fullText: string;
+  translation: string;
+}
+
+const passageCache = new Map<string, PassageResult | null>();
+
 /**
  * Fetch the text of a single verse from bible-api.com.
  * Results are cached in memory for the lifetime of the page session.
@@ -103,6 +112,78 @@ export async function fetchVerseText(
   }
 
   verseCache.set(cacheKey, null);
+  return null;
+}
+
+/**
+ * Fetch the text of a passage range from bible-api.com.
+ * Takes a human-readable reference like "Daniel 3:14-28" or "Psalm 23:1-6".
+ * Results are cached in memory for the lifetime of the page session.
+ * Falls back to WEB translation if the requested translation fails.
+ */
+export async function fetchPassageText(
+  reference: string,
+  translation: string = "web",
+): Promise<PassageResult | null> {
+  const cacheKey = `${reference}:${translation}`;
+  if (passageCache.has(cacheKey)) {
+    return passageCache.get(cacheKey)!;
+  }
+
+  const makeUrl = (t: string) =>
+    `/api/verse?ref=${encodeURIComponent(reference)}&translation=${t}`;
+
+  try {
+    const res = await fetch(makeUrl(translation));
+    const data = await res.json();
+    if (data.verses && Array.isArray(data.verses)) {
+      const result: PassageResult = {
+        reference: data.reference || reference,
+        verses: data.verses.map((v: { verse: number; text: string }) => ({
+          verse: v.verse,
+          text: v.text.trim(),
+        })),
+        fullText: (data.text || "").trim(),
+        translation: data.translation_name || translation,
+      };
+      passageCache.set(cacheKey, result);
+      return result;
+    }
+  } catch {
+    // ignore
+  }
+
+  // Fallback to WEB translation
+  if (translation !== "web") {
+    const webKey = `${reference}:web`;
+    if (passageCache.has(webKey)) {
+      const cached = passageCache.get(webKey)!;
+      passageCache.set(cacheKey, cached);
+      return cached;
+    }
+    try {
+      const res = await fetch(makeUrl("web"));
+      const data = await res.json();
+      if (data.verses && Array.isArray(data.verses)) {
+        const result: PassageResult = {
+          reference: data.reference || reference,
+          verses: data.verses.map((v: { verse: number; text: string }) => ({
+            verse: v.verse,
+            text: v.text.trim(),
+          })),
+          fullText: (data.text || "").trim(),
+          translation: data.translation_name || "web",
+        };
+        passageCache.set(cacheKey, result);
+        passageCache.set(webKey, result);
+        return result;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  passageCache.set(cacheKey, null);
   return null;
 }
 
