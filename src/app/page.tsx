@@ -374,12 +374,12 @@ export default function Home() {
           gap: 8,
         }}
       >
-        <CanonChip canon={canon} onChange={setCanon} />
         <ReadingsPill
           data={readings}
           onSelectBook={handleSelectBook}
           onSelectChapter={handleSelectChapter}
         />
+        <CanonChip canon={canon} onChange={setCanon} />
       </div>
 
       {viewMode === "arcs" && (

@@ -132,7 +132,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
           borderRadius: "var(--radius-md)",
           padding: "16px 20px",
           opacity: fading ? 0 : 1,
-          transition: "opacity 300ms ease-out",
+          transition: "opacity var(--transition-normal)",
         }}
       >
         {/* Row 1: Title + Date */}
@@ -307,6 +307,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
           position: "absolute",
           bottom: 0,
           left: 0,
+          zIndex: 50,
           width: "min(300px, calc(100vw - 32px))",
           maxHeight: expandedVisible ? "min(500px, calc(80vh - 100px))" : "0px",
           opacity: expandedVisible ? 1 : 0,
@@ -319,7 +320,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
           borderLeft: `2px solid ${seasonColor}`,
           borderRadius: "var(--radius-md)",
           boxShadow: "0 -8px 32px rgba(0,0,0,0.3)",
-          transition: "opacity 250ms ease-out, max-height 250ms ease-out",
+          transition: "opacity var(--transition-normal), max-height var(--transition-normal)",
         }}
       >
         <div style={{ padding: "24px" }}>
@@ -387,7 +388,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
                     minHeight: "44px",
                     borderRadius: "3px",
                     background: isHovered ? "rgba(255, 255, 255, 0.04)" : "transparent",
-                    transition: "background 200ms ease-out",
+                    transition: "background var(--transition-fast)",
                     textAlign: "left",
                     width: "100%",
                     cursor: r.bookId ? "pointer" : "default",
@@ -428,7 +429,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
                       color: "var(--color-text-primary)",
                       opacity: isHovered ? 1 : 0.92,
                       fontWeight: 500,
-                      transition: "opacity 200ms ease-out",
+                      transition: "opacity var(--transition-fast)",
                       lineHeight: 1.3,
                     }}
                   >

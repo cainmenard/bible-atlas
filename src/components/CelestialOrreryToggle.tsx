@@ -17,21 +17,21 @@ function ConstellationIcon({ active }: { active: boolean }) {
       viewBox="0 0 18 18"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ transition: "all 200ms ease-out" }}
+      style={{ transition: "all var(--transition-fast)" }}
     >
       {/* Constellation lines */}
-      <line x1="9" y1="3" x2="3" y2="9" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke 200ms ease-out" }} />
-      <line x1="9" y1="3" x2="15" y2="9" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke 200ms ease-out" }} />
-      <line x1="3" y1="9" x2="5" y2="15" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke 200ms ease-out" }} />
-      <line x1="15" y1="9" x2="13" y2="15" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke 200ms ease-out" }} />
-      <line x1="3" y1="9" x2="15" y2="9" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke 200ms ease-out" }} />
-      <line x1="5" y1="15" x2="13" y2="15" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke 200ms ease-out" }} />
+      <line x1="9" y1="3" x2="3" y2="9" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke var(--transition-fast)" }} />
+      <line x1="9" y1="3" x2="15" y2="9" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke var(--transition-fast)" }} />
+      <line x1="3" y1="9" x2="5" y2="15" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke var(--transition-fast)" }} />
+      <line x1="15" y1="9" x2="13" y2="15" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke var(--transition-fast)" }} />
+      <line x1="3" y1="9" x2="15" y2="9" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke var(--transition-fast)" }} />
+      <line x1="5" y1="15" x2="13" y2="15" stroke={color} strokeWidth="0.8" strokeLinecap="round" style={{ transition: "stroke var(--transition-fast)" }} />
       {/* Constellation dots */}
-      <circle cx="9" cy="3" r="1.2" fill={color} style={{ transition: "fill 200ms ease-out" }} />
-      <circle cx="3" cy="9" r="1.2" fill={color} style={{ transition: "fill 200ms ease-out" }} />
-      <circle cx="15" cy="9" r="1.2" fill={color} style={{ transition: "fill 200ms ease-out" }} />
-      <circle cx="5" cy="15" r="1.2" fill={color} style={{ transition: "fill 200ms ease-out" }} />
-      <circle cx="13" cy="15" r="1.2" fill={color} style={{ transition: "fill 200ms ease-out" }} />
+      <circle cx="9" cy="3" r="1.2" fill={color} style={{ transition: "fill var(--transition-fast)" }} />
+      <circle cx="3" cy="9" r="1.2" fill={color} style={{ transition: "fill var(--transition-fast)" }} />
+      <circle cx="15" cy="9" r="1.2" fill={color} style={{ transition: "fill var(--transition-fast)" }} />
+      <circle cx="5" cy="15" r="1.2" fill={color} style={{ transition: "fill var(--transition-fast)" }} />
+      <circle cx="13" cy="15" r="1.2" fill={color} style={{ transition: "fill var(--transition-fast)" }} />
     </svg>
   );
 }
@@ -45,7 +45,7 @@ function ArcsIcon({ active }: { active: boolean }) {
       viewBox="0 0 18 18"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ transition: "all 200ms ease-out" }}
+      style={{ transition: "all var(--transition-fast)" }}
     >
       {/* Outer semicircle boundary */}
       <path
@@ -54,7 +54,7 @@ function ArcsIcon({ active }: { active: boolean }) {
         strokeWidth="0.9"
         strokeLinecap="round"
         fill="none"
-        style={{ transition: "stroke 200ms ease-out" }}
+        style={{ transition: "stroke var(--transition-fast)" }}
       />
       {/* Wide inner chord arc */}
       <path
@@ -63,7 +63,7 @@ function ArcsIcon({ active }: { active: boolean }) {
         strokeWidth="0.9"
         strokeLinecap="round"
         fill="none"
-        style={{ transition: "stroke 200ms ease-out" }}
+        style={{ transition: "stroke var(--transition-fast)" }}
       />
       {/* Narrow inner chord arc */}
       <path
@@ -72,7 +72,7 @@ function ArcsIcon({ active }: { active: boolean }) {
         strokeWidth="0.9"
         strokeLinecap="round"
         fill="none"
-        style={{ transition: "stroke 200ms ease-out" }}
+        style={{ transition: "stroke var(--transition-fast)" }}
       />
     </svg>
   );
@@ -117,7 +117,7 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
               ? "radial-gradient(circle, rgba(212,160,74,0.15) 0%, transparent 70%)"
               : "transparent",
           opacity: viewMode === "constellation" ? 1 : 0.5,
-          transition: "all 200ms ease-out",
+          transition: "all var(--transition-fast)",
           cursor: "pointer",
           border: "none",
           outline: "none",
@@ -146,7 +146,7 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
               ? "radial-gradient(circle, rgba(212,160,74,0.15) 0%, transparent 70%)"
               : "transparent",
           opacity: viewMode === "arcs" ? 1 : 0.5,
-          transition: "all 200ms ease-out",
+          transition: "all var(--transition-fast)",
           cursor: "pointer",
           border: "none",
           outline: "none",
