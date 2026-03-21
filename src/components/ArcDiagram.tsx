@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState, useMemo } from "react";
+import { useRef, useEffect, useCallback, useState, useMemo, forwardRef, useImperativeHandle } from "react";
 import { GENRE_COLORS } from "@/lib/colors";
 import { Canon } from "@/lib/types";
 import { books, bookMap } from "@/data/books";
@@ -48,6 +48,13 @@ interface Props {
   translation?: string;
   selectedChapter?: number | null;
   selectedVerse?: number | null;
+  onZoomChange?: (zoomPercent: number) => void;
+}
+
+export interface ArcDiagramHandle {
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetZoom: () => void;
 }
 
 const GENRE_COLOR_LIST = Object.values(GENRE_COLORS);
@@ -214,14 +221,15 @@ function findArcAtPoint(
   return bestIdx >= 0 ? bestIdx : null;
 }
 
-export default function ArcDiagram({
+const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   canon,
   selectedBookId,
   onSelectBook,
   translation = "web",
   selectedChapter = null,
   selectedVerse = null,
-}: Props) {
+  onZoomChange,
+}: Props, ref) {
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<ArcRenderer | null>(null);
@@ -229,6 +237,9 @@ export default function ArcDiagram({
   const activeVerseSetRef = useRef<Uint8Array | null>(null);
   const [loaded, setLoaded] = useState(false);
   const transformRef = useRef({ offsetX: 0, scaleX: 1 });
+  const onZoomChangeRef = useRef(onZoomChange);
+  onZoomChangeRef.current = onZoomChange;
+  const lastReportedZoomRef = useRef(100);
   const animRef = useRef<number>(0);
   const dragRef = useRef<{
     startX: number;
@@ -720,6 +731,15 @@ export default function ArcDiagram({
     ctx.fillText("Above: target is later in the Bible", 16, titleY + 16);
     ctx.fillText("Below: target is earlier in the Bible", 16, titleY + 30);
 
+    // --- Notify parent of zoom level ---
+    {
+      const zoomPercent = Math.round(scaleX * 100);
+      if (zoomPercent !== lastReportedZoomRef.current) {
+        lastReportedZoomRef.current = zoomPercent;
+        onZoomChangeRef.current?.(zoomPercent);
+      }
+    }
+
     // --- Zoom indicator with location ---
     if (scaleX > 1.05) {
       const visStartIdx = Math.max(0, Math.floor((-offsetX) / xScale));
@@ -763,6 +783,12 @@ export default function ArcDiagram({
     cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(draw);
   }, [draw]);
+
+  useImperativeHandle(ref, () => ({
+    zoomIn: () => applyZoom(1.3, window.innerWidth / 2),
+    zoomOut: () => applyZoom(1 / 1.3, window.innerWidth / 2),
+    resetZoom: () => resetZoom(),
+  }), [applyZoom, resetZoom]);
 
   /** Smoothly zoom to center a specific verse range in the viewport */
   const zoomToRange = useCallback((startIdx: number, endIdx: number) => {
@@ -1338,33 +1364,8 @@ export default function ArcDiagram({
         />
       )}
 
-      {/* Zoom controls */}
-      <div
-        className="absolute bottom-4 left-4 flex flex-col gap-1 z-50 max-md:bottom-auto max-md:left-auto max-md:right-4 max-md:top-1/2 max-md:-translate-y-1/2"
-      >
-        {[
-          { label: "+", action: () => applyZoom(1.3, window.innerWidth / 2) },
-          { label: "\u2212", action: () => applyZoom(1 / 1.3, window.innerWidth / 2) },
-          { label: "1:1", action: () => resetZoom() },
-        ].map(({ label, action }) => (
-          <button
-            key={label}
-            onClick={action}
-            className="glass-panel three-state-interactive font-mono w-9 h-9 max-md:w-11 max-md:h-11"
-            style={{
-              borderRadius: 6,
-              fontSize: label === "1:1" ? 10 : 16,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 0,
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
     </div>
   );
-}
+});
+
+export default ArcDiagram;

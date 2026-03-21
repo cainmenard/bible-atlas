@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import StarBackground from "@/components/StarBackground";
 import Tooltip from "@/components/Tooltip";
@@ -15,6 +15,7 @@ import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
 import { getVerseCrossRefs, getTargetBookCounts } from "@/lib/crossref-utils";
 import { bookMap } from "@/data/books";
+import ArcZoomControls from "@/components/ArcZoomControls";
 import Link from "next/link";
 
 const ForceGraph = dynamic(() => import("@/components/ForceGraph"), {
@@ -37,6 +38,8 @@ export default function Home() {
     y: number;
   } | null>(null);
   const [constellationReady, setConstellationReady] = useState(false);
+  const arcRef = useRef<{ zoomIn: () => void; zoomOut: () => void; resetZoom: () => void } | null>(null);
+  const [arcZoomLevel, setArcZoomLevel] = useState(100);
   const [readings] = useState(() => getDailyReadings());
   const [todayBookIds] = useState(() =>
     readings.readings.map((r) => r.bookId).filter((id): id is string => !!id)
@@ -167,12 +170,14 @@ export default function Home() {
           />
         ) : (
           <ArcDiagram
+            ref={arcRef}
             canon={canon}
             selectedBookId={selectedBookId}
             onSelectBook={handleSelectBook}
             translation={translation}
             selectedChapter={selectedChapter}
             selectedVerse={selectedVerse}
+            onZoomChange={setArcZoomLevel}
           />
         )}
       </div>
@@ -378,6 +383,17 @@ export default function Home() {
           onSelectChapter={handleSelectChapter}
         />
       </div>
+
+      {viewMode === "arcs" && (
+        <div className="view-crossfade">
+          <ArcZoomControls
+            zoomLevel={arcZoomLevel}
+            onZoomIn={() => arcRef.current?.zoomIn()}
+            onZoomOut={() => arcRef.current?.zoomOut()}
+            onResetZoom={() => arcRef.current?.resetZoom()}
+          />
+        </div>
+      )}
 
     </main>
   );
