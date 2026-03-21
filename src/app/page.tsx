@@ -27,7 +27,7 @@ const ArcDiagram = dynamic(() => import("@/components/ArcDiagram"), {
 });
 
 export default function Home() {
-  const [viewMode, setViewMode] = useState<ViewMode>("constellation");
+  const [viewMode, setViewMode] = useState<ViewMode>("arcs");
   const [canon, setCanon] = useState<Canon>("catholic");
   const [translation, setTranslation] = useState("rsv-ce");
   const [edgeThreshold, setEdgeThreshold] = useState(5);
