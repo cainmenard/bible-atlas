@@ -187,6 +187,53 @@ export async function fetchPassageText(
   return null;
 }
 
+/**
+ * Parse a human-readable reading reference like "Daniel 3:14-28" into
+ * structured data. Handles numbered book names ("1 Corinthians 15:54-58")
+ * and comma-separated verse lists ("Psalm 104:1-2, 5-6, 10, 12, 24, 35").
+ * Returns null if the reference cannot be parsed.
+ */
+export function parseReadingReference(reference: string): {
+  bookName: string;
+  chapter: number;
+  startVerse: number;
+  endVerse: number;
+  fullRef: string;
+} | null {
+  // Match: optional number prefix + book name words + chapter:startVerse(-endVerse)?
+  const match = reference.match(
+    /^(\d?\s*[A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(\d+):(\d+)(?:-(\d+))?/,
+  );
+  if (!match) return null;
+
+  const bookName = match[1].trim();
+  const chapter = parseInt(match[2], 10);
+  const startVerse = parseInt(match[3], 10);
+
+  let endVerse: number;
+  if (match[4]) {
+    // If there are additional comma-separated ranges, use the last number in the string
+    const hasMore = reference.indexOf(",") !== -1;
+    if (hasMore) {
+      const allNumbers = reference.match(/\d+/g);
+      endVerse = parseInt(allNumbers![allNumbers!.length - 1], 10);
+    } else {
+      endVerse = parseInt(match[4], 10);
+    }
+  } else {
+    // No dash after first verse — check for comma-separated values
+    const hasMore = reference.indexOf(",") !== -1;
+    if (hasMore) {
+      const allNumbers = reference.match(/\d+/g);
+      endVerse = parseInt(allNumbers![allNumbers!.length - 1], 10);
+    } else {
+      endVerse = startVerse;
+    }
+  }
+
+  return { bookName, chapter, startVerse, endVerse, fullRef: reference };
+}
+
 /** Build a BibleGateway URL for a specific verse */
 export function getBibleGatewayUrl(
   bookId: string,
