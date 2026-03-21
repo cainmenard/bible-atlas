@@ -366,10 +366,8 @@ export default function Home() {
 
       {/* Bottom-left control dock */}
       <div
-        className="fixed z-40"
+        className="fixed z-40 bottom-3 left-3 md:bottom-4 md:left-4"
         style={{
-          bottom: 16,
-          left: 16,
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",

@@ -122,7 +122,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
         ref={componentRef}
         className="readings-card"
         style={{
-          width: "300px",
+          width: "min(300px, calc(100vw - 32px))",
           background: "rgba(14, 14, 28, 0.88)",
           backgroundImage: NOISE_SVG,
           backdropFilter: "blur(12px)",
@@ -307,7 +307,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
           position: "absolute",
           bottom: 0,
           left: 0,
-          width: "300px",
+          width: "min(300px, calc(100vw - 32px))",
           maxHeight: expandedVisible ? "min(500px, calc(80vh - 100px))" : "0px",
           opacity: expandedVisible ? 1 : 0,
           overflowY: "auto",
@@ -383,7 +383,8 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
                     display: "flex",
                     alignItems: "center",
                     gap: "12px",
-                    padding: "10px 8px",
+                    padding: "12px 8px",
+                    minHeight: "44px",
                     borderRadius: "3px",
                     background: isHovered ? "rgba(255, 255, 255, 0.04)" : "transparent",
                     transition: "background 200ms ease-out",
