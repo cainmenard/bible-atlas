@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import StarBackground from "@/components/StarBackground";
 import Tooltip from "@/components/Tooltip";
 import DetailPanel from "@/components/DetailPanel";
+import ReadingPane from "@/components/ReadingPane";
 import CanonChip from "@/components/CanonChip";
 import ReadingsPill from "@/components/ReadingsPill";
 import TranslationSelector from "@/components/TranslationSelector";
@@ -44,6 +45,12 @@ export default function Home() {
   const [todayBookIds] = useState(() =>
     readings.readings.map((r) => r.bookId).filter((id): id is string => !!id)
   );
+
+  // ─── READING PANE STATE ───
+  const [activeReading, setActiveReading] = useState<{
+    index: number;
+    reading: { type: string; reference: string; bookId: string };
+  } | null>(null);
 
   // ─── DRILL-DOWN STATE (reported from DetailPanel) ───
   const [drillState, setDrillState] = useState<{
@@ -128,6 +135,35 @@ export default function Home() {
     setSelectedBookId(null);
     setDrillState(null);
   }, []);
+
+  const handleOpenReading = useCallback((bookId: string, reference: string, type: string, index: number) => {
+    // Close the detail panel if open
+    setSelectedBookId(null);
+    setDrillState(null);
+    // Open the reading pane
+    setActiveReading({
+      index,
+      reading: { type, reference, bookId },
+    });
+  }, []);
+
+  const handleNavigateReading = useCallback((index: number) => {
+    const r = readings.readings[index];
+    if (!r || !r.bookId) return;
+    setActiveReading({
+      index,
+      reading: { type: r.type, reference: r.reference, bookId: r.bookId },
+    });
+  }, [readings]);
+
+  const handleCloseReading = useCallback(() => {
+    setActiveReading(null);
+  }, []);
+
+  const handleExploreFromReading = useCallback((bookId: string) => {
+    setActiveReading(null);
+    handleSelectBook(bookId);
+  }, [handleSelectBook]);
 
   // Reset drill-down state when canon changes and selected book is excluded (derived state pattern)
   const [lastCanon, setLastCanon] = useState(canon);
@@ -364,6 +400,17 @@ export default function Home() {
         onClose={handleClosePanel}
       />
 
+      <ReadingPane
+        isOpen={activeReading !== null}
+        reading={activeReading?.reading ?? null}
+        translation={translation}
+        allReadings={readings.readings}
+        currentReadingIndex={activeReading?.index ?? 0}
+        onClose={handleCloseReading}
+        onNavigateReading={handleNavigateReading}
+        onExploreBook={handleExploreFromReading}
+      />
+
       {/* Bottom-left control dock */}
       <div
         className="fixed z-40 bottom-3 left-3 md:bottom-4 md:left-4"
@@ -378,6 +425,7 @@ export default function Home() {
           data={readings}
           onSelectBook={handleSelectBook}
           onSelectChapter={handleSelectChapter}
+          onOpenReading={handleOpenReading}
         />
         <CanonChip canon={canon} onChange={setCanon} />
       </div>

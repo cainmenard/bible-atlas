@@ -8,6 +8,7 @@ interface Props {
   data: DailyReadingsData | null;
   onSelectBook: (id: string) => void;
   onSelectChapter?: (chapter: number) => void;
+  onOpenReading?: (bookId: string, reference: string, type: string, index: number) => void;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -23,7 +24,7 @@ const NOISE_SVG = `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/sv
 
 type DisplayState = "peek" | "pill" | "expanded";
 
-export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Props) {
+export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading }: Props) {
   const [displayState, setDisplayState] = useState<DisplayState>("peek");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [fading, setFading] = useState(false);
@@ -42,8 +43,13 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
   const yr = now.getFullYear();
   const shortDate = `${day} ${mon} ${yr}`;
 
-  const handleReadingClick = useCallback((bookId: string | undefined, reference: string) => {
+  const handleReadingClick = useCallback((bookId: string | undefined, reference: string, type: string, index: number) => {
     if (!bookId) return;
+    if (onOpenReading) {
+      onOpenReading(bookId, reference, type, index);
+      setDisplayState("pill");
+      return;
+    }
     onSelectBook(bookId);
     if (onSelectChapter) {
       const match = reference.match(/(\d+)[:.\-]/);
@@ -53,7 +59,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
       }
     }
     setDisplayState("pill");
-  }, [onSelectBook, onSelectChapter]);
+  }, [onSelectBook, onSelectChapter, onOpenReading]);
 
   // Auto-collapse peek → pill after 4500ms
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -168,7 +174,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
           {data.readings.map((r, i) => (
             <div
               key={i}
-              onClick={() => handleReadingClick(r.bookId, r.reference)}
+              onClick={() => handleReadingClick(r.bookId, r.reference, r.type, i)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -377,7 +383,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter }: Pr
               return (
                 <button
                   key={i}
-                  onClick={() => handleReadingClick(r.bookId, r.reference)}
+                  onClick={() => handleReadingClick(r.bookId, r.reference, r.type, i)}
                   onMouseEnter={() => setHoveredIndex(i)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   style={{
