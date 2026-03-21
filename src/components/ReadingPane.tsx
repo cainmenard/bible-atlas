@@ -48,6 +48,7 @@ interface ReadingPaneProps {
   onClose: () => void;
   onNavigateReading: (index: number) => void;
   onExploreBook: (bookId: string) => void;
+  onViewConnections?: (bookId: string) => void;
   crossReferenceData?: VerseCrossRef[];
   onSelectVerse?: (bookId: string, chapter: number, verse: number) => void;
 }
@@ -63,6 +64,7 @@ export default function ReadingPane({
   onClose,
   onNavigateReading,
   onExploreBook,
+  onViewConnections,
   crossReferenceData,
   onSelectVerse,
 }: ReadingPaneProps) {
@@ -455,6 +457,23 @@ export default function ReadingPane({
             >
               Read on BibleGateway →
             </a>
+            {onViewConnections && (
+              <button
+                onClick={() => onViewConnections(reading.bookId)}
+                className="three-state-interactive"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "var(--text-xs)",
+                  color: "var(--color-text-secondary)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "var(--space-xs) var(--space-sm)",
+                }}
+              >
+                View connections in Arc →
+              </button>
+            )}
             <button
               onClick={() => onExploreBook(reading.bookId)}
               className="three-state-interactive"

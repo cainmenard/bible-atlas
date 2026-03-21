@@ -140,6 +140,7 @@ export default function Home() {
   const handleSelectBook = useCallback((id: string | null) => {
     setSelectedBookId(id);
     setDrillState(null);
+    setArcHighlightBookId(null);
   }, []);
 
   const handleSelectChapter = useCallback((chapter: number | null) => {
@@ -193,6 +194,15 @@ export default function Home() {
     setDrillState({ bookId, chapter, verse });
   }, []);
 
+  // ─── ARC HIGHLIGHT STATE (separate from selectedBookId to avoid opening DetailPanel) ───
+  const [arcHighlightBookId, setArcHighlightBookId] = useState<string | null>(null);
+
+  const handleViewConnectionsFromReading = useCallback((bookId: string) => {
+    setActiveReading(null);
+    setArcHighlightBookId(bookId);
+    setViewMode("arcs");
+  }, []);
+
   // Reset drill-down state when canon changes and selected book is excluded (derived state pattern)
   const [lastCanon, setLastCanon] = useState(canon);
   if (lastCanon !== canon) {
@@ -236,7 +246,7 @@ export default function Home() {
           <ArcDiagram
             ref={arcRef}
             canon={canon}
-            selectedBookId={selectedBookId}
+            selectedBookId={selectedBookId ?? arcHighlightBookId}
             onSelectBook={handleSelectBook}
             translation={translation}
             selectedChapter={selectedChapter}
@@ -437,6 +447,7 @@ export default function Home() {
         onClose={handleCloseReading}
         onNavigateReading={handleNavigateReading}
         onExploreBook={handleExploreFromReading}
+        onViewConnections={handleViewConnectionsFromReading}
         crossReferenceData={readingPaneCrossRefs}
         onSelectVerse={handleVerseFromReading}
       />
