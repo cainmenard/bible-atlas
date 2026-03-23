@@ -282,6 +282,7 @@ export default function Home() {
             selectedChapter={selectedChapter}
             selectedVerse={selectedVerse}
             onZoomChange={setArcZoomLevel}
+            todayBookIds={todayBookIds}
           />
         )}
       </div>

@@ -49,6 +49,7 @@ interface Props {
   selectedChapter?: number | null;
   selectedVerse?: number | null;
   onZoomChange?: (zoomPercent: number) => void;
+  todayBookIds?: string[];
 }
 
 export interface ArcDiagramHandle {
@@ -229,6 +230,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   selectedChapter = null,
   selectedVerse = null,
   onZoomChange,
+  todayBookIds,
 }: Props, ref) {
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -259,6 +261,13 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
 
   // Store rendered labels for hit-testing
   const renderedLabelsRef = useRef<LabelItem[]>([]);
+
+  // Today's readings book IDs (kept in ref for draw callback)
+  const todayBookIdsRef = useRef<Set<string>>(new Set());
+  todayBookIdsRef.current = useMemo(
+    () => new Set(todayBookIds ?? []),
+    [todayBookIds],
+  );
 
   // Pre-compute book name lookup (stable, no deps)
   const bookNameMap = useMemo(() => {
@@ -541,6 +550,32 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         ctx.fillText(item.text, item.x, item.y);
       }
       ctx.globalAlpha = 1;
+    }
+
+    // --- Today's readings indicators (subtle amber dot + underline) ---
+    {
+      const todaySet = todayBookIdsRef.current;
+      if (todaySet.size > 0) {
+        for (const item of bookLabels) {
+          if (!todaySet.has(item.bookId)) continue;
+          const halfW = item.width / 2;
+          const underY = item.y + 4;
+          // Subtle underline
+          ctx.strokeStyle = "rgba(212, 160, 74, 0.25)";
+          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = item.alpha;
+          ctx.beginPath();
+          ctx.moveTo(item.x - halfW, underY);
+          ctx.lineTo(item.x + halfW, underY);
+          ctx.stroke();
+          // Small amber dot below label
+          ctx.fillStyle = "rgba(212, 160, 74, 0.4)";
+          ctx.beginPath();
+          ctx.arc(item.x, underY + 6, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
     }
 
     // --- Batch-draw chapter labels (sorted by font size) ---
