@@ -160,15 +160,17 @@ export default function Home() {
   }, []);
 
   const handleOpenReading = useCallback((bookId: string, reference: string, type: string, index: number) => {
-    // Close the detail panel if open
-    setSelectedBookId(null);
-    setDrillState(null);
-    // Open the reading pane
-    setActiveReading({
-      index,
-      reading: { type, reference, bookId },
-    });
-  }, []);
+    // If detail panel is open, close it first and delay opening reading pane
+    if (selectedBookId !== null) {
+      setSelectedBookId(null);
+      setDrillState(null);
+      setTimeout(() => {
+        setActiveReading({ index, reading: { type, reference, bookId } });
+      }, 250); // wait for DetailPanel exit animation
+    } else {
+      setActiveReading({ index, reading: { type, reference, bookId } });
+    }
+  }, [selectedBookId]);
 
   const handleNavigateReading = useCallback((index: number) => {
     const r = readings.readings[index];
@@ -185,13 +187,17 @@ export default function Home() {
 
   const handleExploreFromReading = useCallback((bookId: string) => {
     setActiveReading(null);
-    handleSelectBook(bookId);
+    setTimeout(() => {
+      handleSelectBook(bookId);
+    }, 250); // wait for ReadingPane exit animation
   }, [handleSelectBook]);
 
   const handleVerseFromReading = useCallback((bookId: string, chapter: number, verse: number) => {
     setActiveReading(null);
-    setSelectedBookId(bookId);
-    setDrillState({ bookId, chapter, verse });
+    setTimeout(() => {
+      setSelectedBookId(bookId);
+      setDrillState({ bookId, chapter, verse });
+    }, 250); // wait for ReadingPane exit animation
   }, []);
 
   // ─── ARC HIGHLIGHT STATE (separate from selectedBookId to avoid opening DetailPanel) ───
