@@ -334,6 +334,20 @@ input[type="range"] {
 }
 
 /* ----------------------------------------------------------
+   VIEW TRANSITION BOOK REMINDER
+   ---------------------------------------------------------- */
+@keyframes view-transition-book {
+  0%   { opacity: 0; transform: scale(0.96); }
+  30%  { opacity: 1; transform: scale(1); }
+  70%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+
+.view-transition-book-label {
+  animation: view-transition-book 600ms ease-out forwards;
+}
+
+/* ----------------------------------------------------------
    CANON CHIP POPOVER
    ---------------------------------------------------------- */
 @keyframes canon-popover-in {

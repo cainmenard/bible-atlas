@@ -41,6 +41,8 @@ export default function Home() {
   const [constellationReady, setConstellationReady] = useState(false);
   const arcRef = useRef<{ zoomIn: () => void; zoomOut: () => void; resetZoom: () => void } | null>(null);
   const [arcZoomLevel, setArcZoomLevel] = useState(100);
+  const [viewTransitionBook, setViewTransitionBook] = useState<string | null>(null);
+  const prevViewModeRef = useRef(viewMode);
   const [readings] = useState(() => getDailyReadings());
   const [todayBookIds] = useState(() =>
     readings.readings.map((r) => r.bookId).filter((id): id is string => !!id)
@@ -209,6 +211,21 @@ export default function Home() {
     setViewMode("arcs");
   }, []);
 
+  // ─── VIEW TRANSITION BOOK REMINDER ───
+  useEffect(() => {
+    if (prevViewModeRef.current !== viewMode) {
+      prevViewModeRef.current = viewMode;
+      if (selectedBookId) {
+        const book = bookMap.get(selectedBookId);
+        if (book) {
+          setViewTransitionBook(book.name);
+          const timer = setTimeout(() => setViewTransitionBook(null), 600);
+          return () => clearTimeout(timer);
+        }
+      }
+    }
+  }, [viewMode, selectedBookId]);
+
   // Reset drill-down state when canon changes and selected book is excluded (derived state pattern)
   const [lastCanon, setLastCanon] = useState(canon);
   if (lastCanon !== canon) {
@@ -261,6 +278,23 @@ export default function Home() {
           />
         )}
       </div>
+
+      {/* View transition book reminder */}
+      {viewTransitionBook && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center pointer-events-none">
+          <div
+            className="glass-panel view-transition-book-label"
+            style={{
+              padding: '12px 24px',
+              fontFamily: 'var(--font-display)',
+              fontSize: 'var(--text-lg)',
+              color: 'var(--color-accent)',
+            }}
+          >
+            {viewTransitionBook}
+          </div>
+        </div>
+      )}
 
       {/* Loading overlay */}
       {viewMode === "constellation" && !constellationReady && (
