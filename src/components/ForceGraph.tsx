@@ -526,7 +526,11 @@ export default function ForceGraph({
         });
       });
 
-      // Apply selection highlighting
+      // Apply selection highlighting — this handles the case where the component
+      // mounts with a pre-existing selectedBookId (e.g., user selected a book in
+      // the Arc view then toggled to Constellation). Because buildScene() and
+      // populateScene() are both synchronous, the highlight is applied immediately
+      // after nodes and edges are created — no timing gap with Three.js init.
       applySelection(state, selectedId);
       applyTodayPulse(state, todayIds);
     },
