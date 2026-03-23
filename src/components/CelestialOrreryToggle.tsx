@@ -95,42 +95,13 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
     <div
       className="glass-panel flex items-center h-11 md:h-9"
       style={{
-        width: 80,
+        width: 96,
         borderRadius: 18,
         padding: "2px 2px",
         gap: 2,
       }}
     >
-      {/* Constellation button */}
-      <button
-        onClick={() => handleClick("constellation")}
-        onAnimationEnd={handleAnimationEnd}
-        className={`h-10 md:h-8 ${activatingMode === "constellation" ? "orrery-activate" : ""}`}
-        style={{
-          width: 36,
-          borderRadius: 16,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background:
-            viewMode === "constellation"
-              ? "radial-gradient(circle, rgba(212,160,74,0.15) 0%, transparent 70%)"
-              : "transparent",
-          opacity: viewMode === "constellation" ? 1 : 0.5,
-          transition: "all var(--transition-fast)",
-          cursor: "pointer",
-          border: "none",
-          outline: "none",
-          padding: 0,
-          flexShrink: 0,
-        }}
-        aria-label="Constellation view"
-        aria-pressed={viewMode === "constellation"}
-      >
-        <ConstellationIcon active={viewMode === "constellation"} />
-      </button>
-
-      {/* Arcs button */}
+      {/* Arcs button (primary) */}
       <button
         onClick={() => handleClick("arcs")}
         onAnimationEnd={handleAnimationEnd}
@@ -143,7 +114,7 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
           justifyContent: "center",
           background:
             viewMode === "arcs"
-              ? "radial-gradient(circle, rgba(212,160,74,0.15) 0%, transparent 70%)"
+              ? "radial-gradient(circle, rgba(212,160,74,0.2) 0%, transparent 70%)"
               : "transparent",
           opacity: viewMode === "arcs" ? 1 : 0.5,
           transition: "all var(--transition-fast)",
@@ -157,6 +128,47 @@ export default function CelestialOrreryToggle({ viewMode, onChange }: Props) {
         aria-pressed={viewMode === "arcs"}
       >
         <ArcsIcon active={viewMode === "arcs"} />
+      </button>
+
+      {/* Separator (desktop only) */}
+      <div
+        className="hidden md:inline-block"
+        style={{
+          width: 1,
+          height: 14,
+          backgroundColor: "var(--glass-border)",
+          flexShrink: 0,
+        }}
+      />
+
+      {/* Constellation button */}
+      <button
+        onClick={() => handleClick("constellation")}
+        onAnimationEnd={handleAnimationEnd}
+        className={`h-10 md:h-8 ${activatingMode === "constellation" ? "orrery-activate" : ""}`}
+        title="Network Explorer"
+        style={{
+          width: 36,
+          borderRadius: 16,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background:
+            viewMode === "constellation"
+              ? "radial-gradient(circle, rgba(212,160,74,0.15) 0%, transparent 70%)"
+              : "transparent",
+          opacity: viewMode === "constellation" ? 1 : 0.35,
+          transition: "all var(--transition-fast)",
+          cursor: "pointer",
+          border: "none",
+          outline: "none",
+          padding: 0,
+          flexShrink: 0,
+        }}
+        aria-label="Constellation view"
+        aria-pressed={viewMode === "constellation"}
+      >
+        <ConstellationIcon active={viewMode === "constellation"} />
       </button>
     </div>
   );
