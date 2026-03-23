@@ -174,6 +174,13 @@ export default function Home() {
     }
   }, [selectedBookId]);
 
+  const handleReadAll = useCallback(() => {
+    const firstValidIndex = readings.readings.findIndex(r => !!r.bookId);
+    if (firstValidIndex === -1) return;
+    const r = readings.readings[firstValidIndex];
+    handleOpenReading(r.bookId!, r.reference, r.type, firstValidIndex);
+  }, [readings, handleOpenReading]);
+
   const handleNavigateReading = useCallback((index: number) => {
     const r = readings.readings[index];
     if (!r || !r.bookId) return;
@@ -507,6 +514,7 @@ export default function Home() {
           onSelectBook={handleSelectBook}
           onSelectChapter={handleSelectChapter}
           onOpenReading={handleOpenReading}
+          onReadAll={handleReadAll}
         />
         <CanonChip canon={canon} onChange={setCanon} />
       </div>

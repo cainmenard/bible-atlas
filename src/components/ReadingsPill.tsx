@@ -9,6 +9,7 @@ interface Props {
   onSelectBook: (id: string) => void;
   onSelectChapter?: (chapter: number) => void;
   onOpenReading?: (bookId: string, reference: string, type: string, index: number) => void;
+  onReadAll?: () => void;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -24,7 +25,7 @@ const NOISE_SVG = `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/sv
 
 type DisplayState = "peek" | "pill" | "expanded";
 
-export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading }: Props) {
+export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading, onReadAll }: Props) {
   const [displayState, setDisplayState] = useState<DisplayState>("peek");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [fading, setFading] = useState(false);
@@ -470,6 +471,32 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOp
               {data.season}
             </span>
           </div>
+
+          {/* Read All button */}
+          {onReadAll && (
+            <button
+              onClick={() => {
+                onReadAll();
+                setDisplayState("pill");
+              }}
+              className="three-state-interactive"
+              style={{
+                marginTop: "16px",
+                fontFamily: "var(--font-mono)",
+                fontSize: "var(--text-xs)",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                background: "var(--color-accent-muted)",
+                border: "1px solid var(--color-accent-border)",
+                borderRadius: "9999px",
+                padding: "8px 20px",
+                color: "var(--color-accent)",
+                cursor: "pointer",
+              }}
+            >
+              Read All →
+            </button>
+          )}
         </div>
       </div>
     </div>
