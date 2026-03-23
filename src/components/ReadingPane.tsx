@@ -21,6 +21,24 @@ function getTypeColor(type: string): string {
   return TYPE_COLORS[type] ?? DEFAULT_TYPE_COLOR;
 }
 
+/* ─── Translation display names ─── */
+
+const TRANSLATION_DISPLAY_NAMES: Record<string, string> = {
+  "rsv-ce": "RSV-CE",
+  jb: "Jerusalem Bible",
+  kjv: "King James Version",
+  web: "World English Bible",
+  dra: "Douay-Rheims",
+};
+
+const BIBLEGATEWAY_VERSIONS: Record<string, string> = {
+  "rsv-ce": "RSVCE",
+  jb: "JB",
+  kjv: "KJV",
+  web: "WEB",
+  dra: "DRA",
+};
+
 /* ─── Mobile detection (same pattern as DetailPanel) ─── */
 
 const MOBILE_QUERY = "(max-width: 768px)";
@@ -86,6 +104,14 @@ export default function ReadingPane({
   const [passage, setPassage] = useState<PassageResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [overrideTranslation, setOverrideTranslation] = useState<string | null>(null);
+
+  /* Reset override when the parent translation or reading changes */
+  useEffect(() => {
+    setOverrideTranslation(null);
+  }, [translation, reading?.reference]);
+
+  const effectiveTranslation = overrideTranslation ?? translation;
 
   /* Fetch passage when reading or translation changes */
   useEffect(() => {
@@ -96,7 +122,7 @@ export default function ReadingPane({
     setFailed(false);
     setPassage(null);
 
-    fetchPassageText(reading.reference, translation).then((result) => {
+    fetchPassageText(reading.reference, effectiveTranslation).then((result) => {
       if (cancelled) return;
       setLoading(false);
       if (result) {
@@ -109,7 +135,7 @@ export default function ReadingPane({
     return () => {
       cancelled = true;
     };
-  }, [reading?.reference, translation]);
+  }, [reading?.reference, effectiveTranslation]);
 
   if (!reading) return null;
 
@@ -118,7 +144,18 @@ export default function ReadingPane({
   const bookName = getBookName(reading.bookId);
   const hasPrev = currentReadingIndex > 0;
   const hasNext = currentReadingIndex < allReadings.length - 1;
-  const bibleGatewayUrl = `https://www.biblegateway.com/passage/?search=${encodeURIComponent(reading.reference)}&version=RSVCE`;
+  const bgVersion = BIBLEGATEWAY_VERSIONS[effectiveTranslation] || "RSVCE";
+  const bibleGatewayUrl = `https://www.biblegateway.com/passage/?search=${encodeURIComponent(reading.reference)}&version=${bgVersion}`;
+
+  /* Detect if the returned translation differs from what was requested */
+  const requestedName = TRANSLATION_DISPLAY_NAMES[effectiveTranslation] || effectiveTranslation.toUpperCase();
+  const isFallback =
+    passage !== null &&
+    effectiveTranslation !== "web" &&
+    effectiveTranslation !== "kjv" &&
+    effectiveTranslation !== "dra" &&
+    !passage.translation.toLowerCase().includes(effectiveTranslation.replace("-", "").toLowerCase());
+  const fallbackGatewayUrl = `https://www.biblegateway.com/passage/?search=${encodeURIComponent(reading.reference)}&version=${BIBLEGATEWAY_VERSIONS[effectiveTranslation] || "RSVCE"}`;
 
   return (
     <AnimatePresence>
@@ -292,8 +329,66 @@ export default function ReadingPane({
                   borderRadius: "var(--radius-sm)",
                 }}
               >
-                {passage?.translation || translation.toUpperCase()}
+                {passage?.translation || effectiveTranslation.toUpperCase()}
               </span>
+
+              {/* Fallback translation notice */}
+              {isFallback && (
+                <div style={{ marginTop: "var(--space-sm)" }}>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "11px",
+                      color: "var(--color-text-muted)",
+                      fontStyle: "italic",
+                      margin: 0,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {requestedName} not available for free reading. Showing {passage.translation}.
+                  </p>
+                  <a
+                    href={fallbackGatewayUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="three-state-interactive"
+                    style={{
+                      display: "inline-block",
+                      marginTop: "4px",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "11px",
+                      color: "var(--color-accent)",
+                      textDecoration: "none",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    Read in {requestedName} on BibleGateway →
+                  </a>
+                  {effectiveTranslation === "rsv-ce" && (
+                    <button
+                      onClick={() => setOverrideTranslation("dra")}
+                      className="three-state-interactive"
+                      style={{
+                        display: "block",
+                        marginTop: "4px",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "11px",
+                        color: "var(--color-text-muted)",
+                        fontStyle: "italic",
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                        textDecorationColor: "var(--color-text-disabled)",
+                        textUnderlineOffset: "2px",
+                      }}
+                    >
+                      Try Douay-Rheims (Catholic, public domain)
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Passage text area */}
