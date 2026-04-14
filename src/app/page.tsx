@@ -251,6 +251,9 @@ export default function Home() {
 
   return (
     <main className="relative w-screen h-screen overflow-hidden page-fade-in">
+      <h1 className="sr-only">
+        Bible Atlas — Interactive Cross-Reference Star Map
+      </h1>
       {seasonColor && (
         <div
           className="fixed top-0 left-0 right-0 h-[2px] z-50"
