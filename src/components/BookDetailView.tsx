@@ -4,6 +4,7 @@ import React from "react";
 import ChapterGrid from "./ChapterGrid";
 
 interface BookDetailViewProps {
+  bookId: string;
   book: {
     name: string;
     testament: "OT" | "NT";
@@ -16,13 +17,16 @@ interface BookDetailViewProps {
     name: string;
     connectionCount: number;
   }>;
+  selectedChapter?: number | null;
   onSelectChapter: (chapter: number) => void;
   onSelectConnectedBook: (bookName: string) => void;
 }
 
 export default function BookDetailView({
+  bookId,
   book,
   connectedBooks,
+  selectedChapter,
   onSelectChapter,
   onSelectConnectedBook,
 }: BookDetailViewProps) {
@@ -184,8 +188,10 @@ export default function BookDetailView({
       {/* ── Chapter Selector ── */}
       <div className="book-detail-section-header">Select a chapter</div>
       <ChapterGrid
+        bookId={bookId}
         bookName={book.name}
         totalChapters={book.totalChapters}
+        selectedChapter={selectedChapter}
         onSelectChapter={onSelectChapter}
       />
 
