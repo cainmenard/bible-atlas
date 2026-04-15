@@ -46,15 +46,22 @@ function getConnections(bookId: string, canon: Canon) {
       .map((b) => b.id),
   );
 
-  const connections: { book: BibleBook; count: number }[] = [];
+  // Edges are bidirectional: each book-pair appears as both source→target and
+  // target→source with independent counts. Sum both directions per other-book
+  // so each connected book appears exactly once in the list.
+  const counts = new Map<string, number>();
   edges.forEach((e) => {
-    if (e.source === bookId && activeBooks.has(e.target)) {
-      const b = bookMap.get(e.target);
-      if (b) connections.push({ book: b, count: e.count });
-    } else if (e.target === bookId && activeBooks.has(e.source)) {
-      const b = bookMap.get(e.source);
-      if (b) connections.push({ book: b, count: e.count });
-    }
+    let otherId: string | null = null;
+    if (e.source === bookId && activeBooks.has(e.target)) otherId = e.target;
+    else if (e.target === bookId && activeBooks.has(e.source)) otherId = e.source;
+    if (!otherId) return;
+    counts.set(otherId, (counts.get(otherId) ?? 0) + e.count);
+  });
+
+  const connections: { book: BibleBook; count: number }[] = [];
+  counts.forEach((count, otherId) => {
+    const b = bookMap.get(otherId);
+    if (b) connections.push({ book: b, count });
   });
 
   connections.sort((a, b) => b.count - a.count);
