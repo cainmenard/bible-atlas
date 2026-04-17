@@ -17,6 +17,7 @@ interface BookDetailViewProps {
     name: string;
     connectionCount: number;
   }>;
+  totalConnections: number;
   selectedChapter?: number | null;
   onSelectChapter: (chapter: number) => void;
   onSelectConnectedBook: (bookName: string) => void;
@@ -26,6 +27,7 @@ export default function BookDetailView({
   bookId,
   book,
   connectedBooks,
+  totalConnections,
   selectedChapter,
   onSelectChapter,
   onSelectConnectedBook,
@@ -155,12 +157,20 @@ export default function BookDetailView({
           margin-left: var(--space-md);
         }
 
+        .book-detail-conn-pct {
+          color: var(--color-text-disabled);
+        }
+
         .book-detail-conn-bar {
-          height: 3px;
-          border-radius: 2px;
+          height: 8px;
+          border-radius: 3px;
           background: var(--color-accent-muted);
-          margin-top: 4px;
-          transition: width var(--transition-normal);
+          margin-top: var(--space-xs);
+          transition: width var(--transition-normal), background var(--transition-fast);
+        }
+
+        .book-detail-conn-bar[data-leader="true"] {
+          background: var(--color-accent);
         }
       `}</style>
 
@@ -200,28 +210,39 @@ export default function BookDetailView({
         <>
           <div className="book-detail-section-header">Most connected books</div>
           <div className="book-detail-conn-list" role="list">
-            {top8.map((conn) => (
-              <button
-                key={conn.name}
-                type="button"
-                className="book-detail-conn-item"
-                onClick={() => onSelectConnectedBook(conn.name)}
-                role="listitem"
-              >
-                <div className="book-detail-conn-row">
-                  <span className="book-detail-conn-name">{conn.name}</span>
-                  <span className="book-detail-conn-count">
-                    {conn.connectionCount.toLocaleString()}
-                  </span>
-                </div>
-                <div
-                  className="book-detail-conn-bar"
-                  style={{
-                    width: `${(conn.connectionCount / maxCount) * 100}%`,
-                  }}
-                />
-              </button>
-            ))}
+            {top8.map((conn, i) => {
+              const share = totalConnections > 0 ? conn.connectionCount / totalConnections : 0;
+              const pctDigits = share > 0 && share < 0.1 ? 1 : 0;
+              return (
+                <button
+                  key={conn.name}
+                  type="button"
+                  className="book-detail-conn-item"
+                  onClick={() => onSelectConnectedBook(conn.name)}
+                  role="listitem"
+                >
+                  <div className="book-detail-conn-row">
+                    <span className="book-detail-conn-name">{conn.name}</span>
+                    <span className="book-detail-conn-count">
+                      {conn.connectionCount.toLocaleString()}
+                      {totalConnections > 0 && (
+                        <span className="book-detail-conn-pct">
+                          {" · "}
+                          {(share * 100).toFixed(pctDigits)}%
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div
+                    className="book-detail-conn-bar"
+                    data-leader={i === 0}
+                    style={{
+                      width: `${(conn.connectionCount / maxCount) * 100}%`,
+                    }}
+                  />
+                </button>
+              );
+            })}
           </div>
         </>
       )}

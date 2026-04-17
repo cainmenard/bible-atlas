@@ -235,12 +235,17 @@ export default function DetailPanel({
   // ─── Derived data ───
   const book = navState.selectedBook ? bookMap.get(navState.selectedBook) : null;
 
-  const connectedBooks = useMemo(() => {
-    if (!navState.selectedBook) return [];
-    return getConnections(navState.selectedBook, canon).map((c) => ({
-      name: c.book.name,
-      connectionCount: c.count,
-    }));
+  const { connectedBooks, totalConnections } = useMemo(() => {
+    if (!navState.selectedBook) return { connectedBooks: [], totalConnections: 0 };
+    const connections = getConnections(navState.selectedBook, canon);
+    const total = connections.reduce((sum, c) => sum + c.count, 0);
+    return {
+      connectedBooks: connections.map((c) => ({
+        name: c.book.name,
+        connectionCount: c.count,
+      })),
+      totalConnections: total,
+    };
   }, [navState.selectedBook, canon]);
 
   const chapterCrossRefs = useMemo(() => {
@@ -341,6 +346,7 @@ export default function DetailPanel({
               totalCrossReferences: crossReferenceData.length,
             }}
             connectedBooks={connectedBooks}
+            totalConnections={totalConnections}
             selectedChapter={navState.selectedChapter}
             onSelectChapter={handleSelectChapter}
             onSelectConnectedBook={handleSelectConnectedBook}
