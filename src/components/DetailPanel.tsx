@@ -331,6 +331,7 @@ export default function DetailPanel({
       case "book":
         return (
           <BookDetailView
+            bookId={navState.selectedBook}
             book={{
               name: book.name,
               testament: book.testament === "DC" ? "OT" : book.testament,
@@ -340,6 +341,7 @@ export default function DetailPanel({
               totalCrossReferences: crossReferenceData.length,
             }}
             connectedBooks={connectedBooks}
+            selectedChapter={navState.selectedChapter}
             onSelectChapter={handleSelectChapter}
             onSelectConnectedBook={handleSelectConnectedBook}
           />
