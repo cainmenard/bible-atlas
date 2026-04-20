@@ -64,6 +64,15 @@ export default function Home() {
     verse: number | null;
   } | null>(null);
 
+  // Pending cross-reference navigation pushed down into DetailPanel.
+  // Updating `key` always wins the most recent click — no stack.
+  const [pendingNavigation, setPendingNavigation] = useState<{
+    bookId: string;
+    chapter: number;
+    verse: number;
+    key: number;
+  } | null>(null);
+
   // Cross-refs for the selected book (shared between ForceGraph and DetailPanel)
   const [bookCrossRefs, setBookCrossRefs] = useState<VerseCrossRef[]>([]);
   const [crossRefBookId, setCrossRefBookId] = useState<string | null>(null);
@@ -143,6 +152,7 @@ export default function Home() {
     setSelectedBookId(id);
     setDrillState(null);
     setArcHighlightBookId(null);
+    setPendingNavigation(null);
   }, []);
 
   const handleSelectChapter = useCallback((chapter: number | null) => {
@@ -159,7 +169,18 @@ export default function Home() {
   const handleClosePanel = useCallback(() => {
     setSelectedBookId(null);
     setDrillState(null);
+    setPendingNavigation(null);
   }, []);
+
+  const handleDotNavigate = useCallback(
+    (bookId: string, chapter: number, verse: number) => {
+      const key =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+      setSelectedBookId(bookId);
+      setPendingNavigation({ bookId, chapter, verse, key });
+    },
+    []
+  );
 
   const handleOpenReading = useCallback((bookId: string, reference: string, type: string, index: number) => {
     // If detail panel is open, close it first and delay opening reading pane
@@ -487,6 +508,8 @@ export default function Home() {
         onSelectBook={handleSelectBook}
         onNavigationChange={handleNavigationChange}
         onClose={handleClosePanel}
+        onDotNavigate={handleDotNavigate}
+        pendingNavigation={pendingNavigation}
       />
 
       <ReadingPane

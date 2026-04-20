@@ -32,6 +32,13 @@ interface DetailPanelProps {
     verse: number | null;
   }) => void;
   onSelectBook?: (bookId: string) => void;
+  onDotNavigate?: (bookId: string, chapter: number, verse: number) => void;
+  pendingNavigation?: {
+    bookId: string;
+    chapter: number;
+    verse: number;
+    key: number;
+  } | null;
 }
 
 /* ─── Helpers ─── */
@@ -116,6 +123,8 @@ export default function DetailPanel({
   canon,
   onNavigationChange,
   onSelectBook,
+  onDotNavigate,
+  pendingNavigation,
 }: DetailPanelProps) {
   const [navState, dispatch] = useReducer(
     panelNavigationReducer,
@@ -143,6 +152,31 @@ export default function DetailPanel({
     }
   }, [selectedBook]);
 
+  // ─── Apply pending cross-reference navigation (from margin dot click) ───
+  const lastNavKeyRef = useRef<number | null>(null);
+  const [pulseVerse, setPulseVerse] = useState<{
+    chapter: number;
+    verse: number;
+    key: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!pendingNavigation) return;
+    if (lastNavKeyRef.current === pendingNavigation.key) return;
+    lastNavKeyRef.current = pendingNavigation.key;
+
+    // INIT_BOOK resets the reducer, ensuring the prop-sync effect above
+    // treats the next selectedBook change cleanly.
+    prevSelectedBook.current = pendingNavigation.bookId;
+    dispatch({ type: "INIT_BOOK", book: pendingNavigation.bookId });
+    dispatch({ type: "CHANGE_CHAPTER", chapter: pendingNavigation.chapter });
+    setPulseVerse({
+      chapter: pendingNavigation.chapter,
+      verse: pendingNavigation.verse,
+      key: pendingNavigation.key,
+    });
+  }, [pendingNavigation]);
+
   // ─── Notify parent of navigation changes ───
   useEffect(() => {
     onNavigationChange?.({
@@ -152,17 +186,53 @@ export default function DetailPanel({
     });
   }, [navState.selectedBook, navState.selectedChapter, navState.selectedVerse, onNavigationChange]);
 
-  // ─── Keyboard: Escape closes panel ───
+  // ─── Keyboard shortcuts: Escape, Left / Right chapter navigation ───
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
+        return;
+      }
+
+      // Only act on left/right when a chapter is active and focus is
+      // within the panel (so arrow keys can still drive form controls).
+      if (navState.level !== "chapter" || navState.selectedChapter === null) {
+        return;
+      }
+      const active = document.activeElement;
+      const panel = panelRef.current;
+      if (panel && active && !panel.contains(active) && active !== panel) {
+        return;
+      }
+
+      const bookEntry = navState.selectedBook
+        ? bookMap.get(navState.selectedBook)
+        : null;
+      const total = bookEntry?.chapters ?? 0;
+      const current = navState.selectedChapter;
+
+      if (e.key === "ArrowLeft") {
+        if (current > 1) {
+          e.preventDefault();
+          dispatch({ type: "CHANGE_CHAPTER", chapter: current - 1 });
+        }
+      } else if (e.key === "ArrowRight") {
+        if (current < total) {
+          e.preventDefault();
+          dispatch({ type: "CHANGE_CHAPTER", chapter: current + 1 });
+        }
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [
+    isOpen,
+    onClose,
+    navState.level,
+    navState.selectedBook,
+    navState.selectedChapter,
+  ]);
 
   // ─── Focus panel on open ───
   useEffect(() => {
@@ -292,6 +362,7 @@ export default function DetailPanel({
     [navState.selectedBook, onSelectBook],
   );
 
+
   const handleChangeTranslation = useCallback(() => {
     // Translation is owned by page.tsx; no-op here
   }, []);
@@ -334,6 +405,15 @@ export default function DetailPanel({
                 book={book.name}
                 chapter={navState.selectedChapter}
                 translation={translation}
+                pulseVerse={
+                  pulseVerse &&
+                  pulseVerse.chapter === navState.selectedChapter
+                    ? pulseVerse
+                    : null
+                }
+                onNavigate={(targetBookId, targetChapter, targetVerse) => {
+                  onDotNavigate?.(targetBookId, targetChapter, targetVerse);
+                }}
               />
             }
           />
@@ -399,6 +479,7 @@ export default function DetailPanel({
             state={navState}
             dispatch={dispatch}
             onClose={onClose}
+            totalChapters={book?.chapters}
           />
 
           {/* Scrollable content area */}

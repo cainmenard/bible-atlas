@@ -10,6 +10,8 @@ interface VerseReaderProps {
   book: string;
   chapter: number;
   translation: string;
+  pulseVerse?: { chapter: number; verse: number; key: number } | null;
+  onNavigate?: (bookId: string, chapter: number, verse: number) => void;
 }
 
 type Status = "loading" | "ready" | "error";
@@ -43,13 +45,23 @@ function todayReadingTypeFor(bookName: string, chapter: number): string | null {
   return null;
 }
 
-export default function VerseReader({ book, chapter, translation }: VerseReaderProps) {
+export default function VerseReader({
+  book,
+  chapter,
+  translation,
+  pulseVerse,
+  onNavigate,
+}: VerseReaderProps) {
   const requestKey = `${book}|${chapter}|${translation}`;
   const [lastKey, setLastKey] = useState(requestKey);
   const [status, setStatus] = useState<Status>("loading");
   const [verses, setVerses] = useState<VerseLine[]>([]);
   const [xrefCounts, setXrefCounts] = useState<Map<number, number>>(new Map());
   const anchorRef = useRef<HTMLElement>(null);
+  const pulseKey =
+    pulseVerse && pulseVerse.chapter === chapter ? pulseVerse.key : null;
+  const pulseTargetVerse =
+    pulseVerse && pulseVerse.chapter === chapter ? pulseVerse.verse : null;
 
   if (lastKey !== requestKey) {
     setLastKey(requestKey);
@@ -71,6 +83,27 @@ export default function VerseReader({ book, chapter, translation }: VerseReaderP
       });
     });
   }, [book, chapter]);
+
+  // When a pulse target is set and verses are ready, scroll that verse into
+  // view. The pulse animation itself runs via the verse-pulse class below.
+  useEffect(() => {
+    if (pulseTargetVerse === null || status !== "ready") return;
+    const host = anchorRef.current;
+    if (!host) return;
+    const target = host.querySelector<HTMLElement>(
+      `[data-verse="${pulseTargetVerse}"]`
+    );
+    if (!target) return;
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    requestAnimationFrame(() => {
+      target.scrollIntoView({
+        behavior: prefersReduced ? "auto" : "smooth",
+        block: "center",
+      });
+    });
+  }, [pulseKey, pulseTargetVerse, status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -248,6 +281,33 @@ export default function VerseReader({ book, chapter, translation }: VerseReaderP
             opacity: 0.28;
           }
         }
+
+        /* Single-pulse amber outline to mark a cross-reference target.
+           Runs once for 2s then fades; no persistent background fill. */
+        .verse-pulse {
+          display: inline;
+          box-decoration-break: clone;
+          -webkit-box-decoration-break: clone;
+          border-radius: 3px;
+          padding: 0 2px;
+          margin: 0 -2px;
+          box-shadow: 0 0 0 0 var(--accent-border, rgba(212, 160, 74, 0));
+          animation: verse-pulse-outline 2000ms ease-out 1 both;
+        }
+
+        @keyframes verse-pulse-outline {
+          0%   { box-shadow: 0 0 0 2px rgba(212, 160, 74, 0);    }
+          10%  { box-shadow: 0 0 0 2px rgba(212, 160, 74, 0.9);  }
+          60%  { box-shadow: 0 0 0 2px rgba(212, 160, 74, 0.55); }
+          100% { box-shadow: 0 0 0 2px rgba(212, 160, 74, 0);    }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .verse-pulse {
+            animation: none;
+            box-shadow: 0 0 0 2px rgba(212, 160, 74, 0.5);
+          }
+        }
       `}</style>
 
       {status === "loading" && (
@@ -270,8 +330,20 @@ export default function VerseReader({ book, chapter, translation }: VerseReaderP
             {verses.map((v, i) => {
               const count = xrefCounts.get(v.verse) ?? 0;
               const hasXref = count > 0;
+              const isPulseTarget = pulseTargetVerse === v.verse;
+              // Re-mount the span when a new pulse is requested so the
+              // single-play animation restarts even if the verse number
+              // hasn't changed.
+              const spanKey =
+                isPulseTarget && pulseKey !== null
+                  ? `${v.verse}-pulse-${pulseKey}`
+                  : String(v.verse);
               return (
-                <span key={v.verse}>
+                <span
+                  key={spanKey}
+                  data-verse={v.verse}
+                  className={isPulseTarget ? "verse-pulse" : undefined}
+                >
                   <sup
                     className="verse-num"
                     {...(hasXref ? { "data-has-xref": String(count) } : {})}
@@ -283,6 +355,8 @@ export default function VerseReader({ book, chapter, translation }: VerseReaderP
                         chapter={chapter}
                         verse={v.verse}
                         count={count}
+                        translation={translation}
+                        onNavigate={(b, c, vv) => onNavigate?.(b, c, vv)}
                       />
                     ) : (
                       <span className="verse-margin-dot-slot" aria-hidden="true" />

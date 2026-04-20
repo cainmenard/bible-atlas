@@ -19,6 +19,7 @@ export type PanelNavigationAction =
   | { type: 'INIT_BOOK'; book: string }
   | { type: 'SELECT_BOOK'; book: string }
   | { type: 'SELECT_CHAPTER'; chapter: number }
+  | { type: 'CHANGE_CHAPTER'; chapter: number }
   | { type: 'SELECT_VERSE'; verse: number }
   | { type: 'GO_BACK' }
   | { type: 'GO_TO_LEVEL'; level: DrillLevel }
@@ -74,6 +75,18 @@ export function panelNavigationReducer(
           ...state.history,
           { level: state.level, book: state.selectedBook, chapter: state.selectedChapter },
         ],
+        animationDirection: 'forward',
+      };
+    }
+
+    case 'CHANGE_CHAPTER': {
+      // Swap chapter in-place without pushing history — used by chevron
+      // navigation and dot-click cross-reference jumps.
+      return {
+        ...state,
+        level: 'chapter',
+        selectedChapter: action.chapter,
+        selectedVerse: null,
         animationDirection: 'forward',
       };
     }
