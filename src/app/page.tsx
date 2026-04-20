@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import StarBackground from "@/components/StarBackground";
-import Tooltip from "@/components/Tooltip";
+import Tooltip, { TooltipContext } from "@/components/Tooltip";
 import DetailPanel from "@/components/DetailPanel";
 import ReadingPane from "@/components/ReadingPane";
 import CanonChip from "@/components/CanonChip";
@@ -363,6 +363,23 @@ export default function Home() {
   const season = readings?.season as LiturgicalSeason | undefined;
   const seasonColor = season ? LITURGICAL_COLORS[season] : undefined;
 
+  // Tooltip context — which variant renders is driven by these signals.
+  // Canon mode fires when the user has picked a non-default canon; otherwise
+  // readings mode or plain (no filter) mode.
+  const tooltipContext: TooltipContext = useMemo(
+    () => ({
+      selectedBook: selectedBookId,
+      filterMode: readingsFilterActive
+        ? "readings"
+        : canon !== "catholic"
+          ? "canon"
+          : "none",
+      todayReadings: readings?.readings ?? null,
+      canon,
+    }),
+    [selectedBookId, readingsFilterActive, canon, readings],
+  );
+
   return (
     <main className="relative w-screen h-screen overflow-hidden page-fade-in">
       <h1 className="sr-only">
@@ -592,6 +609,7 @@ export default function Home() {
         book={hoveredBook?.book ?? null}
         x={hoveredBook?.x ?? 0}
         y={hoveredBook?.y ?? 0}
+        context={tooltipContext}
       />
 
       <DetailPanel
