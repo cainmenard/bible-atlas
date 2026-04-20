@@ -150,7 +150,6 @@ export function buildVerseIndex(): Promise<Map<string, Reference[]>> {
   if (indexPromise) return indexPromise;
 
   indexPromise = (async () => {
-    console.time("verse-index:build");
     const res = await fetch("/arc-crossrefs.json");
     const data = (await res.json()) as ArcCrossrefsShape;
 
@@ -223,7 +222,6 @@ export function buildVerseIndex(): Promise<Map<string, Reference[]>> {
     }
 
     cachedIndex = map;
-    console.timeEnd("verse-index:build");
     return map;
   })();
 
