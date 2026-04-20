@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchPassageText, parseReadingReference } from "@/lib/bible-api";
 import { getDailyReadings } from "@/lib/readings";
+import { buildVerseIndex, getReferencesForVerse } from "@/lib/verse-index";
+import VerseMarginDot from "@/components/VerseMarginDot";
 
 interface VerseReaderProps {
   book: string;
@@ -46,12 +48,14 @@ export default function VerseReader({ book, chapter, translation }: VerseReaderP
   const [lastKey, setLastKey] = useState(requestKey);
   const [status, setStatus] = useState<Status>("loading");
   const [verses, setVerses] = useState<VerseLine[]>([]);
+  const [xrefCounts, setXrefCounts] = useState<Map<number, number>>(new Map());
   const anchorRef = useRef<HTMLElement>(null);
 
   if (lastKey !== requestKey) {
     setLastKey(requestKey);
     setStatus("loading");
     setVerses([]);
+    setXrefCounts(new Map());
   }
 
   useEffect(() => {
@@ -91,6 +95,27 @@ export default function VerseReader({ book, chapter, translation }: VerseReaderP
       cancelled = true;
     };
   }, [book, chapter, translation]);
+
+  useEffect(() => {
+    if (verses.length === 0) return;
+    let cancelled = false;
+    buildVerseIndex()
+      .then(() => {
+        if (cancelled) return;
+        const counts = new Map<number, number>();
+        for (const v of verses) {
+          const refs = getReferencesForVerse(book, chapter, v.verse);
+          if (refs.length > 0) counts.set(v.verse, refs.length);
+        }
+        setXrefCounts(counts);
+      })
+      .catch(() => {
+        // Index failures are non-fatal — the reader still shows verses.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [book, chapter, verses]);
 
   const readingType = todayReadingTypeFor(book, chapter);
   const bylineParts = [`${book} ${chapter}`, translationLabel(translation)];
@@ -137,12 +162,49 @@ export default function VerseReader({ book, chapter, translation }: VerseReaderP
           margin-left: 0;
         }
 
-        .verse-num[data-has-xref="true"] {
-          cursor: pointer;
+        .verse-num[data-has-xref]:hover {
+          color: var(--accent);
         }
 
-        .verse-num[data-has-xref="true"]:hover {
-          color: var(--accent);
+        /* Uniform horizontal slot keeps text flow stable whether a dot
+           renders or not, and regardless of when the index resolves. */
+        .verse-margin-dot,
+        .verse-margin-dot-slot {
+          display: inline-block;
+          width: 6px;
+          height: 6px;
+          margin-right: 4px;
+          vertical-align: middle;
+          border-radius: 50%;
+        }
+
+        .verse-margin-dot-slot {
+          visibility: hidden;
+        }
+
+        .verse-margin-dot {
+          background: var(--accent);
+          opacity: 0.6;
+          cursor: pointer;
+          transition: opacity 200ms ease-out;
+          animation: verse-dot-fade-in 200ms ease-out both;
+        }
+
+        .verse-margin-dot:hover,
+        .verse-margin-dot:focus-visible {
+          opacity: 1;
+          outline: none;
+        }
+
+        @keyframes verse-dot-fade-in {
+          from { opacity: 0; }
+          to   { opacity: 0.6; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .verse-margin-dot {
+            animation: none;
+          }
         }
 
         .verse-reader-byline {
@@ -205,19 +267,33 @@ export default function VerseReader({ book, chapter, translation }: VerseReaderP
       {status === "ready" && (
         <>
           <p className="verse-reader-body">
-            {verses.map((v, i) => (
-              <span key={v.verse}>
-                <sup
-                  className="verse-num"
-                  data-has-xref="false"
-                  aria-label={`Verse ${v.verse}`}
-                >
-                  {v.verse}
-                </sup>
-                {v.text}
-                {i < verses.length - 1 ? " " : ""}
-              </span>
-            ))}
+            {verses.map((v, i) => {
+              const count = xrefCounts.get(v.verse) ?? 0;
+              const hasXref = count > 0;
+              return (
+                <span key={v.verse}>
+                  <sup
+                    className="verse-num"
+                    {...(hasXref ? { "data-has-xref": String(count) } : {})}
+                    aria-label={`Verse ${v.verse}`}
+                  >
+                    {hasXref ? (
+                      <VerseMarginDot
+                        book={book}
+                        chapter={chapter}
+                        verse={v.verse}
+                        count={count}
+                      />
+                    ) : (
+                      <span className="verse-margin-dot-slot" aria-hidden="true" />
+                    )}
+                    {v.verse}
+                  </sup>
+                  {v.text}
+                  {i < verses.length - 1 ? " " : ""}
+                </span>
+              );
+            })}
           </p>
           <footer className="verse-reader-byline">{byline}</footer>
         </>
