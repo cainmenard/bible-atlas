@@ -21,6 +21,7 @@ interface BookDetailViewProps {
   selectedChapter?: number | null;
   onSelectChapter: (chapter: number) => void;
   onSelectConnectedBook: (bookName: string) => void;
+  verseReaderSlot?: React.ReactNode;
 }
 
 export default function BookDetailView({
@@ -31,6 +32,7 @@ export default function BookDetailView({
   selectedChapter,
   onSelectChapter,
   onSelectConnectedBook,
+  verseReaderSlot,
 }: BookDetailViewProps) {
   const top8 = connectedBooks.slice(0, 8);
   const maxCount = top8.length > 0 ? top8[0].connectionCount : 1;
@@ -204,6 +206,8 @@ export default function BookDetailView({
         selectedChapter={selectedChapter}
         onSelectChapter={onSelectChapter}
       />
+
+      {verseReaderSlot}
 
       {/* ── Connected Books ── */}
       {top8.length > 0 && (
