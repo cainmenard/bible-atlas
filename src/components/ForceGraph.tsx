@@ -15,6 +15,10 @@ interface Props {
   todayBookIds: string[];
   edgeThreshold: number;
   drillDownTargetBooks: { bookId: string; count: number }[] | null;
+  /** When true, dim every book not in `todayBookIds` to 15% opacity. */
+  readingsFilterActive?: boolean;
+  /** One-shot feast-day pulse: amber outline around this book for 3 seconds. */
+  feastPulseBookId?: string | null;
   onSelectBook: (id: string | null) => void;
   onHover: (book: BibleBook | null, x: number, y: number) => void;
   onReady?: () => void;
@@ -104,6 +108,8 @@ export default function ForceGraph({
   todayBookIds,
   edgeThreshold,
   drillDownTargetBooks,
+  readingsFilterActive = false,
+  feastPulseBookId = null,
   onSelectBook,
   onHover,
   onReady,
@@ -135,12 +141,21 @@ export default function ForceGraph({
   const selectedBookIdRef = useRef(selectedBookId);
   const edgeThresholdRef = useRef(edgeThreshold);
   const todayBookIdsRef = useRef(todayBookIds);
+  const readingsFilterActiveRef = useRef(readingsFilterActive);
   onSelectBookRef.current = onSelectBook;
   onHoverRef.current = onHover;
   onReadyRef.current = onReady;
   selectedBookIdRef.current = selectedBookId;
   edgeThresholdRef.current = edgeThreshold;
   todayBookIdsRef.current = todayBookIds;
+  readingsFilterActiveRef.current = readingsFilterActive;
+
+  // Feast pulse timing state — driven from the animation loop.
+  const feastPulseRef = useRef<{
+    bookId: string;
+    startTime: number;
+    sprite: THREE.Sprite | null;
+  } | null>(null);
 
   // ─── BUILD SCENE ──────────────────────────────────────
   const buildScene = useCallback(
@@ -531,7 +546,12 @@ export default function ForceGraph({
       // the Arc view then toggled to Constellation). Because buildScene() and
       // populateScene() are both synchronous, the highlight is applied immediately
       // after nodes and edges are created — no timing gap with Three.js init.
-      applySelection(state, selectedId);
+      applySelection(
+        state,
+        selectedId,
+        readingsFilterActiveRef.current,
+        todayIds,
+      );
       applyTodayPulse(state, todayIds);
     },
     []
@@ -540,18 +560,28 @@ export default function ForceGraph({
   // ─── SELECTION HIGHLIGHTING ───────────────────────────
   function applySelection(
     state: NonNullable<typeof sceneRef.current>,
-    selectedId: string | null
+    selectedId: string | null,
+    readingsFilter = false,
+    todayIds: string[] = []
   ) {
     if (!selectedId) {
-      // Reset all to default
-      state.nodes.forEach((nd) => {
-        (nd.sphere.material as THREE.MeshBasicMaterial).opacity = 0.85;
-        (nd.glow.material as THREE.SpriteMaterial).opacity = 0.4;
-        nd.labelEl.style.opacity = "0.3";
+      const todaySet = new Set(todayIds);
+      const filtering = readingsFilter && todaySet.size > 0;
+      // Reset all to default (or apply readings filter if active)
+      state.nodes.forEach((nd, id) => {
+        const dim = filtering && !todaySet.has(id);
+        (nd.sphere.material as THREE.MeshBasicMaterial).opacity = dim ? 0.15 : 0.85;
+        (nd.glow.material as THREE.SpriteMaterial).opacity = dim ? 0.05 : 0.4;
+        nd.labelEl.style.opacity = dim ? "0.1" : "0.3";
       });
       state.edgeLines.forEach((ed) => {
         const mat = ed.line.material as THREE.LineBasicMaterial;
-        mat.opacity = 0.12;
+        if (filtering) {
+          const bothToday = todaySet.has(ed.sourceId) && todaySet.has(ed.targetId);
+          mat.opacity = bothToday ? 0.12 : 0.02;
+        } else {
+          mat.opacity = 0.12;
+        }
       });
       return;
     }
@@ -806,6 +836,32 @@ export default function ForceGraph({
         }
       });
 
+      // One-shot feast-day outline pulse (3 seconds)
+      {
+        const pulse = feastPulseRef.current;
+        const sp = pulse?.sprite;
+        if (pulse && sp) {
+          const t = (performance.now() - pulse.startTime) / 3000;
+          if (t >= 1) {
+            if (sp.parent) sp.parent.remove(sp);
+            (sp.material as THREE.SpriteMaterial).map?.dispose();
+            sp.material.dispose();
+            pulse.sprite = null;
+          } else {
+            // Fade in quickly, then gently out; with a subtle breathing scale.
+            const fadeIn = Math.min(t / 0.12, 1);
+            const fadeOut = 1 - Math.pow(Math.max(0, (t - 0.12) / 0.88), 1.4);
+            (sp.material as THREE.SpriteMaterial).opacity = fadeIn * fadeOut;
+            const nd = state.nodes.get(pulse.bookId);
+            if (nd) {
+              const base = nd.nodeRadius * 9;
+              const breathe = 1 + Math.sin(t * Math.PI * 2) * 0.06;
+              sp.scale.set(base * breathe, base * breathe, 1);
+            }
+          }
+        }
+      }
+
       glRenderer.render(glScene, glCamera);
       glLabelRenderer.render(glScene, glCamera);
 
@@ -885,18 +941,79 @@ export default function ForceGraph({
   // ─── REACT TO SELECTION ──────────────────────────────
   useEffect(() => {
     if (!sceneRef.current) return;
-    applySelection(sceneRef.current, selectedBookId);
+    applySelection(
+      sceneRef.current,
+      selectedBookId,
+      readingsFilterActive,
+      todayBookIds,
+    );
     // If drill-down targets exist, apply narrower highlighting on top
     if (drillDownTargetBooks) {
       applyDrillDown(sceneRef.current, selectedBookId, drillDownTargetBooks);
     }
-  }, [selectedBookId, drillDownTargetBooks]);
+  }, [selectedBookId, drillDownTargetBooks, readingsFilterActive, todayBookIds]);
 
   // ─── REACT TO TODAY IDS ──────────────────────────────
   useEffect(() => {
     if (!sceneRef.current) return;
     applyTodayPulse(sceneRef.current, todayBookIds);
   }, [todayBookIds]);
+
+  // ─── FEAST DAY PULSE (one-shot amber outline, 3s) ─────
+  useEffect(() => {
+    if (!feastPulseBookId) return;
+    const s = sceneRef.current;
+    if (!s) return;
+    const nd = s.nodes.get(feastPulseBookId);
+    if (!nd) return;
+
+    // Build an amber outline ring. Use a canvas texture with a radial ring
+    // gradient so the sprite renders as an outline (not a fill).
+    const size = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    const cx = size / 2;
+    const gradient = ctx.createRadialGradient(cx, cx, cx * 0.55, cx, cx, cx);
+    gradient.addColorStop(0.0, "rgba(212, 160, 74, 0)");
+    gradient.addColorStop(0.55, "rgba(212, 160, 74, 0)");
+    gradient.addColorStop(0.7, "rgba(212, 160, 74, 1)");
+    gradient.addColorStop(0.85, "rgba(212, 160, 74, 0.3)");
+    gradient.addColorStop(1.0, "rgba(212, 160, 74, 0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+    const tex = new THREE.CanvasTexture(canvas);
+
+    const mat = new THREE.SpriteMaterial({
+      map: tex,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      opacity: 0,
+    });
+    const sprite = new THREE.Sprite(mat);
+    sprite.position.copy(nd.position);
+    const outlineScale = nd.nodeRadius * 9;
+    sprite.scale.set(outlineScale, outlineScale, 1);
+    s.nodeGroup.add(sprite);
+
+    feastPulseRef.current = {
+      bookId: feastPulseBookId,
+      startTime: performance.now(),
+      sprite,
+    };
+
+    return () => {
+      if (feastPulseRef.current?.sprite) {
+        const sp = feastPulseRef.current.sprite;
+        if (sp.parent) sp.parent.remove(sp);
+        (sp.material as THREE.SpriteMaterial).map?.dispose();
+        sp.material.dispose();
+      }
+      feastPulseRef.current = null;
+    };
+  }, [feastPulseBookId]);
 
   return (
     <div

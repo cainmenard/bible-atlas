@@ -1,5 +1,53 @@
 import { LiturgicalSeason } from "./types";
 
+export type FeastDay =
+  | "easter"
+  | "christmas"
+  | "pentecost"
+  | "epiphany"
+  | "all-saints"
+  | "ascension"
+  | "assumption";
+
+// Detect a major General Roman Calendar feast for the given date. Returns
+// null on non-feast days. Used for the first-load feast-day pulse animation.
+export function getMajorFeast(date: Date = new Date()): FeastDay | null {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  // Fixed-date feasts
+  if (month === 11 && day === 25) return "christmas";
+  if (month === 0 && day === 6) return "epiphany";
+  if (month === 10 && day === 1) return "all-saints";
+  if (month === 7 && day === 15) return "assumption";
+
+  const easter = computeEaster(year);
+  if (sameYMD(date, easter)) return "easter";
+
+  const ascension = addDays(easter, 39);
+  if (sameYMD(date, ascension)) return "ascension";
+
+  const pentecost = addDays(easter, 49);
+  if (sameYMD(date, pentecost)) return "pentecost";
+
+  return null;
+}
+
+function sameYMD(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function addDays(base: Date, days: number): Date {
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
 // Simplified liturgical season detection based on date ranges.
 // For a production app you'd use a full liturgical calendar library.
 export function getLiturgicalSeason(date: Date = new Date()): LiturgicalSeason {

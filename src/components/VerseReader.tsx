@@ -12,6 +12,7 @@ interface VerseReaderProps {
   translation: string;
   pulseVerse?: { chapter: number; verse: number; key: number } | null;
   onNavigate?: (bookId: string, chapter: number, verse: number) => void;
+  onOpenReadingsCard?: () => void;
 }
 
 type Status = "loading" | "ready" | "error";
@@ -51,6 +52,7 @@ export default function VerseReader({
   translation,
   pulseVerse,
   onNavigate,
+  onOpenReadingsCard,
 }: VerseReaderProps) {
   const requestKey = `${book}|${chapter}|${translation}`;
   const [lastKey, setLastKey] = useState(requestKey);
@@ -248,6 +250,31 @@ export default function VerseReader({
           letter-spacing: 0.02em;
         }
 
+        .reading-today-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          margin-bottom: var(--space-md);
+          font-family: var(--font-mono);
+          font-size: 10px;
+          color: var(--accent);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          padding: 6px;
+          border: 1px solid rgba(212, 160, 74, 0.4);
+          border-radius: 2px;
+          background: var(--glass-bg-heavy);
+          backdrop-filter: blur(var(--glass-blur));
+          -webkit-backdrop-filter: blur(var(--glass-blur));
+          cursor: pointer;
+          transition: var(--transition-base);
+        }
+
+        .reading-today-chip:hover {
+          border-color: rgba(212, 160, 74, 0.7);
+          background: var(--color-accent-muted);
+        }
+
         .verse-reader-error {
           font-family: var(--font-mono);
           font-size: 11px;
@@ -322,6 +349,17 @@ export default function VerseReader({
         <p className="verse-reader-error">
           Unable to load {book} {chapter}. Try another translation.
         </p>
+      )}
+
+      {status === "ready" && readingType && (
+        <button
+          type="button"
+          className="reading-today-chip"
+          onClick={() => onOpenReadingsCard?.()}
+          aria-label="Open today's readings"
+        >
+          Reading today →
+        </button>
       )}
 
       {status === "ready" && (

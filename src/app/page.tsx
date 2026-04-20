@@ -14,6 +14,8 @@ import EdgeDensitySelector from "@/components/EdgeDensitySelector";
 import { BibleBook, Canon, LiturgicalSeason, ViewMode, VerseCrossRef } from "@/lib/types";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
+import { getMajorFeast } from "@/lib/liturgical";
+import { parseReadingReference } from "@/lib/bible-api";
 import { getVerseCrossRefs, getTargetBookCounts } from "@/lib/crossref-utils";
 import { bookMap } from "@/data/books";
 import ArcZoomControls from "@/components/ArcZoomControls";
@@ -43,10 +45,34 @@ export default function Home() {
   const [arcZoomLevel, setArcZoomLevel] = useState(100);
   const [viewTransitionBook, setViewTransitionBook] = useState<string | null>(null);
   const prevViewModeRef = useRef(viewMode);
-  const [readings] = useState(() => getDailyReadings());
+  const [readings] = useState(() => {
+    try {
+      return getDailyReadings();
+    } catch (err) {
+      console.warn("[bible-atlas] getDailyReadings failed:", err);
+      return null;
+    }
+  });
   const [todayBookIds] = useState(() =>
-    readings.readings.map((r) => r.bookId).filter((id): id is string => !!id)
+    readings
+      ? readings.readings.map((r) => r.bookId).filter((id): id is string => !!id)
+      : []
   );
+
+  // Soft filter: dim non-readings books. Cleared on book click, canon change,
+  // or edge-density change. Persistence across sessions is out of scope here
+  // (session 6 will handle that).
+  const [readingsFilterActive, setReadingsFilterActive] = useState(true);
+
+  // Signal to open the expanded readings card (from the "Reading today" chip).
+  const [readingsCardOpenSignal, setReadingsCardOpenSignal] = useState(0);
+  const handleOpenReadingsCard = useCallback(() => {
+    setReadingsCardOpenSignal((n) => n + 1);
+  }, []);
+
+  // Feast-day pulse target: only computed on first load, only if today is a
+  // major feast. Cleared after a single pulse cycle so it doesn't retrigger.
+  const [feastPulseBookId, setFeastPulseBookId] = useState<string | null>(null);
 
   // ─── READING PANE STATE ───
   const [activeReading, setActiveReading] = useState<{
@@ -82,6 +108,60 @@ export default function Home() {
     setCrossRefBookId(selectedBookId);
     setBookCrossRefs([]);
   }
+
+  // ─── FIRST-LOAD: OPEN TO TODAY'S GOSPEL ───
+  // Runs once on mount. Only applies when no prior book is persisted
+  // (session 6 will add full "continue where you left off" persistence).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let persisted: string | null = null;
+    try {
+      persisted = localStorage.getItem("bible-atlas-last-book");
+    } catch {
+      // localStorage unavailable — treat as first load.
+    }
+    if (persisted !== null) return;
+
+    if (!readings || readings.readings.length === 0) {
+      console.warn("[bible-atlas] No readings available for first-load state");
+      return;
+    }
+
+    const gospel = readings.readings.find((r) => r.type === "Gospel");
+    if (!gospel || !gospel.bookId) {
+      console.warn("[bible-atlas] No Gospel reading found for first-load state");
+      return;
+    }
+
+    const parsed = parseReadingReference(gospel.reference);
+    if (!parsed) {
+      console.warn(
+        "[bible-atlas] Unable to parse Gospel reference:",
+        gospel.reference,
+      );
+      return;
+    }
+
+    const key =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    setSelectedBookId(gospel.bookId);
+    setPendingNavigation({
+      bookId: gospel.bookId,
+      chapter: parsed.chapter,
+      verse: parsed.startVerse,
+      key,
+    });
+
+    // Feast-day pulse — only on major General Roman Calendar feasts.
+    if (getMajorFeast() !== null) {
+      setFeastPulseBookId(gospel.bookId);
+      // Clear after 3s so the effect doesn't retrigger if the prop is
+      // referenced elsewhere.
+      setTimeout(() => setFeastPulseBookId(null), 3000);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load cross-refs when book changes
   useEffect(() => {
@@ -153,6 +233,17 @@ export default function Home() {
     setDrillState(null);
     setArcHighlightBookId(null);
     setPendingNavigation(null);
+    setReadingsFilterActive(false);
+  }, []);
+
+  const handleCanonChange = useCallback((next: Canon) => {
+    setCanon(next);
+    setReadingsFilterActive(false);
+  }, []);
+
+  const handleEdgeThresholdChange = useCallback((next: number) => {
+    setEdgeThreshold(next);
+    setReadingsFilterActive(false);
   }, []);
 
   const handleSelectChapter = useCallback((chapter: number | null) => {
@@ -196,6 +287,7 @@ export default function Home() {
   }, [selectedBookId]);
 
   const handleReadAll = useCallback(() => {
+    if (!readings) return;
     const firstValidIndex = readings.readings.findIndex(r => !!r.bookId);
     if (firstValidIndex === -1) return;
     const r = readings.readings[firstValidIndex];
@@ -203,6 +295,7 @@ export default function Home() {
   }, [readings, handleOpenReading]);
 
   const handleNavigateReading = useCallback((index: number) => {
+    if (!readings) return;
     const r = readings.readings[index];
     if (!r || !r.bookId) return;
     setActiveReading({
@@ -292,6 +385,8 @@ export default function Home() {
             todayBookIds={todayBookIds}
             edgeThreshold={edgeThreshold}
             drillDownTargetBooks={drillDownTargetBooks}
+            readingsFilterActive={readingsFilterActive}
+            feastPulseBookId={feastPulseBookId}
             onSelectBook={handleSelectBook}
             onHover={handleHover}
             onReady={() => setConstellationReady(true)}
@@ -417,7 +512,7 @@ export default function Home() {
             <div className="hidden md:block">
               <EdgeDensitySelector
                 value={edgeThreshold}
-                onChange={setEdgeThreshold}
+                onChange={handleEdgeThresholdChange}
               />
             </div>
           )}
@@ -509,6 +604,7 @@ export default function Home() {
         onNavigationChange={handleNavigationChange}
         onClose={handleClosePanel}
         onDotNavigate={handleDotNavigate}
+        onOpenReadingsCard={handleOpenReadingsCard}
         pendingNavigation={pendingNavigation}
       />
 
@@ -516,7 +612,7 @@ export default function Home() {
         isOpen={activeReading !== null}
         reading={activeReading?.reading ?? null}
         translation={translation}
-        allReadings={readings.readings}
+        allReadings={readings?.readings ?? []}
         currentReadingIndex={activeReading?.index ?? 0}
         onClose={handleCloseReading}
         onNavigateReading={handleNavigateReading}
@@ -542,8 +638,9 @@ export default function Home() {
           onSelectChapter={handleSelectChapter}
           onOpenReading={handleOpenReading}
           onReadAll={handleReadAll}
+          openSignal={readingsCardOpenSignal}
         />
-        <CanonChip canon={canon} onChange={setCanon} />
+        <CanonChip canon={canon} onChange={handleCanonChange} />
       </div>
 
       {viewMode === "arcs" && (
