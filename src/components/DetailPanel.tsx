@@ -5,21 +5,18 @@ import { AnimatePresence, motion } from "motion/react";
 import { bookMap } from "@/data/books";
 import { books } from "@/data/books";
 import { edges } from "@/data/edges";
-import { CHAPTER_VERSES } from "@/data/chapter-verses";
 import {
   panelNavigationReducer,
   initialPanelNavigationState,
-  type PanelNavigationState,
-  type PanelNavigationAction,
-  type DrillLevel,
 } from "@/lib/panelNavigation";
-import { parseRef, getVerseCrossRefs, getVerseRefCounts } from "@/lib/crossref-utils";
+import { parseRef, getVerseCrossRefs } from "@/lib/crossref-utils";
 import type { BibleBook, Canon, VerseCrossRef } from "@/lib/types";
 import PanelBreadcrumb from "./PanelBreadcrumb";
 import AnimatedPanelContent from "./AnimatedPanelContent";
 import BookDetailView from "./BookDetailView";
-import ChapterDetailView, { type CrossReference } from "./ChapterDetailView";
+import { type CrossReference } from "./ChapterDetailView";
 import VerseDetailView from "./VerseDetailView";
+import VerseReader from "./VerseReader";
 
 /* ─── Props ─── */
 interface DetailPanelProps {
@@ -248,18 +245,6 @@ export default function DetailPanel({
     };
   }, [navState.selectedBook, canon]);
 
-  const chapterCrossRefs = useMemo(() => {
-    if (navState.selectedChapter === null) return [];
-    return transformCrossRefs(
-      getVerseCrossRefs(crossReferenceData, navState.selectedChapter),
-    );
-  }, [crossReferenceData, navState.selectedChapter]);
-
-  const chapterCrossRefCounts = useMemo(() => {
-    if (navState.selectedChapter === null) return new Map<number, number>();
-    return getVerseRefCounts(crossReferenceData, navState.selectedChapter);
-  }, [crossReferenceData, navState.selectedChapter]);
-
   const verseCrossRefs = useMemo(() => {
     if (navState.selectedChapter === null || navState.selectedVerse === null)
       return [];
@@ -272,24 +257,10 @@ export default function DetailPanel({
     );
   }, [crossReferenceData, navState.selectedChapter, navState.selectedVerse]);
 
-  const totalVerses = useMemo(() => {
-    if (!navState.selectedBook || navState.selectedChapter === null) return 0;
-    const chapters = CHAPTER_VERSES[navState.selectedBook];
-    if (!chapters) return 0;
-    return chapters[navState.selectedChapter - 1] ?? 0;
-  }, [navState.selectedBook, navState.selectedChapter]);
-
   // ─── Callbacks for sub-components ───
   const handleSelectChapter = useCallback(
     (chapter: number) => {
       dispatch({ type: "SELECT_CHAPTER", chapter });
-    },
-    [],
-  );
-
-  const handleSelectVerse = useCallback(
-    (verse: number) => {
-      dispatch({ type: "SELECT_VERSE", verse });
     },
     [],
   );
@@ -332,38 +303,39 @@ export default function DetailPanel({
   const renderContent = () => {
     if (!book || !navState.selectedBook) return null;
 
+    const bookViewProps = {
+      bookId: navState.selectedBook,
+      book: {
+        name: book.name,
+        testament: (book.testament === "DC" ? "OT" : book.testament) as "OT" | "NT",
+        category: book.genre,
+        totalChapters: book.chapters,
+        totalVerses: book.verses,
+        totalCrossReferences: crossReferenceData.length,
+      },
+      connectedBooks,
+      totalConnections,
+      selectedChapter: navState.selectedChapter,
+      onSelectChapter: handleSelectChapter,
+      onSelectConnectedBook: handleSelectConnectedBook,
+    };
+
     switch (navState.level) {
       case "book":
-        return (
-          <BookDetailView
-            bookId={navState.selectedBook}
-            book={{
-              name: book.name,
-              testament: book.testament === "DC" ? "OT" : book.testament,
-              category: book.genre,
-              totalChapters: book.chapters,
-              totalVerses: book.verses,
-              totalCrossReferences: crossReferenceData.length,
-            }}
-            connectedBooks={connectedBooks}
-            totalConnections={totalConnections}
-            selectedChapter={navState.selectedChapter}
-            onSelectChapter={handleSelectChapter}
-            onSelectConnectedBook={handleSelectConnectedBook}
-          />
-        );
+        return <BookDetailView {...bookViewProps} />;
 
       case "chapter":
         if (navState.selectedChapter === null) return null;
         return (
-          <ChapterDetailView
-            bookName={book.name}
-            chapter={navState.selectedChapter}
-            totalVerses={totalVerses}
-            crossReferences={chapterCrossRefs}
-            crossReferenceCounts={chapterCrossRefCounts}
-            onSelectVerse={handleSelectVerse}
-            onNavigateCrossRef={handleNavigateCrossRef}
+          <BookDetailView
+            {...bookViewProps}
+            verseReaderSlot={
+              <VerseReader
+                book={book.name}
+                chapter={navState.selectedChapter}
+                translation={translation}
+              />
+            }
           />
         );
 
