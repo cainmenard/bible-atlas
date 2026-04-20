@@ -10,7 +10,11 @@ interface Props {
   onSelectChapter?: (chapter: number) => void;
   onOpenReading?: (bookId: string, reference: string, type: string, index: number) => void;
   onReadAll?: () => void;
+  /** Increment to request opening the expanded card (e.g. from the "Reading today" chip). */
+  openSignal?: number;
 }
+
+const SESSION_SHOWN_KEY = "bible-atlas-readings-shown-this-session";
 
 const TYPE_COLORS: Record<string, string> = {
   "First Reading":      "#fb923c",
@@ -25,13 +29,32 @@ const NOISE_SVG = `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/sv
 
 type DisplayState = "peek" | "pill" | "expanded";
 
-export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading, onReadAll }: Props) {
-  const [displayState, setDisplayState] = useState<DisplayState>("peek");
+export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading, onReadAll, openSignal }: Props) {
+  // First-session auto-expand: peek only on the first load of the session.
+  // Subsequent re-mounts (e.g. navigating back from /about) start collapsed.
+  const [displayState, setDisplayState] = useState<DisplayState>(() => {
+    if (typeof window === "undefined") return "peek";
+    try {
+      if (sessionStorage.getItem(SESSION_SHOWN_KEY) === "1") return "pill";
+      sessionStorage.setItem(SESSION_SHOWN_KEY, "1");
+    } catch {
+      // sessionStorage unavailable — fall back to always-peek.
+    }
+    return "peek";
+  });
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [fading, setFading] = useState(false);
   const [pillVisible, setPillVisible] = useState(false);
   const [expandedVisible, setExpandedVisible] = useState(false);
   const componentRef = useRef<HTMLDivElement>(null);
+  const lastOpenSignalRef = useRef<number | undefined>(openSignal);
+
+  useEffect(() => {
+    if (openSignal === undefined) return;
+    if (lastOpenSignalRef.current === openSignal) return;
+    lastOpenSignalRef.current = openSignal;
+    setDisplayState("expanded");
+  }, [openSignal]);
 
   if (!data) return null;
 

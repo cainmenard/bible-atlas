@@ -33,6 +33,7 @@ interface DetailPanelProps {
   }) => void;
   onSelectBook?: (bookId: string) => void;
   onDotNavigate?: (bookId: string, chapter: number, verse: number) => void;
+  onOpenReadingsCard?: () => void;
   pendingNavigation?: {
     bookId: string;
     chapter: number;
@@ -124,6 +125,7 @@ export default function DetailPanel({
   onNavigationChange,
   onSelectBook,
   onDotNavigate,
+  onOpenReadingsCard,
   pendingNavigation,
 }: DetailPanelProps) {
   const [navState, dispatch] = useReducer(
@@ -414,6 +416,7 @@ export default function DetailPanel({
                 onNavigate={(targetBookId, targetChapter, targetVerse) => {
                   onDotNavigate?.(targetBookId, targetChapter, targetVerse);
                 }}
+                onOpenReadingsCard={onOpenReadingsCard}
               />
             }
           />

@@ -308,12 +308,13 @@ input[type="range"] {
    READINGS CARD
    ---------------------------------------------------------- */
 @keyframes readings-card-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .readings-card {
-  animation: readings-card-in 200ms ease-out forwards;
+  animation: readings-card-in 400ms ease-out forwards;
+  transform-origin: bottom left;
 }
 
 @keyframes genre-dot-pulse {
