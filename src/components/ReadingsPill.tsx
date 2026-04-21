@@ -12,6 +12,8 @@ interface Props {
   onReadAll?: () => void;
   /** Increment to request opening the expanded card (e.g. from the "Reading today" chip). */
   openSignal?: number;
+  /** Called when the user clicks "Dismiss for today". */
+  onDismiss?: () => void;
 }
 
 const SESSION_SHOWN_KEY = "bible-atlas-readings-shown-this-session";
@@ -29,7 +31,7 @@ const NOISE_SVG = `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/sv
 
 type DisplayState = "peek" | "pill" | "expanded";
 
-export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading, onReadAll, openSignal }: Props) {
+export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading, onReadAll, openSignal, onDismiss }: Props) {
   // First-session auto-expand: peek only on the first load of the session.
   // Subsequent re-mounts (e.g. navigating back from /about) start collapsed.
   const [displayState, setDisplayState] = useState<DisplayState>(() => {
@@ -518,6 +520,36 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOp
               }}
             >
               Read All →
+            </button>
+          )}
+
+          {/* Dismiss for today */}
+          {onDismiss && (
+            <button
+              onClick={() => {
+                onDismiss();
+                setDisplayState("pill");
+              }}
+              style={{
+                marginTop: "10px",
+                display: "block",
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                color: "var(--color-text-secondary)",
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                letterSpacing: "0.06em",
+                transition: "color 200ms ease-out",
+                textDecoration: "underline",
+                textDecorationColor: "rgba(196, 184, 168, 0.3)",
+                textUnderlineOffset: "3px",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--color-accent)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--color-text-secondary)"; }}
+            >
+              Dismiss for today
             </button>
           )}
         </div>

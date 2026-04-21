@@ -8,6 +8,7 @@ import Tooltip, { TooltipContext } from "@/components/Tooltip";
 import DetailPanel from "@/components/DetailPanel";
 import ReadingPane from "@/components/ReadingPane";
 import ReadingsPill from "@/components/ReadingsPill";
+import ReadingPlanCard from "@/components/ReadingPlanCard";
 import CelestialOrreryToggle from "@/components/CelestialOrreryToggle";
 import FilterPanel from "@/components/FilterPanel";
 import { DensityStop, DENSITY_THRESHOLDS } from "@/components/EdgeDensitySlider";
@@ -71,6 +72,12 @@ export default function Home() {
     setReadingsCardOpenSignal((n) => n + 1);
   }, []);
 
+  // ─── DISMISSAL STATE ───
+  // showReadingPlan: true when user has dismissed readings for today or prefers plan by default.
+  // showDefaultPrompt: true when user has dismissed 3+ consecutive days and hasn't set a default.
+  const [showReadingPlan, setShowReadingPlan] = useState(false);
+  const [showDefaultPrompt, setShowDefaultPrompt] = useState(false);
+
   // Feast-day pulse target: only computed on first load, only if today is a
   // major feast. Cleared after a single pulse cycle so it doesn't retrigger.
   const [feastPulseBookId, setFeastPulseBookId] = useState<string | null>(null);
@@ -123,6 +130,31 @@ export default function Home() {
   // ─── FIRST-LOAD: RESTORE PREFERENCES + OPEN TO PERSISTED BOOK OR TODAY'S GOSPEL ───
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // ── Readings dismissal: auto-expire or activate plan card ──
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const dismissedDate = getPreference<string>("readings-dismissed-date");
+    const defaultView = getPreference<string>("default-daily-view");
+    const consecutiveCount = getPreference<number>("consecutive-dismissals") ?? 0;
+
+    let willShowPlan = false;
+    if (dismissedDate !== null) {
+      if (dismissedDate < todayStr) {
+        // Stale dismissal from a previous day — auto-expire it.
+        setPreference<string>("readings-dismissed-date", null);
+      } else {
+        // Dismissed earlier today — keep plan card up.
+        willShowPlan = true;
+      }
+    }
+    if (defaultView === "plan") willShowPlan = true;
+
+    if (willShowPlan) {
+      setShowReadingPlan(true);
+      if (defaultView === null && consecutiveCount >= 3) {
+        setShowDefaultPrompt(true);
+      }
+    }
 
     // Apply persisted filter preferences
     const savedTranslation = getPreference<string>("translation");
@@ -355,6 +387,48 @@ export default function Home() {
       key,
     });
   }, [readings]);
+
+  // ─── DISMISSAL HANDLERS ───
+  const handleDismissReadings = useCallback(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+    const prevDismissedDate = getPreference<string>("readings-dismissed-date");
+    const prevCount = getPreference<number>("consecutive-dismissals") ?? 0;
+
+    setPreference<string>("readings-dismissed-date", todayStr);
+    const newCount = prevDismissedDate === yesterday ? prevCount + 1 : 1;
+    setPreference<number>("consecutive-dismissals", newCount);
+
+    setShowReadingPlan(true);
+
+    const defaultView = getPreference<string>("default-daily-view");
+    if (defaultView === null && newCount >= 3) {
+      setShowDefaultPrompt(true);
+    }
+  }, []);
+
+  const handleShowReadings = useCallback(() => {
+    setPreference<string>("readings-dismissed-date", null);
+    setShowReadingPlan(false);
+    setShowDefaultPrompt(false);
+  }, []);
+
+  const handleDefaultPromptYes = useCallback(() => {
+    setPreference<string>("default-daily-view", "plan");
+    setShowDefaultPrompt(false);
+  }, []);
+
+  const handleDefaultPromptNo = useCallback(() => {
+    setPreference<string>("default-daily-view", "readings");
+    setShowDefaultPrompt(false);
+  }, []);
+
+  const handleNavigateTo = useCallback((bookId: string, chapter: number) => {
+    const key = typeof performance !== "undefined" ? performance.now() : Date.now();
+    setSelectedBookId(bookId);
+    setPendingNavigation({ bookId, chapter, verse: 1, key });
+    setRestoredChip(null);
+  }, []);
 
   const handleOpenReading = useCallback((bookId: string, reference: string, type: string, index: number) => {
     // If detail panel is open, close it first and delay opening reading pane
@@ -745,14 +819,90 @@ export default function Home() {
           gap: 8,
         }}
       >
-        <ReadingsPill
-          data={readings}
-          onSelectBook={handleSelectBook}
-          onSelectChapter={handleSelectChapter}
-          onOpenReading={handleOpenReading}
-          onReadAll={handleReadAll}
-          openSignal={readingsCardOpenSignal}
-        />
+        {/* Three-day preference prompt — shown above the plan card */}
+        {showDefaultPrompt && (
+          <div
+            className="readings-card"
+            style={{
+              width: "min(300px, calc(100vw - 32px))",
+              background: "rgba(14, 14, 28, 0.92)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid var(--glass-border)",
+              borderRadius: "var(--radius-md)",
+              padding: "14px 18px",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "11px",
+                color: "var(--color-text-primary)",
+                lineHeight: 1.6,
+                marginBottom: "12px",
+              }}
+            >
+              Prefer the reading plan by default?
+            </p>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={handleDefaultPromptYes}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "10px",
+                  color: "var(--color-accent)",
+                  background: "var(--color-accent-muted)",
+                  border: "1px solid var(--color-accent-border)",
+                  borderRadius: "9999px",
+                  padding: "5px 14px",
+                  cursor: "pointer",
+                  transition: "all 200ms ease-out",
+                  opacity: 0.85,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.85"; }}
+              >
+                Yes
+              </button>
+              <button
+                onClick={handleDefaultPromptNo}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "10px",
+                  color: "var(--color-text-secondary)",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: "9999px",
+                  padding: "5px 14px",
+                  cursor: "pointer",
+                  transition: "all 200ms ease-out",
+                  opacity: 0.75,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.75"; }}
+              >
+                No, keep showing readings
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showReadingPlan ? (
+          <ReadingPlanCard
+            onShowReadings={handleShowReadings}
+            onNavigateTo={handleNavigateTo}
+          />
+        ) : (
+          <ReadingsPill
+            data={readings}
+            onSelectBook={handleSelectBook}
+            onSelectChapter={handleSelectChapter}
+            onOpenReading={handleOpenReading}
+            onReadAll={handleReadAll}
+            openSignal={readingsCardOpenSignal}
+            onDismiss={handleDismissReadings}
+          />
+        )}
       </div>
 
       {viewMode === "arcs" && (
