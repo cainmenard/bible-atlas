@@ -6,11 +6,10 @@ import StarBackground from "@/components/StarBackground";
 import Tooltip, { TooltipContext } from "@/components/Tooltip";
 import DetailPanel from "@/components/DetailPanel";
 import ReadingPane from "@/components/ReadingPane";
-import CanonChip from "@/components/CanonChip";
 import ReadingsPill from "@/components/ReadingsPill";
-import TranslationSelector from "@/components/TranslationSelector";
 import CelestialOrreryToggle from "@/components/CelestialOrreryToggle";
-import EdgeDensitySelector from "@/components/EdgeDensitySelector";
+import FilterPanel from "@/components/FilterPanel";
+import { DensityStop, DENSITY_THRESHOLDS } from "@/components/EdgeDensitySlider";
 import { BibleBook, Canon, LiturgicalSeason, ViewMode, VerseCrossRef } from "@/lib/types";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
@@ -33,7 +32,8 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>("arcs");
   const [canon, setCanon] = useState<Canon>("catholic");
   const [translation, setTranslation] = useState("rsv-ce");
-  const [edgeThreshold, setEdgeThreshold] = useState(5);
+  const [edgeDensity, setEdgeDensity] = useState<DensityStop>("medium");
+  const edgeThreshold = DENSITY_THRESHOLDS[edgeDensity];
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [hoveredBook, setHoveredBook] = useState<{
     book: BibleBook;
@@ -241,8 +241,8 @@ export default function Home() {
     setReadingsFilterActive(false);
   }, []);
 
-  const handleEdgeThresholdChange = useCallback((next: number) => {
-    setEdgeThreshold(next);
+  const handleDensityChange = useCallback((next: DensityStop) => {
+    setEdgeDensity(next);
     setReadingsFilterActive(false);
   }, []);
 
@@ -522,17 +522,9 @@ export default function Home() {
           </span>
         </div>
 
-        {/* Center: Orrery Toggle + Edge Density */}
+        {/* Center: Orrery Toggle */}
         <div className="flex items-center gap-4">
           <CelestialOrreryToggle viewMode={viewMode} onChange={setViewMode} />
-          {viewMode === "constellation" && (
-            <div className="hidden md:block">
-              <EdgeDensitySelector
-                value={edgeThreshold}
-                onChange={handleEdgeThresholdChange}
-              />
-            </div>
-          )}
         </div>
 
         {/* Far right: About link + Translation Selector */}
@@ -601,9 +593,17 @@ export default function Home() {
           >
             ⓘ
           </Link>
-          <TranslationSelector translation={translation} onChange={setTranslation} />
         </div>
       </div>
+
+      <FilterPanel
+        canon={canon}
+        onCanonChange={handleCanonChange}
+        translation={translation}
+        onTranslationChange={setTranslation}
+        edgeDensity={edgeDensity}
+        onDensityChange={handleDensityChange}
+      />
 
       <Tooltip
         book={hoveredBook?.book ?? null}
@@ -658,7 +658,6 @@ export default function Home() {
           onReadAll={handleReadAll}
           openSignal={readingsCardOpenSignal}
         />
-        <CanonChip canon={canon} onChange={handleCanonChange} />
       </div>
 
       {viewMode === "arcs" && (
