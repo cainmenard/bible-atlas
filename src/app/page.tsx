@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { getPreference, setPreference } from "@/lib/preferences";
 import dynamic from "next/dynamic";
 import StarBackground from "@/components/StarBackground";
 import Tooltip, { TooltipContext } from "@/components/Tooltip";
@@ -74,6 +75,13 @@ export default function Home() {
   // major feast. Cleared after a single pulse cycle so it doesn't retrigger.
   const [feastPulseBookId, setFeastPulseBookId] = useState<string | null>(null);
 
+  // Tracks whether the current session was restored from persisted navigation.
+  // Non-null → show "Continue reading" chip with the stored book/chapter label.
+  const [restoredChip, setRestoredChip] = useState<{
+    bookId: string;
+    chapter: number | null;
+  } | null>(null);
+
   // ─── READING PANE STATE ───
   const [activeReading, setActiveReading] = useState<{
     index: number;
@@ -109,20 +117,47 @@ export default function Home() {
     setBookCrossRefs([]);
   }
 
-  // ─── FIRST-LOAD: OPEN TO TODAY'S GOSPEL ───
-  // Runs once on mount. Only applies when no prior book is persisted
-  // (session 6 will add full "continue where you left off" persistence).
+  // Debounce ref for persisting navigation state (prevents thrashing on rapid clicks)
+  const navWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ─── FIRST-LOAD: RESTORE PREFERENCES + OPEN TO PERSISTED BOOK OR TODAY'S GOSPEL ───
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    let persisted: string | null = null;
-    try {
-      persisted = localStorage.getItem("bible-atlas-last-book");
-    } catch {
-      // localStorage unavailable — treat as first load.
-    }
-    if (persisted !== null) return;
+    // Apply persisted filter preferences
+    const savedTranslation = getPreference<string>("translation");
+    const savedCanon = getPreference<Canon>("canon");
+    const savedDensity = getPreference<DensityStop>("density");
+    if (savedTranslation) setTranslation(savedTranslation);
+    if (savedCanon) setCanon(savedCanon);
+    if (savedDensity) setEdgeDensity(savedDensity);
 
+    // Check for persisted navigation (stale if older than 14 days)
+    const persistedBook = getPreference<string>("last-book");
+    const persistedDate = getPreference<string>("last-view-date");
+    if (persistedBook && persistedDate) {
+      const daysSince =
+        (Date.now() - new Date(persistedDate).getTime()) / 86_400_000;
+      if (daysSince <= 14) {
+        const persistedChapter = getPreference<number>("last-chapter");
+        const persistedVerse = getPreference<number>("last-verse");
+        const navKey =
+          typeof performance !== "undefined" ? performance.now() : Date.now();
+        setSelectedBookId(persistedBook);
+        if (persistedChapter !== null) {
+          setPendingNavigation({
+            bookId: persistedBook,
+            chapter: persistedChapter,
+            verse: persistedVerse ?? 1,
+            key: navKey,
+          });
+        }
+        setRestoredChip({ bookId: persistedBook, chapter: persistedChapter });
+        return;
+      }
+    }
+
+    // No valid persisted state → fall through to today's Gospel (liturgical landing)
     if (!readings || readings.readings.length === 0) {
       console.warn("[bible-atlas] No readings available for first-load state");
       return;
@@ -156,8 +191,6 @@ export default function Home() {
     // Feast-day pulse — only on major General Roman Calendar feasts.
     if (getMajorFeast() !== null) {
       setFeastPulseBookId(gospel.bookId);
-      // Clear after 3s so the effect doesn't retrigger if the prop is
-      // referenced elsewhere.
       setTimeout(() => setFeastPulseBookId(null), 3000);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -197,6 +230,23 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [activeReading?.reading.bookId]);
 
+  // Persist navigation state (debounced 500ms to avoid thrashing on rapid clicks).
+  // Every write of last-book also writes last-view-date.
+  useEffect(() => {
+    if (!drillState?.bookId) return;
+    if (navWriteTimerRef.current) clearTimeout(navWriteTimerRef.current);
+    navWriteTimerRef.current = setTimeout(() => {
+      const today = new Date().toISOString().slice(0, 10);
+      setPreference<string>("last-book", drillState.bookId!);
+      setPreference<string>("last-view-date", today);
+      setPreference<number | null>("last-chapter", drillState.chapter ?? null);
+      setPreference<number | null>("last-verse", drillState.verse ?? null);
+    }, 500);
+    return () => {
+      if (navWriteTimerRef.current) clearTimeout(navWriteTimerRef.current);
+    };
+  }, [drillState]);
+
   // Compute drill-down target books for ForceGraph highlighting
   const selectedChapter = drillState?.chapter ?? null;
   const selectedVerse = drillState?.verse ?? null;
@@ -234,16 +284,19 @@ export default function Home() {
     setArcHighlightBookId(null);
     setPendingNavigation(null);
     setReadingsFilterActive(false);
+    setRestoredChip(null);
   }, []);
 
   const handleCanonChange = useCallback((next: Canon) => {
     setCanon(next);
     setReadingsFilterActive(false);
+    setPreference<string>("canon", next);
   }, []);
 
   const handleDensityChange = useCallback((next: DensityStop) => {
     setEdgeDensity(next);
     setReadingsFilterActive(false);
+    setPreference<string>("density", next);
   }, []);
 
   const handleSelectChapter = useCallback((chapter: number | null) => {
@@ -261,6 +314,7 @@ export default function Home() {
     setSelectedBookId(null);
     setDrillState(null);
     setPendingNavigation(null);
+    setRestoredChip(null);
   }, []);
 
   const handleDotNavigate = useCallback(
@@ -269,9 +323,38 @@ export default function Home() {
         typeof performance !== "undefined" ? performance.now() : Date.now();
       setSelectedBookId(bookId);
       setPendingNavigation({ bookId, chapter, verse, key });
+      setRestoredChip(null);
     },
     []
   );
+
+  const handleTranslationChange = useCallback((next: string) => {
+    setTranslation(next);
+    setPreference<string>("translation", next);
+  }, []);
+
+  const handleDismissContinue = useCallback(() => {
+    setPreference<string>("last-book", null);
+    setPreference<number>("last-chapter", null);
+    setPreference<number>("last-verse", null);
+    setPreference<string>("last-view-date", null);
+    setRestoredChip(null);
+    // Return to today's Gospel
+    if (!readings || readings.readings.length === 0) return;
+    const gospel = readings.readings.find((r) => r.type === "Gospel");
+    if (!gospel || !gospel.bookId) return;
+    const parsed = parseReadingReference(gospel.reference);
+    if (!parsed) return;
+    const key =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    setSelectedBookId(gospel.bookId);
+    setPendingNavigation({
+      bookId: gospel.bookId,
+      chapter: parsed.chapter,
+      verse: parsed.startVerse,
+      key,
+    });
+  }, [readings]);
 
   const handleOpenReading = useCallback((bookId: string, reference: string, type: string, index: number) => {
     // If detail panel is open, close it first and delay opening reading pane
@@ -362,6 +445,16 @@ export default function Home() {
 
   const season = readings?.season as LiturgicalSeason | undefined;
   const seasonColor = season ? LITURGICAL_COLORS[season] : undefined;
+
+  // Label for the "Continue reading" chip, computed from restored persistence state.
+  const continueChipLabel = useMemo(() => {
+    if (!restoredChip) return null;
+    const book = bookMap.get(restoredChip.bookId);
+    if (!book) return null;
+    return restoredChip.chapter != null
+      ? `${book.name} ${restoredChip.chapter}`
+      : book.name;
+  }, [restoredChip]);
 
   // Tooltip context — which variant renders is driven by these signals.
   // Canon mode fires when the user has picked a non-default canon; otherwise
@@ -600,7 +693,7 @@ export default function Home() {
         canon={canon}
         onCanonChange={handleCanonChange}
         translation={translation}
-        onTranslationChange={setTranslation}
+        onTranslationChange={handleTranslationChange}
         edgeDensity={edgeDensity}
         onDensityChange={handleDensityChange}
       />
@@ -624,6 +717,8 @@ export default function Home() {
         onDotNavigate={handleDotNavigate}
         onOpenReadingsCard={handleOpenReadingsCard}
         pendingNavigation={pendingNavigation}
+        continueChipLabel={continueChipLabel}
+        onDismissContinue={handleDismissContinue}
       />
 
       <ReadingPane
