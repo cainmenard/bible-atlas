@@ -127,8 +127,17 @@ export default function VerseMarginPopover({
 
   // Dismiss on scroll anywhere in the document (capture phase catches
   // non-bubbling scroll events from scroll containers like DetailPanel).
+  // Skip scrolls that originate inside the popover itself — those are
+  // the user reading cross-refs, not a background scroll that detaches
+  // the popover from its anchor.
   useEffect(() => {
-    const handleScroll = () => onClose();
+    const handleScroll = (e: Event) => {
+      const target = e.target;
+      if (target instanceof Node && popoverRef.current?.contains(target)) {
+        return;
+      }
+      onClose();
+    };
     window.addEventListener("scroll", handleScroll, true);
     return () => window.removeEventListener("scroll", handleScroll, true);
   }, [onClose]);
