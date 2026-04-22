@@ -127,11 +127,38 @@ export default function VerseMarginPopover({
 
   // Dismiss on scroll anywhere in the document (capture phase catches
   // non-bubbling scroll events from scroll containers like DetailPanel).
+  // Ignore scrolls that originate inside the popover itself.
   useEffect(() => {
-    const handleScroll = () => onClose();
+    const handleScroll = (e: Event) => {
+      if (
+        popoverRef.current &&
+        e.target instanceof Node &&
+        popoverRef.current.contains(e.target)
+      ) return;
+      onClose();
+    };
     window.addEventListener("scroll", handleScroll, true);
     return () => window.removeEventListener("scroll", handleScroll, true);
   }, [onClose]);
+
+  // Attach a native wheel listener so the event never escapes the popover
+  // to the arc canvas or reading pane. React's onWheel only stops the
+  // synthetic event; the native WheelEvent still propagates.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.stopPropagation();
+      const atTop = el.scrollTop <= 0 && e.deltaY < 0;
+      const atBottom =
+        el.scrollTop + el.clientHeight >= el.scrollHeight - 1 &&
+        e.deltaY > 0;
+      if (atTop || atBottom) e.preventDefault();
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, []);
 
   return (
     <div
@@ -324,8 +351,8 @@ export default function VerseMarginPopover({
       )}
 
       <div
+        ref={scrollRef}
         className="verse-margin-popover-scroll"
-        onWheel={(e) => e.stopPropagation()}
       >
         {refs.map((r) => {
           const bookName = BIBLE_API_NAMES[r.bookId] ?? r.bookId;
