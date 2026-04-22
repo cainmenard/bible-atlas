@@ -80,10 +80,11 @@ export default function VerseMarginDot({
     clearTimers();
     closeTimer.current = window.setTimeout(() => {
       if (pinnedRef.current) return;
+      console.log("[mouseleave-close]", { pinned: pinnedRef.current, openState: open });
       setOpen(false);
       setAnchorRect(null);
     }, HIDE_DELAY_MS);
-  }, [clearTimers]);
+  }, [clearTimers, open]);
 
   const handleFocus = useCallback(() => {
     clearTimers();
@@ -134,10 +135,11 @@ export default function VerseMarginDot({
     clearTimers();
     closeTimer.current = window.setTimeout(() => {
       if (pinnedRef.current) return;
+      console.log("[mouseleave-close]", { pinned: pinnedRef.current, openState: open });
       setOpen(false);
       setAnchorRect(null);
     }, HIDE_DELAY_MS);
-  }, [clearTimers]);
+  }, [clearTimers, open]);
 
   const handleJump = useCallback(
     (targetBook: string, targetChapter: number, targetVerse: number) => {
@@ -155,11 +157,28 @@ export default function VerseMarginDot({
   useEffect(() => {
     if (!pinned) return;
     const handleClickOutside = (e: MouseEvent) => {
+      console.log("[outside-click]", {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        target: (e.target as Element)?.tagName,
+        targetClass: (e.target as Element)?.className,
+        buttonContains: buttonRef.current?.contains(e.target as Node),
+        popoverExists: !!document.getElementById(popoverId),
+      });
       const target = e.target as Node;
       if (buttonRef.current?.contains(target)) return;
       const popoverEl = document.getElementById(popoverId);
       if (popoverEl) {
         const rect = popoverEl.getBoundingClientRect();
+        console.log("[outside-click-rect]", {
+          rect: {
+            left: rect.left, right: rect.right,
+            top: rect.top, bottom: rect.bottom,
+          },
+          insideRect:
+            e.clientX >= rect.left && e.clientX <= rect.right &&
+            e.clientY >= rect.top && e.clientY <= rect.bottom,
+        });
         if (
           e.clientX >= rect.left &&
           e.clientX <= rect.right &&
@@ -167,6 +186,7 @@ export default function VerseMarginDot({
           e.clientY <= rect.bottom
         ) return;
       }
+      console.log("[outside-click-closing]");
       closePopover();
     };
     document.addEventListener("mousedown", handleClickOutside);

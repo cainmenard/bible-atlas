@@ -133,6 +133,23 @@ export default function VerseMarginPopover({
     return () => window.removeEventListener("scroll", handleScroll, true);
   }, [onClose]);
 
+  // Diagnostic: capture-phase wheel listener on window to see every wheel
+  // event and whether its path includes the popover scroll container.
+  useEffect(() => {
+    const handler = (e: WheelEvent) => {
+      const popoverEl = document.querySelector(".verse-margin-popover-scroll");
+      const pathIncludesPopover = popoverEl && e.composedPath().includes(popoverEl);
+      console.log("[window-wheel-capture]", {
+        target: (e.target as Element)?.tagName,
+        pathIncludesPopover,
+        deltaY: e.deltaY,
+        defaultPrevented: e.defaultPrevented,
+      });
+    };
+    window.addEventListener("wheel", handler, { capture: true, passive: true });
+    return () => window.removeEventListener("wheel", handler, { capture: true });
+  }, []);
+
   return (
     <div
       ref={popoverRef}
@@ -325,7 +342,19 @@ export default function VerseMarginPopover({
 
       <div
         className="verse-margin-popover-scroll"
-        onWheel={(e) => e.stopPropagation()}
+        onWheel={(e) => {
+          console.log("[popover-wheel]", {
+            deltaY: e.deltaY,
+            scrollTop: e.currentTarget.scrollTop,
+            scrollHeight: e.currentTarget.scrollHeight,
+            clientHeight: e.currentTarget.clientHeight,
+            atTop: e.currentTarget.scrollTop === 0,
+            atBottom: e.currentTarget.scrollTop + e.currentTarget.clientHeight >= e.currentTarget.scrollHeight,
+            defaultPrevented: e.defaultPrevented,
+            propagationStopped: "calling stopPropagation now",
+          });
+          e.stopPropagation();
+        }}
       >
         {refs.map((r) => {
           const bookName = BIBLE_API_NAMES[r.bookId] ?? r.bookId;
