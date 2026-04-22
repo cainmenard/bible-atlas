@@ -197,8 +197,40 @@ export default function VerseReader({
           margin-left: 0;
         }
 
-        .verse-num[data-has-xref]:hover {
-          color: var(--accent);
+        /* Interactive button wrapper for verses that have cross-references.
+           Renders as a superscript but accepts focus, hover, and click. */
+        button.verse-num-interactive {
+          appearance: none;
+          background: none;
+          border: none;
+          cursor: pointer;
+          text-decoration: none;
+          outline: none;
+          border-radius: 4px;
+
+          /* Expanded hit target (32×32px min); negative margin keeps text flow unchanged */
+          padding: 11px 8px;
+          margin-top: -11px;
+          margin-bottom: -11px;
+
+          /* Rest: slightly more visible than non-interactive verse numbers */
+          color: var(--color-text-secondary);
+          transition: color 200ms ease-out, text-decoration-color 200ms ease-out;
+        }
+
+        button.verse-num-interactive:hover {
+          color: var(--color-text-primary);
+          text-decoration: underline;
+          text-decoration-color: var(--color-text-primary);
+          text-underline-offset: 2px;
+        }
+
+        button.verse-num-interactive:hover .verse-margin-dot {
+          opacity: 1;
+        }
+
+        button.verse-num-interactive:focus-visible {
+          box-shadow: 0 0 0 1px rgba(212, 160, 74, 0.6);
         }
 
         /* Uniform horizontal slot keeps text flow stable whether a dot
@@ -382,25 +414,21 @@ export default function VerseReader({
                   data-verse={v.verse}
                   className={isPulseTarget ? "verse-pulse" : undefined}
                 >
-                  <sup
-                    className="verse-num"
-                    {...(hasXref ? { "data-has-xref": String(count) } : {})}
-                    aria-label={`Verse ${v.verse}`}
-                  >
-                    {hasXref ? (
-                      <VerseMarginDot
-                        book={book}
-                        chapter={chapter}
-                        verse={v.verse}
-                        count={count}
-                        translation={translation}
-                        onNavigate={(b, c, vv) => onNavigate?.(b, c, vv)}
-                      />
-                    ) : (
+                  {hasXref ? (
+                    <VerseMarginDot
+                      book={book}
+                      chapter={chapter}
+                      verse={v.verse}
+                      count={count}
+                      translation={translation}
+                      onNavigate={(b, c, vv) => onNavigate?.(b, c, vv)}
+                    />
+                  ) : (
+                    <sup className="verse-num">
                       <span className="verse-margin-dot-slot" aria-hidden="true" />
-                    )}
-                    {v.verse}
-                  </sup>
+                      {v.verse}
+                    </sup>
+                  )}
                   {v.text}
                   {i < verses.length - 1 ? " " : ""}
                 </span>

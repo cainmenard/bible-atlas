@@ -54,9 +54,11 @@ function getCached(
 /* ──────────────────────────────────────────────────────────── */
 
 interface VerseMarginPopoverProps {
+  id?: string;
   anchorRect: DOMRect;
   refs: Reference[];
   translation: string;
+  pinned?: boolean;
   onJump: (bookId: string, chapter: number, verse: number) => void;
   onClose: () => void;
   onMouseEnter: () => void;
@@ -67,9 +69,11 @@ const POPOVER_WIDTH = 320;
 const VIEWPORT_MARGIN = 16;
 
 export default function VerseMarginPopover({
+  id,
   anchorRect,
   refs,
   translation,
+  pinned = false,
   onJump,
   onClose,
   onMouseEnter,
@@ -132,6 +136,7 @@ export default function VerseMarginPopover({
   return (
     <div
       ref={popoverRef}
+      id={id}
       role="dialog"
       aria-modal="false"
       aria-label="Cross-reference preview"
@@ -166,7 +171,7 @@ export default function VerseMarginPopover({
         .verse-margin-popover-header {
           display: flex;
           align-items: center;
-          justify-content: flex-end;
+          justify-content: flex-start;
           flex-shrink: 0;
         }
 
@@ -268,6 +273,23 @@ export default function VerseMarginPopover({
           color: var(--color-accent-hover);
         }
 
+        .verse-margin-popover-close {
+          background: none;
+          border: none;
+          font-family: var(--font-mono);
+          font-size: 14px;
+          line-height: 1;
+          color: var(--color-text-muted);
+          cursor: pointer;
+          padding: 0 2px;
+          margin-left: auto;
+          transition: color var(--transition-fast);
+        }
+
+        .verse-margin-popover-close:hover {
+          color: var(--color-text-primary);
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .verse-margin-popover {
             animation: none;
@@ -279,11 +301,23 @@ export default function VerseMarginPopover({
         }
       `}</style>
 
-      {refs.length > 5 && (
+      {(pinned || refs.length > 5) && (
         <div className="verse-margin-popover-header">
-          <span className="verse-margin-popover-count">
-            {refs.length} REFERENCES
-          </span>
+          {refs.length > 5 && (
+            <span className="verse-margin-popover-count">
+              {refs.length} REFERENCES
+            </span>
+          )}
+          {pinned && (
+            <button
+              type="button"
+              className="verse-margin-popover-close"
+              onClick={onClose}
+              aria-label="Close cross-references"
+            >
+              ×
+            </button>
+          )}
         </div>
       )}
 
