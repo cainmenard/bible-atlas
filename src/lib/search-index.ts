@@ -468,3 +468,78 @@ export function clearVerseTextCache(): void {
   verseTextCache.clear();
   verseTextPending.clear();
 }
+
+// ────────────────────────────────────────────────────────────
+// Genre search
+// ────────────────────────────────────────────────────────────
+
+export interface GenreMatch {
+  /** Display label, e.g. "Gospels" or "Major Prophets". */
+  genre: string;
+  books: BookMatch[];
+}
+
+interface GenreQueryGroup {
+  label: string;
+  genres: string[];
+  extraBookNames?: string[];
+}
+
+interface GenreQueryEntry {
+  aliases: string[];
+  groups: GenreQueryGroup[];
+}
+
+const GENRE_QUERIES: GenreQueryEntry[] = [
+  { aliases: ['gospels', 'gospel'], groups: [{ label: 'Gospels', genres: ['Gospels'] }] },
+  {
+    aliases: ['prophets', 'prophet'],
+    groups: [
+      { label: 'Major Prophets', genres: ['Major Prophets'] },
+      { label: 'Minor Prophets', genres: ['Minor Prophets'] },
+    ],
+  },
+  { aliases: ['wisdom'], groups: [{ label: 'Wisdom', genres: ['Wisdom'] }] },
+  {
+    aliases: ['epistles', 'letters'],
+    groups: [
+      { label: 'Pauline Epistles', genres: ['Pauline Epistles'] },
+      { label: 'General Epistles', genres: ['General Epistles'] },
+    ],
+  },
+  { aliases: ['torah', 'pentateuch'], groups: [{ label: 'Torah', genres: ['Torah'] }] },
+  { aliases: ['history', 'historical'], groups: [{ label: 'History', genres: ['History'] }] },
+  {
+    aliases: ['apocalyptic'],
+    groups: [{ label: 'Apocalyptic', genres: ['Apocalyptic'], extraBookNames: ['Daniel'] }],
+  },
+];
+
+/**
+ * Return genre groups matching an exact genre alias (e.g. "gospels" → [{genre:"Gospels", books:[...]}]).
+ * Only exact-alias matches are supported — this is not a fuzzy search.
+ * Returns an empty array if the query does not match any known genre alias.
+ */
+export function searchGenres(query: string): GenreMatch[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+
+  const result: GenreMatch[] = [];
+  for (const entry of GENRE_QUERIES) {
+    if (!entry.aliases.includes(q)) continue;
+    for (const group of entry.groups) {
+      const genreSet = new Set(group.genres);
+      const extraSet = new Set(group.extraBookNames ?? []);
+      const matchingBooks: BookMatch[] = [];
+      for (const b of books) {
+        if (genreSet.has(b.genre) || extraSet.has(b.name)) {
+          matchingBooks.push({ book: b, score: 0 });
+        }
+      }
+      if (matchingBooks.length > 0) {
+        result.push({ genre: group.label, books: matchingBooks });
+      }
+    }
+  }
+  return result;
+}

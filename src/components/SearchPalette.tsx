@@ -11,12 +11,19 @@ import {
 } from "react";
 import {
   parseQuery,
+  searchGenres,
   bookByCanonicalName,
   getCachedVerseText,
   fetchVersePreview,
   clearVerseTextCache,
   type ParsedQuery,
+  type GenreMatch,
 } from "@/lib/search-index";
+import {
+  addRecentPassage,
+  getRecentPassages,
+  type RecentPassage,
+} from "@/lib/preferences";
 import { CHAPTER_VERSES } from "@/data/chapter-verses";
 import type { BibleBook } from "@/lib/types";
 
@@ -38,7 +45,18 @@ interface PaletteResult {
   verse?: number;
 }
 
+// Discriminated union for what's keyboard-navigable.
+type SelectableItem =
+  | { mode: "result"; result: PaletteResult }
+  | { mode: "recent"; passage: RecentPassage };
+
 const VERSE_PREVIEW_MAX = 140;
+
+const TRY_EXAMPLES = [
+  { text: "gen 1", description: "Find a book and chapter" },
+  { text: "john 3:16", description: "Find a specific verse" },
+  { text: "gospels", description: "Find books by genre" },
+] as const;
 
 function SearchIcon({ size = 14, color = "currentColor" }: { size?: number; color?: string }) {
   return (
@@ -87,6 +105,45 @@ function toResult(parsed: ParsedQuery): PaletteResult | null {
   return { kind: "book", book };
 }
 
+function formatPassageRef(p: RecentPassage): string {
+  if (p.chapter === null) return p.book;
+  if (p.verse === null) return `${p.book} ${p.chapter}`;
+  return `${p.book} ${p.chapter}:${p.verse}`;
+}
+
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now();
+  const diff = now - timestamp;
+  if (diff < 3_600_000) return "Just now";
+
+  const nowDate = new Date();
+  const tsDate = new Date(timestamp);
+
+  if (
+    tsDate.getFullYear() === nowDate.getFullYear() &&
+    tsDate.getMonth() === nowDate.getMonth() &&
+    tsDate.getDate() === nowDate.getDate()
+  ) {
+    return "Today";
+  }
+
+  const yesterday = new Date(nowDate);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (
+    tsDate.getFullYear() === yesterday.getFullYear() &&
+    tsDate.getMonth() === yesterday.getMonth() &&
+    tsDate.getDate() === yesterday.getDate()
+  ) {
+    return "Yesterday";
+  }
+
+  const daysAgo = Math.floor(diff / 86_400_000);
+  if (daysAgo < 7) return `${daysAgo} days ago`;
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[tsDate.getMonth()]} ${tsDate.getDate()}`;
+}
+
 export default function SearchPalette({
   isOpen,
   translation,
@@ -99,43 +156,82 @@ export default function SearchPalette({
   const [debounced, setDebounced] = useState("");
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [exiting, setExiting] = useState(false);
-  // Bumps whenever we want to rerender after a verse preview fetch settles
-  // or the translation changes. The tick value is never read; calling the
-  // setter with a fresh value is what forces the re-render.
+  const [recentPassages, setRecentPassages] = useState<RecentPassage[]>([]);
+  const [lastIsOpen, setLastIsOpen] = useState(isOpen);
   const [, setPreviewTick] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   const listboxId = useId();
 
-  // Debounce the query at 80ms so we don't re-rank on every keystroke.
+  // Debounce the query at 80ms.
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 80);
     return () => clearTimeout(t);
   }, [query]);
 
-  const results: PaletteResult[] = useMemo(() => {
-    if (debounced.trim().length === 0) return [];
-    const parsed = parseQuery(debounced);
-    const out: PaletteResult[] = [];
+  // Reload recent passages whenever the palette transitions to open (derived state during render).
+  if (lastIsOpen !== isOpen) {
+    setLastIsOpen(isOpen);
+    if (isOpen) setRecentPassages(getRecentPassages(5));
+  }
+
+  // ── Results computation ──────────────────────────────────
+  const { bookResults, genreGroups, showGenreSeparator } = useMemo(() => {
+    const q = debounced.trim();
+    if (!q) return { bookResults: [], genreGroups: [] as GenreMatch[], showGenreSeparator: false };
+
+    const genres = searchGenres(q);
+    const parsed = parseQuery(q);
+    const books: PaletteResult[] = [];
     for (const p of parsed) {
       const r = toResult(p);
-      if (r) out.push(r);
+      if (r) books.push(r);
     }
-    return out;
+
+    if (genres.length > 0 && books.length === 0) {
+      return { bookResults: [], genreGroups: genres, showGenreSeparator: false };
+    }
+    if (genres.length > 0 && books.length > 0) {
+      return { bookResults: books, genreGroups: genres, showGenreSeparator: true };
+    }
+    return { bookResults: books, genreGroups: [] as GenreMatch[], showGenreSeparator: false };
   }, [debounced]);
 
-  // Reset selection when the query changes.
+  // Precompute flat index offset for each genre group (for keyboard nav).
+  const genreGroupOffsets = useMemo(() => {
+    const map = new Map<string, number>();
+    let offset = 0;
+    for (const g of genreGroups) {
+      map.set(g.genre, offset);
+      offset += g.books.length;
+    }
+    return map;
+  }, [genreGroups]);
+
+  // Flat list of all keyboard-navigable items.
+  const flatNavigable = useMemo((): SelectableItem[] => {
+    const hasQ = debounced.trim().length > 0;
+    if (!hasQ) {
+      return recentPassages.map((passage) => ({ mode: "recent" as const, passage }));
+    }
+    const items: SelectableItem[] = bookResults.map((result) => ({ mode: "result" as const, result }));
+    for (const group of genreGroups) {
+      for (const bm of group.books) {
+        items.push({ mode: "result", result: { kind: "book", book: bm.book } });
+      }
+    }
+    return items;
+  }, [debounced, bookResults, genreGroups, recentPassages]);
+
+  // Reset selection when debounced query changes.
   const [lastDebounced, setLastDebounced] = useState(debounced);
   if (lastDebounced !== debounced) {
     setLastDebounced(debounced);
     setSelectedIdx(0);
   }
 
-  // Translation change: drop verse-preview cache so previews refetch.
-  // Derived-state-during-render pattern avoids the setState-in-effect
-  // cascade: when `translation` flips we synchronously clear the cache and
-  // bump a tick that invalidates any displayed previews.
+  // Translation change: drop verse-preview cache.
   const [lastTranslation, setLastTranslation] = useState(translation);
   if (lastTranslation !== translation) {
     setLastTranslation(translation);
@@ -143,12 +239,10 @@ export default function SearchPalette({
     setPreviewTick((n) => n + 1);
   }
 
-  // Fetch verse previews for every Type C result currently visible. Cache
-  // dedupes concurrent calls and persists across re-renders within the
-  // translation.
+  // Fetch verse previews for Type C results.
   useEffect(() => {
     let cancelled = false;
-    for (const r of results) {
+    for (const r of bookResults) {
       if (r.kind !== "verse") continue;
       const chapterVerses = verseCountForChapter(r.book.id, r.chapter!);
       if (chapterVerses === null) continue;
@@ -159,15 +253,12 @@ export default function SearchPalette({
         if (!cancelled) setPreviewTick((n) => n + 1);
       });
     }
-    return () => {
-      cancelled = true;
-    };
-  }, [results, translation]);
+    return () => { cancelled = true; };
+  }, [bookResults, translation]);
 
-  // Mount-time: capture the element that had focus, then autofocus the input.
+  // Mount-time: capture focused element, autofocus input.
   useEffect(() => {
-    previouslyFocused.current =
-      (document.activeElement as HTMLElement | null) ?? null;
+    previouslyFocused.current = (document.activeElement as HTMLElement | null) ?? null;
     const t = setTimeout(() => inputRef.current?.focus(), 0);
     return () => clearTimeout(t);
   }, []);
@@ -177,36 +268,50 @@ export default function SearchPalette({
     setTimeout(() => {
       onClose();
       const prev = previouslyFocused.current;
-      if (prev && typeof prev.focus === "function") {
-        prev.focus();
-      }
+      if (prev && typeof prev.focus === "function") prev.focus();
     }, 150);
   }, [onClose]);
 
   const execute = useCallback(
-    (r: PaletteResult) => {
-      if (r.kind === "verse") {
-        onSelectVerse(r.book.id, r.chapter!, r.verse!);
-      } else if (r.kind === "chapter") {
-        onSelectChapter(r.book.id, r.chapter!);
+    (item: SelectableItem) => {
+      if (item.mode === "recent") {
+        const p = item.passage;
+        const bookEntry = bookByCanonicalName.get(p.book);
+        if (!bookEntry) { close(); return; }
+        if (p.verse !== null && p.chapter !== null) {
+          onSelectVerse(bookEntry.id, p.chapter, p.verse);
+          addRecentPassage({ book: p.book, chapter: p.chapter, verse: p.verse });
+        } else if (p.chapter !== null) {
+          onSelectChapter(bookEntry.id, p.chapter);
+          addRecentPassage({ book: p.book, chapter: p.chapter, verse: null });
+        } else {
+          onSelectBook(bookEntry.id);
+          addRecentPassage({ book: p.book, chapter: null, verse: null });
+        }
       } else {
-        onSelectBook(r.book.id);
+        const r = item.result;
+        if (r.kind === "verse") {
+          onSelectVerse(r.book.id, r.chapter!, r.verse!);
+          addRecentPassage({ book: r.book.name, chapter: r.chapter!, verse: r.verse! });
+        } else if (r.kind === "chapter") {
+          onSelectChapter(r.book.id, r.chapter!);
+          addRecentPassage({ book: r.book.name, chapter: r.chapter!, verse: null });
+        } else {
+          onSelectBook(r.book.id);
+          addRecentPassage({ book: r.book.name, chapter: null, verse: null });
+        }
       }
       close();
     },
     [onSelectBook, onSelectChapter, onSelectVerse, close],
   );
 
-  // Keep the selected option scrolled into view.
+  // Keep selected item scrolled into view.
   useEffect(() => {
     if (!listRef.current) return;
-    const el = listRef.current.querySelector<HTMLElement>(
-      `[data-idx="${selectedIdx}"]`,
-    );
-    if (el) {
-      el.scrollIntoView({ block: "nearest" });
-    }
-  }, [selectedIdx, results]);
+    const el = listRef.current.querySelector<HTMLElement>(`[data-idx="${selectedIdx}"]`);
+    if (el) el.scrollIntoView({ block: "nearest" });
+  }, [selectedIdx, flatNavigable]);
 
   // Palette-local keyboard handler.
   useEffect(() => {
@@ -219,32 +324,31 @@ export default function SearchPalette({
         return;
       }
 
-      if (results.length === 0) return;
+      if (flatNavigable.length === 0) return;
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIdx((i) => (i + 1) % results.length);
+        setSelectedIdx((i) => (i + 1) % flatNavigable.length);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIdx((i) => (i - 1 + results.length) % results.length);
+        setSelectedIdx((i) => (i - 1 + flatNavigable.length) % flatNavigable.length);
       } else if (e.key === "Home") {
         e.preventDefault();
         setSelectedIdx(0);
       } else if (e.key === "End") {
         e.preventDefault();
-        setSelectedIdx(results.length - 1);
+        setSelectedIdx(flatNavigable.length - 1);
       } else if (e.key === "Enter") {
         e.preventDefault();
-        const pick = results[selectedIdx];
+        const pick = flatNavigable[selectedIdx];
         if (pick) execute(pick);
       }
     };
     document.addEventListener("keydown", handler, { capture: true });
-    return () =>
-      document.removeEventListener("keydown", handler, { capture: true });
-  }, [isOpen, results, selectedIdx, close, execute]);
+    return () => document.removeEventListener("keydown", handler, { capture: true });
+  }, [isOpen, flatNavigable, selectedIdx, close, execute]);
 
-  // Simple focus trap: keep Tab within the palette while open.
+  // Simple focus trap.
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -274,7 +378,7 @@ export default function SearchPalette({
 
   const stage = exiting ? "exiting" : "entering";
   const hasQuery = debounced.trim().length > 0;
-  const showNoMatch = hasQuery && results.length === 0;
+  const showNoMatch = hasQuery && bookResults.length === 0 && genreGroups.length === 0;
 
   return (
     <>
@@ -308,7 +412,7 @@ export default function SearchPalette({
             aria-autocomplete="list"
             aria-controls={listboxId}
             aria-activedescendant={
-              results.length > 0
+              flatNavigable.length > 0
                 ? `${listboxId}-opt-${selectedIdx}`
                 : undefined
             }
@@ -316,26 +420,81 @@ export default function SearchPalette({
             spellCheck={false}
             autoComplete="off"
           />
-          <span className="search-palette-esc" aria-hidden="true">
-            Esc
-          </span>
+          <span className="search-palette-esc" aria-hidden="true">Esc</span>
         </div>
 
-        {/* Results */}
-        {(hasQuery || results.length > 0) && (
-          <div
-            ref={listRef}
-            id={listboxId}
-            role="listbox"
-            aria-label="Search results"
-            className="search-palette-results"
-          >
-            {showNoMatch ? (
-              <div className="search-palette-empty">
-                No passages match &ldquo;{debounced}&rdquo;
+        {/* Results / Empty state */}
+        <div
+          ref={listRef}
+          id={listboxId}
+          role="listbox"
+          aria-label="Search results"
+          className="search-palette-results"
+        >
+          {/* ── Empty state ── */}
+          {!hasQuery && (
+            <>
+              {recentPassages.length > 0 && (
+                <div role="group" aria-label="Recent passages">
+                  <div className="search-palette-section-header" aria-hidden="true">
+                    RECENT PASSAGES
+                  </div>
+                  {recentPassages.map((passage, idx) => (
+                    <div
+                      key={`${passage.book}-${passage.chapter}-${passage.verse}-${passage.timestamp}`}
+                      id={`${listboxId}-opt-${idx}`}
+                      role="option"
+                      aria-selected={idx === selectedIdx}
+                      data-idx={idx}
+                      tabIndex={-1}
+                      className={`search-palette-result search-palette-recent-row${idx === selectedIdx ? " selected" : ""}`}
+                      onMouseEnter={() => setSelectedIdx(idx)}
+                      onClick={() => execute({ mode: "recent", passage })}
+                    >
+                      <span className="search-palette-book-name">{formatPassageRef(passage)}</span>
+                      <span className="search-palette-meta">{formatRelativeTime(passage.timestamp)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 16px gap between sections */}
+              {recentPassages.length > 0 && <div className="search-palette-section-gap" />}
+
+              <div className="search-palette-section-header" aria-hidden="true">
+                TRY SEARCHING
               </div>
-            ) : (
-              results.map((r, idx) => (
+              {TRY_EXAMPLES.map(({ text, description }) => (
+                <button
+                  key={text}
+                  type="button"
+                  className="search-palette-try-row"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setQuery(text);
+                    inputRef.current?.focus();
+                  }}
+                  tabIndex={0}
+                >
+                  <span className="search-palette-try-example">{text}</span>
+                  <span className="search-palette-meta">{description}</span>
+                </button>
+              ))}
+            </>
+          )}
+
+          {/* ── No match message ── */}
+          {showNoMatch && (
+            <div className="search-palette-empty">
+              No passages match &ldquo;{debounced}&rdquo;
+            </div>
+          )}
+
+          {/* ── Results ── */}
+          {hasQuery && !showNoMatch && (
+            <>
+              {/* Book / chapter / verse results */}
+              {bookResults.map((r, idx) => (
                 <PaletteResultRow
                   key={`${r.kind}-${r.book.id}-${r.chapter ?? ""}-${r.verse ?? ""}`}
                   result={r}
@@ -344,12 +503,44 @@ export default function SearchPalette({
                   optionId={`${listboxId}-opt-${idx}`}
                   translation={translation}
                   onHover={() => setSelectedIdx(idx)}
-                  onClick={() => execute(r)}
+                  onClick={() => execute({ mode: "result", result: r })}
                 />
-              ))
-            )}
-          </div>
-        )}
+              ))}
+
+              {/* Separator when both book results and genre results appear */}
+              {showGenreSeparator && <div className="search-palette-separator" aria-hidden="true" />}
+
+              {/* Genre groups */}
+              {genreGroups.map((group) => {
+                const groupOffset = genreGroupOffsets.get(group.genre) ?? 0;
+                return (
+                  <div key={group.genre} role="group" aria-label={group.genre}>
+                    <div className="search-palette-genre-header" aria-hidden="true">
+                      {group.genre.toUpperCase()}
+                    </div>
+                    {group.books.map((bm, i) => {
+                      const flatIdx = bookResults.length + groupOffset + i;
+                      const result: PaletteResult = { kind: "book", book: bm.book };
+                      return (
+                        <PaletteResultRow
+                          key={bm.book.id}
+                          result={result}
+                          idx={flatIdx}
+                          selected={flatIdx === selectedIdx}
+                          optionId={`${listboxId}-opt-${flatIdx}`}
+                          translation={translation}
+                          onHover={() => setSelectedIdx(flatIdx)}
+                          onClick={() => execute({ mode: "result", result })}
+                          indent
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </div>
       </div>
     </>
   );
@@ -363,6 +554,7 @@ interface RowProps {
   translation: string;
   onHover: () => void;
   onClick: () => void;
+  indent?: boolean;
 }
 
 function PaletteResultRow({
@@ -373,8 +565,10 @@ function PaletteResultRow({
   translation,
   onHover,
   onClick,
+  indent,
 }: RowProps) {
   const { kind, book } = result;
+  const indentStyle = indent ? { paddingLeft: 24 } : undefined;
 
   if (kind === "book") {
     return (
@@ -385,6 +579,7 @@ function PaletteResultRow({
         data-idx={idx}
         tabIndex={-1}
         className={`search-palette-result${selected ? " selected" : ""}`}
+        style={indentStyle}
         onMouseEnter={onHover}
         onClick={onClick}
       >
@@ -409,6 +604,7 @@ function PaletteResultRow({
         data-idx={idx}
         tabIndex={-1}
         className={`search-palette-result${selected ? " selected" : ""}`}
+        style={indentStyle}
         onMouseEnter={onHover}
         onClick={onClick}
       >
@@ -418,9 +614,7 @@ function PaletteResultRow({
           <span style={{ color: "var(--accent)" }}>{chapter}</span>
         </span>
         {outOfRange ? (
-          <span className="search-palette-meta search-palette-warn">
-            chapter out of range
-          </span>
+          <span className="search-palette-meta search-palette-warn">chapter out of range</span>
         ) : (
           <span className="search-palette-meta">{chapterVerses} verses</span>
         )}
@@ -446,21 +640,11 @@ function PaletteResultRow({
   } else {
     const cached = getCachedVerseText(translation, book.name, chapter, verse);
     if (cached === undefined) {
-      previewLine = (
-        <span className="search-palette-verse-status">Loading verse…</span>
-      );
+      previewLine = <span className="search-palette-verse-status">Loading verse…</span>;
     } else if (cached === null) {
-      previewLine = (
-        <span className="search-palette-verse-status">
-          Verse text unavailable
-        </span>
-      );
+      previewLine = <span className="search-palette-verse-status">Verse text unavailable</span>;
     } else {
-      previewLine = (
-        <span className="search-palette-verse-preview">
-          {truncatePreview(cached)}
-        </span>
-      );
+      previewLine = <span className="search-palette-verse-preview">{truncatePreview(cached)}</span>;
     }
   }
 
@@ -472,6 +656,7 @@ function PaletteResultRow({
       data-idx={idx}
       tabIndex={-1}
       className={`search-palette-result search-palette-result-verse${selected ? " selected" : ""}`}
+      style={indentStyle}
       onMouseEnter={onHover}
       onClick={onClick}
     >

@@ -602,6 +602,73 @@ input[type="range"] {
   color: var(--text-dim);
 }
 
+/* ── Genre group header ── */
+.search-palette-genre-header {
+  padding: 8px 16px 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* ── 1px rule between book results and genre groups ── */
+.search-palette-separator {
+  height: 1px;
+  margin: 4px 16px;
+  background: var(--glass-border);
+}
+
+/* ── Empty-state section header (RECENT PASSAGES / TRY SEARCHING) ── */
+.search-palette-section-header {
+  padding: 10px 16px 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* ── Spacer between empty-state sections ── */
+.search-palette-section-gap {
+  height: 16px;
+}
+
+/* ── Recent passage row (same height/padding as result, no badge) ── */
+.search-palette-recent-row {
+  justify-content: space-between;
+}
+
+/* ── Try Searching example row ── */
+.search-palette-try-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 200ms ease-out;
+}
+
+.search-palette-try-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.search-palette-try-example {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
 @media (max-width: 640px) {
   .search-palette {
     width: 90vw;

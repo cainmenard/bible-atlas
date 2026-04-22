@@ -1,6 +1,7 @@
 "use client";
 
 import { useReducer, useEffect, useMemo, useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { addRecentPassage } from "@/lib/preferences";
 import { AnimatePresence, motion } from "motion/react";
 import { bookMap } from "@/data/books";
 import { books } from "@/data/books";
@@ -337,8 +338,10 @@ export default function DetailPanel({
   const handleSelectChapter = useCallback(
     (chapter: number) => {
       dispatch({ type: "SELECT_CHAPTER", chapter });
+      const bookEntry = navState.selectedBook ? bookMap.get(navState.selectedBook) : null;
+      if (bookEntry) addRecentPassage({ book: bookEntry.name, chapter, verse: null });
     },
-    [],
+    [navState.selectedBook],
   );
 
   const handleSelectConnectedBook = useCallback(
@@ -354,6 +357,8 @@ export default function DetailPanel({
     (targetBookName: string, chapter: number, verse: number) => {
       const targetBookId = findBookIdByName(targetBookName);
       if (!targetBookId) return;
+
+      addRecentPassage({ book: targetBookName, chapter, verse });
 
       if (targetBookId === navState.selectedBook) {
         // Same book — navigate within panel
@@ -487,6 +492,10 @@ export default function DetailPanel({
             dispatch={dispatch}
             onClose={onClose}
             totalChapters={book?.chapters}
+            onChapterChange={(chapter) => {
+              const bookEntry = navState.selectedBook ? bookMap.get(navState.selectedBook) : null;
+              if (bookEntry) addRecentPassage({ book: bookEntry.name, chapter, verse: null });
+            }}
           />
 
           {/* Continue-reading chip — shown when session was restored from persisted state */}
