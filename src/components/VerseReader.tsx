@@ -252,15 +252,8 @@ export default function VerseReader({
         .verse-margin-dot {
           background: var(--accent);
           opacity: 0.6;
-          cursor: pointer;
           transition: opacity 200ms ease-out;
           animation: verse-dot-fade-in 200ms ease-out both;
-        }
-
-        .verse-margin-dot:hover,
-        .verse-margin-dot:focus-visible {
-          opacity: 1;
-          outline: none;
         }
 
         @keyframes verse-dot-fade-in {
