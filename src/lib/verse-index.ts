@@ -149,8 +149,9 @@ let indexPromise: Promise<Map<string, Reference[]>> | null = null;
 export function buildVerseIndex(): Promise<Map<string, Reference[]>> {
   if (indexPromise) return indexPromise;
 
-  indexPromise = (async () => {
+  const pending = (async () => {
     const res = await fetch("/arc-crossrefs.json");
+    if (!res.ok) throw new Error(`arc-crossrefs.json: ${res.status}`);
     const data = (await res.json()) as ArcCrossrefsShape;
 
     const n = data.totalVerses;
@@ -225,7 +226,11 @@ export function buildVerseIndex(): Promise<Map<string, Reference[]>> {
     return map;
   })();
 
-  return indexPromise;
+  pending.catch(() => {
+    if (indexPromise === pending) indexPromise = null;
+  });
+  indexPromise = pending;
+  return pending;
 }
 
 /**

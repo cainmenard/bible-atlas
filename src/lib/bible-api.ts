@@ -72,10 +72,8 @@ export async function fetchVerseText(
 
   const ref = `${bookName} ${chapter}:${verse}`;
 
-  // Route through /api/verse to avoid CORS restrictions in production.
-  // The proxy fetches bible-api.com server-side where CORS does not apply.
   const makeUrl = (t: string) =>
-    `/api/verse?ref=${encodeURIComponent(ref)}&translation=${t}`;
+    `https://bible-api.com/${encodeURIComponent(ref)}?translation=${t}`;
 
   try {
     const res = await fetch(makeUrl(translation));
@@ -131,7 +129,7 @@ export async function fetchPassageText(
   }
 
   const makeUrl = (t: string) =>
-    `/api/verse?ref=${encodeURIComponent(reference)}&translation=${t}`;
+    `https://bible-api.com/${encodeURIComponent(reference)}?translation=${t}`;
 
   try {
     const res = await fetch(makeUrl(translation));
