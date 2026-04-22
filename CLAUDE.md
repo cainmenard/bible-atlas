@@ -168,12 +168,13 @@ Zero native form controls. Every input, slider, select, button, and toggle is cu
 ## Developer Commands
 
 ```bash
-npm run dev      # Start local dev server (localhost:3000)
-npm run build    # Production build
-npm run lint     # Run ESLint
+npm run dev           # Start local dev server (localhost:3000)
+npm run build         # Production build (runs validate-data via prebuild hook)
+npm run lint          # Run ESLint
+npm run validate-data # Assert chapter-verses.ts agrees with books.ts (length + sum per book)
 ```
 
-There is no test suite. Verify changes by running `npm run build` — it catches TypeScript errors.
+There is no test suite. Verify changes by running `npm run build` — it catches TypeScript errors and verse-count drift.
 
 ---
 

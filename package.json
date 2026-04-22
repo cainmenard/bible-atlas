@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "npm run validate-data",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validate-data": "tsx scripts/validate-chapter-verses.ts"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.13.23",
@@ -29,6 +31,7 @@
     "eslint-config-next": "16.1.6",
     "gh-pages": "^6.3.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "5.9.3"
   }
 }
