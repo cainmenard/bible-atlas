@@ -190,6 +190,8 @@ export default function VerseMarginPopover({
           padding-right: 8px;
           scrollbar-width: thin;
           scrollbar-color: rgba(212, 160, 74, 0.4) transparent;
+          overscroll-behavior: contain;
+          overscroll-behavior-y: contain;
         }
 
         .verse-margin-popover-scroll::-webkit-scrollbar {
@@ -321,7 +323,10 @@ export default function VerseMarginPopover({
         </div>
       )}
 
-      <div className="verse-margin-popover-scroll">
+      <div
+        className="verse-margin-popover-scroll"
+        onWheel={(e) => e.stopPropagation()}
+      >
         {refs.map((r) => {
           const bookName = BIBLE_API_NAMES[r.bookId] ?? r.bookId;
           const cached = getCached(r.bookId, r.chapter, r.verse, translation);
