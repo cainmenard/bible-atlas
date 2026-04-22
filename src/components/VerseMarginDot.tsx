@@ -158,7 +158,15 @@ export default function VerseMarginDot({
       const target = e.target as Node;
       if (buttonRef.current?.contains(target)) return;
       const popoverEl = document.getElementById(popoverId);
-      if (popoverEl?.contains(target)) return;
+      if (popoverEl) {
+        const rect = popoverEl.getBoundingClientRect();
+        if (
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom
+        ) return;
+      }
       closePopover();
     };
     document.addEventListener("mousedown", handleClickOutside);
