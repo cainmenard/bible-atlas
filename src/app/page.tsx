@@ -11,6 +11,8 @@ import ReadingsPill from "@/components/ReadingsPill";
 import ReadingPlanCard from "@/components/ReadingPlanCard";
 import CelestialOrreryToggle from "@/components/CelestialOrreryToggle";
 import FilterPanel from "@/components/FilterPanel";
+import SearchPalette from "@/components/SearchPalette";
+import SearchTrigger from "@/components/SearchTrigger";
 import { DensityStop, DENSITY_THRESHOLDS } from "@/components/EdgeDensitySlider";
 import { BibleBook, Canon, LiturgicalSeason, ViewMode, VerseCrossRef } from "@/lib/types";
 import { LITURGICAL_COLORS } from "@/lib/colors";
@@ -489,6 +491,57 @@ export default function Home() {
     setViewMode("arcs");
   }, []);
 
+  // ─── COMMAND-K SEARCH PALETTE ───
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
+
+  const handleSearchSelectBook = useCallback((bookId: string) => {
+    setSelectedBookId(bookId);
+    setDrillState(null);
+    setArcHighlightBookId(null);
+    setPendingNavigation(null);
+    setReadingsFilterActive(false);
+    setRestoredChip(null);
+  }, []);
+
+  // Global Cmd/Ctrl+K and `/` shortcuts. Ignore key presses inside form fields
+  // or contenteditable regions, except the palette's own input which this
+  // effect never sees anyway (capture phase fires before bubble).
+  useEffect(() => {
+    const isTypingTarget = (el: EventTarget | null): boolean => {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+      if (el.isContentEditable) return true;
+      return false;
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K / Ctrl+K always opens regardless of focus target.
+      const isMod = e.metaKey || e.ctrlKey;
+      if (isMod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        e.stopPropagation();
+        setSearchOpen(true);
+        return;
+      }
+
+      // "/" opens only when not already typing in a form field.
+      if (e.key === "/" && !isMod && !e.altKey) {
+        if (isTypingTarget(e.target)) return;
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown, { capture: true });
+    return () =>
+      document.removeEventListener("keydown", onKeyDown, { capture: true });
+  }, []);
+
   // ─── VIEW TRANSITION BOOK REMINDER ───
   useEffect(() => {
     if (prevViewModeRef.current !== viewMode) {
@@ -694,7 +747,7 @@ export default function Home() {
           <CelestialOrreryToggle viewMode={viewMode} onChange={setViewMode} />
         </div>
 
-        {/* Far right: About link + Translation Selector */}
+        {/* Far right: Search + About link + Translation Selector */}
         <div
           className="flex items-center gap-2"
           style={{
@@ -706,6 +759,7 @@ export default function Home() {
             WebkitBackdropFilter: "blur(8px)",
           }}
         >
+          <SearchTrigger ref={searchTriggerRef} onClick={openSearch} />
           <Link
             href="/about"
             className="text-[12px] font-mono hidden md:inline-block"
@@ -915,6 +969,12 @@ export default function Home() {
           />
         </div>
       )}
+
+      <SearchPalette
+        isOpen={searchOpen}
+        onClose={closeSearch}
+        onSelectBook={handleSearchSelectBook}
+      />
 
     </main>
   );
