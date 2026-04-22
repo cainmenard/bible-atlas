@@ -17,6 +17,38 @@ Users can filter by:
 
 ---
 
+## Keeping CLAUDE.md current
+
+Every session must leave CLAUDE.md accurate. Before committing, check whether this session's changes meaningfully affect what future sessions need to know. If yes, update CLAUDE.md in the same commit.
+
+**Update CLAUDE.md when the session:**
+
+- Adds a new component in `src/components/` → add to File Structure with one-sentence description
+- Adds a new file in `src/lib/` or `src/data/` → add to File Structure with one-sentence description
+- Deletes a component or lib file that was previously documented → remove it
+- Introduces a new architectural pattern (caching, state management, persistence, data attributes that serve as attachment points) → document it in Architecture Patterns
+- Adds a file that shouldn't be modified by future sessions → add to the "Do NOT modify" list
+- Changes the product thesis, default behavior, or primary user flow → update Project Context and Core Interaction Model
+
+**Do NOT update CLAUDE.md for:**
+
+- Bug fixes that don't change architecture
+- Styling tweaks already covered by the design system
+- Implementation details: cache sizes, debounce values, animation durations, color hex codes already in tokens.css
+- One-off refactors that don't introduce new patterns
+- Performance improvements that don't change the public interface
+
+**When updating:**
+
+- Keep the diff minimal. Preserve sections that are still accurate; do NOT rewrite for rewriting's sake.
+- One sentence per component or lib file is enough. CLAUDE.md is a map, not a manual.
+- Commit the CLAUDE.md update in the same commit as the code change. A separate doc-only commit makes the history harder to follow.
+- If unsure whether a change warrants an update, skip it. Over-documentation drifts faster than under-documentation.
+
+This section is a standing directive. Every future session reads it and acts on it automatically.
+
+---
+
 ## Core Interaction Model
 
 The visualization surfaces cross-reference structure; the `DetailPanel` is where reading happens. Opening a book drills from book → chapter → verse, and at the verse level `VerseReader` renders the full passage with margin dots that expose outbound cross-references. `ReadingPane` is a separate expanded view for liturgical readings (first reading, psalm, gospel, etc.) reached from `ReadingsPill`. Default state on first load is driven by the daily lectionary: today's Gospel opens in the reader, unless the user has either (a) a persisted last-passage within 14 days, or (b) dismissed today's readings, in which case `ReadingPlanCard` shows the M'Cheyne plan for the day.
