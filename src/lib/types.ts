@@ -87,4 +87,17 @@ export interface ChapterCrossRefSummary {
 
 export type DrillDownLevel = "book" | "chapter" | "verse";
 
+/**
+ * A snapshot of the reader's current location, pushed onto the reading-history
+ * stack before a "Jump to passage" cross-reference navigation so the jump is
+ * reversible via the Back breadcrumb.
+ */
+export interface ReadingLocation {
+  bookId: string;
+  chapter: number;
+  verse: number;
+  translation: string;
+  scrollY?: number;
+}
+
 import * as d3 from "d3";

@@ -11,7 +11,7 @@ import {
   initialPanelNavigationState,
 } from "@/lib/panelNavigation";
 import { parseRef, getVerseCrossRefs } from "@/lib/crossref-utils";
-import type { BibleBook, Canon, VerseCrossRef } from "@/lib/types";
+import type { BibleBook, Canon, ReadingLocation, VerseCrossRef } from "@/lib/types";
 import PanelBreadcrumb from "./PanelBreadcrumb";
 import AnimatedPanelContent from "./AnimatedPanelContent";
 import BookDetailView from "./BookDetailView";
@@ -33,7 +33,7 @@ interface DetailPanelProps {
     verse: number | null;
   }) => void;
   onSelectBook?: (bookId: string) => void;
-  onDotNavigate?: (bookId: string, chapter: number, verse: number) => void;
+  onCrossRefNavigate?: (bookId: string, chapter: number, verse: number) => void;
   onOpenReadingsCard?: () => void;
   pendingNavigation?: {
     bookId: string;
@@ -43,6 +43,8 @@ interface DetailPanelProps {
   } | null;
   continueChipLabel?: string | null;
   onDismissContinue?: () => void;
+  readingHistory?: ReadingLocation[];
+  onReadingHistoryBack?: () => void;
 }
 
 /* ─── Helpers ─── */
@@ -127,11 +129,13 @@ export default function DetailPanel({
   canon,
   onNavigationChange,
   onSelectBook,
-  onDotNavigate,
+  onCrossRefNavigate,
   onOpenReadingsCard,
   pendingNavigation,
   continueChipLabel,
   onDismissContinue,
+  readingHistory,
+  onReadingHistoryBack,
 }: DetailPanelProps) {
   const [navState, dispatch] = useReducer(
     panelNavigationReducer,
@@ -240,6 +244,25 @@ export default function DetailPanel({
     navState.selectedBook,
     navState.selectedChapter,
   ]);
+
+  // ─── Alt+ArrowLeft / Cmd+[ → reading-history back ───
+  // Scoped to the panel container so it doesn't intercept global shortcuts.
+  useEffect(() => {
+    if (!isOpen) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const handler = (e: KeyboardEvent) => {
+      if (!readingHistory || readingHistory.length === 0) return;
+      const isAltLeft = e.altKey && e.key === "ArrowLeft";
+      const isCmdBracket = e.metaKey && e.key === "[";
+      if (!isAltLeft && !isCmdBracket) return;
+      e.preventDefault();
+      e.stopPropagation();
+      onReadingHistoryBack?.();
+    };
+    panel.addEventListener("keydown", handler);
+    return () => panel.removeEventListener("keydown", handler);
+  }, [isOpen, readingHistory, onReadingHistoryBack]);
 
   // ─── Focus panel on open ───
   useEffect(() => {
@@ -423,7 +446,7 @@ export default function DetailPanel({
                     : null
                 }
                 onNavigate={(targetBookId, targetChapter, targetVerse) => {
-                  onDotNavigate?.(targetBookId, targetChapter, targetVerse);
+                  onCrossRefNavigate?.(targetBookId, targetChapter, targetVerse);
                 }}
                 onOpenReadingsCard={onOpenReadingsCard}
               />
@@ -486,6 +509,70 @@ export default function DetailPanel({
             outline: "none",
           }}
         >
+          {/* Reading-history back breadcrumb — shown when the user has
+              jumped from a prior passage via a cross-reference. Placed above
+              PanelBreadcrumb so it reads as a stacked navigation affordance. */}
+          {readingHistory && readingHistory.length > 0 && onReadingHistoryBack && (() => {
+            const target = readingHistory[readingHistory.length - 1];
+            const targetBook = bookMap.get(target.bookId);
+            const label = targetBook
+              ? `${targetBook.name} ${target.chapter}:${target.verse}`.toUpperCase()
+              : `${target.bookId} ${target.chapter}:${target.verse}`;
+            return (
+              <div
+                style={{
+                  padding: "8px var(--space-lg) 6px",
+                  borderBottom: "1px solid var(--glass-border)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={onReadingHistoryBack}
+                  aria-label={`Back to ${label}`}
+                  className="reading-history-back"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: "none",
+                    border: "none",
+                    padding: "6px 2px",
+                    margin: "-6px -2px",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "var(--text-xs)",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--color-text-secondary)",
+                    cursor: "pointer",
+                    transition: "color 200ms ease-out",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "var(--color-text-primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "var(--color-text-secondary)";
+                  }}
+                >
+                  <span>← BACK TO {label}</span>
+                  {readingHistory.length > 1 && (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        color: "var(--color-text-muted)",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      × {readingHistory.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            );
+          })()}
+
           {/* Sticky breadcrumb header */}
           <PanelBreadcrumb
             state={navState}

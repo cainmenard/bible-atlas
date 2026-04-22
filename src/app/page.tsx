@@ -14,7 +14,7 @@ import FilterPanel from "@/components/FilterPanel";
 import SearchPalette from "@/components/SearchPalette";
 import SearchTrigger from "@/components/SearchTrigger";
 import { DensityStop, DENSITY_THRESHOLDS } from "@/components/EdgeDensitySlider";
-import { BibleBook, Canon, LiturgicalSeason, ViewMode, VerseCrossRef } from "@/lib/types";
+import { BibleBook, Canon, LiturgicalSeason, ReadingLocation, ViewMode, VerseCrossRef } from "@/lib/types";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
 import { getMajorFeast } from "@/lib/liturgical";
@@ -117,6 +117,11 @@ export default function Home() {
     verse: number;
     key: number;
   } | null>(null);
+
+  // Stack of prior reading locations. Pushed before each "Jump to passage"
+  // cross-ref navigation so the jump is reversible via the Back breadcrumb.
+  // Arc/search navigations do NOT push — they reset reader context entirely.
+  const [readingHistory, setReadingHistory] = useState<ReadingLocation[]>([]);
 
   // Cross-refs for the selected book (shared between ForceGraph and DetailPanel)
   const [bookCrossRefs, setBookCrossRefs] = useState<VerseCrossRef[]>([]);
@@ -321,6 +326,7 @@ export default function Home() {
     setPendingNavigation(null);
     setReadingsFilterActive(false);
     setRestoredChip(null);
+    setReadingHistory([]);
   }, []);
 
   const handleCanonChange = useCallback((next: Canon) => {
@@ -351,10 +357,30 @@ export default function Home() {
     setDrillState(null);
     setPendingNavigation(null);
     setRestoredChip(null);
+    setReadingHistory([]);
   }, []);
 
-  const handleDotNavigate = useCallback(
+  const handleCrossRefNavigate = useCallback(
     (bookId: string, chapter: number, verse: number) => {
+      // Snapshot current reading location before jumping so the user can
+      // reverse the jump via the Back breadcrumb. Skip the push if we don't
+      // have a concrete current verse (no drill state) — there's nothing
+      // meaningful to return to.
+      // TODO: capture scrollY from DetailPanel once it exposes a scroll ref.
+      if (
+        drillState?.bookId &&
+        drillState.chapter !== null &&
+        drillState.verse !== null
+      ) {
+        const snapshot: ReadingLocation = {
+          bookId: drillState.bookId,
+          chapter: drillState.chapter,
+          verse: drillState.verse,
+          translation,
+        };
+        setReadingHistory((prev) => [...prev, snapshot]);
+      }
+
       const key =
         typeof performance !== "undefined" ? performance.now() : Date.now();
       setSelectedBookId(bookId);
@@ -363,8 +389,27 @@ export default function Home() {
       const book = bookMap.get(bookId);
       if (book) addRecentPassage({ book: book.name, chapter, verse });
     },
-    []
+    [drillState, translation]
   );
+
+  const handleReadingHistoryBack = useCallback(() => {
+    setReadingHistory((prev) => {
+      if (prev.length === 0) return prev;
+      const next = prev.slice(0, -1);
+      const target = prev[prev.length - 1];
+      const key =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+      setSelectedBookId(target.bookId);
+      setPendingNavigation({
+        bookId: target.bookId,
+        chapter: target.chapter,
+        verse: target.verse,
+        key,
+      });
+      setRestoredChip(null);
+      return next;
+    });
+  }, []);
 
   const handleTranslationChange = useCallback((next: string) => {
     setTranslation(next);
@@ -512,6 +557,7 @@ export default function Home() {
     setPendingNavigation(null);
     setReadingsFilterActive(false);
     setRestoredChip(null);
+    setReadingHistory([]);
   }, []);
 
   const handleSearchSelectChapter = useCallback(
@@ -522,6 +568,7 @@ export default function Home() {
       setPendingNavigation(buildVerseNavigation(bookId, chapter, 1));
       setReadingsFilterActive(false);
       setRestoredChip(null);
+      setReadingHistory([]);
     },
     [],
   );
@@ -534,6 +581,7 @@ export default function Home() {
       setPendingNavigation(buildVerseNavigation(bookId, chapter, verse));
       setReadingsFilterActive(false);
       setRestoredChip(null);
+      setReadingHistory([]);
     },
     [],
   );
@@ -873,11 +921,13 @@ export default function Home() {
         onSelectBook={handleSelectBook}
         onNavigationChange={handleNavigationChange}
         onClose={handleClosePanel}
-        onDotNavigate={handleDotNavigate}
+        onCrossRefNavigate={handleCrossRefNavigate}
         onOpenReadingsCard={handleOpenReadingsCard}
         pendingNavigation={pendingNavigation}
         continueChipLabel={continueChipLabel}
         onDismissContinue={handleDismissContinue}
+        readingHistory={readingHistory}
+        onReadingHistoryBack={handleReadingHistoryBack}
       />
 
       <ReadingPane
