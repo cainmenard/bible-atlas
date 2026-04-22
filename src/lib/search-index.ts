@@ -1,4 +1,5 @@
 import { books } from "@/data/books";
+import { fetchVerseText } from "@/lib/bible-api";
 import type { BibleBook } from "@/lib/types";
 
 export interface BookAlias {
@@ -10,6 +11,17 @@ export interface BookMatch {
   book: BibleBook;
   /** Lower score = better rank. */
   score: number;
+}
+
+/**
+ * Structured result of parsing a palette query. One ParsedQuery is emitted
+ * per candidate book — an ambiguous query (`john`, `1 4`) yields several.
+ */
+export interface ParsedQuery {
+  /** Canonical book name, e.g. "1 John" or "Psalms". */
+  book: string;
+  chapter?: number;
+  verse?: number;
 }
 
 /**
@@ -149,6 +161,11 @@ const searchIndex: IndexEntry[] = books.map((book) => {
   };
 });
 
+/** Canonical-name → BibleBook lookup. Name strings are exactly `book.name`. */
+export const bookByCanonicalName = new Map<string, BibleBook>(
+  books.map((b) => [b.name, b]),
+);
+
 // Score tiers — lower is better; gaps leave room for within-tier tie-breakers.
 const TIER_EXACT_ALIAS = 0;
 const TIER_PREFIX_CANONICAL = 100;
@@ -269,4 +286,185 @@ export function searchBooks(query: string): BookMatch[] {
   });
 
   return results.slice(0, MAX_RESULTS);
+}
+
+// ────────────────────────────────────────────────────────────
+// Query parsing — book + optional chapter:verse reference
+// ────────────────────────────────────────────────────────────
+
+/** Pure translation codes never resolve to a passage. */
+const TRANSLATION_CODES = new Set(["rsv", "kjv", "jb", "ce", "web", "rsv-ce"]);
+
+interface ReferenceParts {
+  bookText: string;
+  chapter?: number;
+  verse?: number;
+}
+
+/**
+ * Separate the numeric chapter[:verse] portion from the book text portion of
+ * a raw (already lowercased, whitespace-normalized) query. Recognizes these
+ * shapes, in order:
+ *   1. `book chapter[:verse[-end]]`       ("mark 4", "mark 4:1", "1 john 3:16")
+ *   2. `chapter[:verse[-end]] book`       ("4 mark", "4:1 mark")
+ *   3. `alphaAbbr+chapter[:verse[-end]]`  ("mk4", "mk4:1")
+ *   4. `digit+alpha+chapter[:verse]`      ("1jn4", "1jn4:16")
+ *
+ * Returns null only if the input is empty. Otherwise the whole input is
+ * treated as book text (patterns fell through).
+ */
+function parseReferenceParts(raw: string): ReferenceParts | null {
+  const q = raw.trim().toLowerCase().replace(/\s+/g, " ");
+  if (!q) return null;
+
+  // 1. book then chapter[:verse[-end]] — non-greedy book text to allow
+  //    multi-word names ("1 john 3:16", "song of solomon 2:4").
+  let m = q.match(/^(.+?)\s+(\d+)(?::(\d+)(?:-\d+)?)?$/);
+  if (m) {
+    return {
+      bookText: m[1],
+      chapter: parseInt(m[2], 10),
+      verse: m[3] ? parseInt(m[3], 10) : undefined,
+    };
+  }
+
+  // 2. chapter[:verse[-end]] then book — reversed order.
+  m = q.match(/^(\d+)(?::(\d+)(?:-\d+)?)?\s+([a-z].*)$/);
+  if (m) {
+    return {
+      bookText: m[3],
+      chapter: parseInt(m[1], 10),
+      verse: m[2] ? parseInt(m[2], 10) : undefined,
+    };
+  }
+
+  // 3. alpha abbr glued to chapter ("mk4", "mk4:1-9").
+  m = q.match(/^([a-z]+)(\d+)(?::(\d+)(?:-\d+)?)?$/);
+  if (m) {
+    return {
+      bookText: m[1],
+      chapter: parseInt(m[2], 10),
+      verse: m[3] ? parseInt(m[3], 10) : undefined,
+    };
+  }
+
+  // 4. digit + alpha glued ("1jn4", "1jn4:16"). Numbered-book abbreviation
+  //    with the chapter appended directly. The book text is normalized back
+  //    to "<digit> <alpha>" so searchBooks can match the canonical alias.
+  m = q.match(/^(\d)([a-z]+)(\d+)(?::(\d+)(?:-\d+)?)?$/);
+  if (m) {
+    return {
+      bookText: `${m[1]} ${m[2]}`,
+      chapter: parseInt(m[3], 10),
+      verse: m[4] ? parseInt(m[4], 10) : undefined,
+    };
+  }
+
+  // No chapter present — the whole query is book text.
+  return { bookText: q };
+}
+
+/**
+ * Parse a palette query into one or more structured references. A plain book
+ * query yields book-only results (matching 7A); a query with a chapter yields
+ * Type B results; chapter+verse yields Type C results.
+ *
+ * Ambiguous text like `john` produces multiple entries (John, 1 John, 2 John,
+ * 3 John) in the same ranking order as searchBooks. Translation codes on
+ * their own (`rsv`, `kjv`, …) never produce results — translations aren't
+ * passages.
+ */
+export function parseQuery(query: string): ParsedQuery[] {
+  const raw = query.trim().toLowerCase();
+  if (raw.length === 0) return [];
+  if (TRANSLATION_CODES.has(raw)) return [];
+
+  const parts = parseReferenceParts(raw);
+  if (!parts) return [];
+
+  const matches = searchBooks(parts.bookText);
+  if (matches.length === 0) return [];
+
+  return matches.map((m) => ({
+    book: m.book.name,
+    chapter: parts.chapter,
+    verse: parts.verse,
+  }));
+}
+
+// ────────────────────────────────────────────────────────────
+// Verse text preview cache (for Type C results in the palette)
+// ────────────────────────────────────────────────────────────
+
+type VerseCacheEntry = string | null;
+
+const verseTextCache = new Map<string, VerseCacheEntry>();
+const verseTextPending = new Map<string, Promise<VerseCacheEntry>>();
+
+function verseCacheKey(
+  translation: string,
+  book: string,
+  chapter: number,
+  verse: number,
+): string {
+  return `${translation}-${book}-${chapter}-${verse}`;
+}
+
+/** Synchronous cache lookup; undefined if not yet fetched, string on hit,
+ *  null on settled fetch failure. */
+export function getCachedVerseText(
+  translation: string,
+  book: string,
+  chapter: number,
+  verse: number,
+): VerseCacheEntry | undefined {
+  return verseTextCache.get(verseCacheKey(translation, book, chapter, verse));
+}
+
+/**
+ * Fetch the preview text for a single verse, deduplicating concurrent
+ * fetches for the same key. Results are cached in-memory for the session.
+ * Returns null when the fetch fails or yields no text.
+ */
+export function fetchVersePreview(
+  translation: string,
+  book: string,
+  chapter: number,
+  verse: number,
+): Promise<VerseCacheEntry> {
+  const key = verseCacheKey(translation, book, chapter, verse);
+
+  if (verseTextCache.has(key)) {
+    return Promise.resolve(verseTextCache.get(key) ?? null);
+  }
+  const pending = verseTextPending.get(key);
+  if (pending) return pending;
+
+  const bookEntry = bookByCanonicalName.get(book);
+  if (!bookEntry) {
+    verseTextCache.set(key, null);
+    return Promise.resolve(null);
+  }
+
+  const promise = fetchVerseText(bookEntry.id, chapter, verse, translation)
+    .then((result) => {
+      const text = result?.text ?? null;
+      verseTextCache.set(key, text);
+      verseTextPending.delete(key);
+      return text;
+    })
+    .catch(() => {
+      verseTextCache.set(key, null);
+      verseTextPending.delete(key);
+      return null;
+    });
+
+  verseTextPending.set(key, promise);
+  return promise;
+}
+
+/** Drop all cached verse previews. Call when the active translation changes. */
+export function clearVerseTextCache(): void {
+  verseTextCache.clear();
+  verseTextPending.clear();
 }

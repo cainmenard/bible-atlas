@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type ReactNode,
   useCallback,
   useEffect,
   useId,
@@ -8,14 +9,36 @@ import {
   useRef,
   useState,
 } from "react";
-import { searchBooks, type BookMatch } from "@/lib/search-index";
+import {
+  parseQuery,
+  bookByCanonicalName,
+  getCachedVerseText,
+  fetchVersePreview,
+  clearVerseTextCache,
+  type ParsedQuery,
+} from "@/lib/search-index";
+import { CHAPTER_VERSES } from "@/data/chapter-verses";
 import type { BibleBook } from "@/lib/types";
 
 interface Props {
   isOpen: boolean;
+  translation: string;
   onClose: () => void;
   onSelectBook: (bookId: string) => void;
+  onSelectChapter: (bookId: string, chapter: number) => void;
+  onSelectVerse: (bookId: string, chapter: number, verse: number) => void;
 }
+
+type ResultKind = "book" | "chapter" | "verse";
+
+interface PaletteResult {
+  kind: ResultKind;
+  book: BibleBook;
+  chapter?: number;
+  verse?: number;
+}
+
+const VERSE_PREVIEW_MAX = 140;
 
 function SearchIcon({ size = 14, color = "currentColor" }: { size?: number; color?: string }) {
   return (
@@ -40,11 +63,46 @@ function testamentBadge(t: BibleBook["testament"]) {
   return t;
 }
 
-export default function SearchPalette({ isOpen, onClose, onSelectBook }: Props) {
+function verseCountForChapter(bookId: string, chapter: number): number | null {
+  const arr = CHAPTER_VERSES[bookId];
+  if (!arr) return null;
+  if (chapter < 1 || chapter > arr.length) return null;
+  return arr[chapter - 1];
+}
+
+function truncatePreview(text: string): string {
+  if (text.length <= VERSE_PREVIEW_MAX) return text;
+  return text.slice(0, VERSE_PREVIEW_MAX).trimEnd() + "…";
+}
+
+function toResult(parsed: ParsedQuery): PaletteResult | null {
+  const book = bookByCanonicalName.get(parsed.book);
+  if (!book) return null;
+  if (parsed.verse !== undefined && parsed.chapter !== undefined) {
+    return { kind: "verse", book, chapter: parsed.chapter, verse: parsed.verse };
+  }
+  if (parsed.chapter !== undefined) {
+    return { kind: "chapter", book, chapter: parsed.chapter };
+  }
+  return { kind: "book", book };
+}
+
+export default function SearchPalette({
+  isOpen,
+  translation,
+  onClose,
+  onSelectBook,
+  onSelectChapter,
+  onSelectVerse,
+}: Props) {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [exiting, setExiting] = useState(false);
+  // Bumps whenever we want to rerender after a verse preview fetch settles
+  // or the translation changes. The tick value is never read; calling the
+  // setter with a fresh value is what forces the re-render.
+  const [, setPreviewTick] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -56,22 +114,57 @@ export default function SearchPalette({ isOpen, onClose, onSelectBook }: Props) 
     return () => clearTimeout(t);
   }, [query]);
 
-  const results: BookMatch[] = useMemo(
-    () => (debounced.trim().length === 0 ? [] : searchBooks(debounced)),
-    [debounced],
-  );
+  const results: PaletteResult[] = useMemo(() => {
+    if (debounced.trim().length === 0) return [];
+    const parsed = parseQuery(debounced);
+    const out: PaletteResult[] = [];
+    for (const p of parsed) {
+      const r = toResult(p);
+      if (r) out.push(r);
+    }
+    return out;
+  }, [debounced]);
 
-  // Reset selection when the query changes. Derived state — resolved during
-  // render to avoid the cascading render of setState-in-effect.
+  // Reset selection when the query changes.
   const [lastDebounced, setLastDebounced] = useState(debounced);
   if (lastDebounced !== debounced) {
     setLastDebounced(debounced);
     setSelectedIdx(0);
   }
 
+  // Translation change: drop verse-preview cache so previews refetch.
+  // Derived-state-during-render pattern avoids the setState-in-effect
+  // cascade: when `translation` flips we synchronously clear the cache and
+  // bump a tick that invalidates any displayed previews.
+  const [lastTranslation, setLastTranslation] = useState(translation);
+  if (lastTranslation !== translation) {
+    setLastTranslation(translation);
+    clearVerseTextCache();
+    setPreviewTick((n) => n + 1);
+  }
+
+  // Fetch verse previews for every Type C result currently visible. Cache
+  // dedupes concurrent calls and persists across re-renders within the
+  // translation.
+  useEffect(() => {
+    let cancelled = false;
+    for (const r of results) {
+      if (r.kind !== "verse") continue;
+      const chapterVerses = verseCountForChapter(r.book.id, r.chapter!);
+      if (chapterVerses === null) continue;
+      if (r.verse! < 1 || r.verse! > chapterVerses) continue;
+      const cached = getCachedVerseText(translation, r.book.name, r.chapter!, r.verse!);
+      if (cached !== undefined) continue;
+      fetchVersePreview(translation, r.book.name, r.chapter!, r.verse!).then(() => {
+        if (!cancelled) setPreviewTick((n) => n + 1);
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [results, translation]);
+
   // Mount-time: capture the element that had focus, then autofocus the input.
-  // The palette unmounts when closed, so running this once per mount is
-  // equivalent to "run whenever the palette opens".
   useEffect(() => {
     previouslyFocused.current =
       (document.activeElement as HTMLElement | null) ?? null;
@@ -80,11 +173,9 @@ export default function SearchPalette({ isOpen, onClose, onSelectBook }: Props) 
   }, []);
 
   const close = useCallback(() => {
-    // Play exit animation then unmount via parent.
     setExiting(true);
     setTimeout(() => {
       onClose();
-      // Restore focus to the element that opened the palette.
       const prev = previouslyFocused.current;
       if (prev && typeof prev.focus === "function") {
         prev.focus();
@@ -93,11 +184,17 @@ export default function SearchPalette({ isOpen, onClose, onSelectBook }: Props) 
   }, [onClose]);
 
   const execute = useCallback(
-    (book: BibleBook) => {
-      onSelectBook(book.id);
+    (r: PaletteResult) => {
+      if (r.kind === "verse") {
+        onSelectVerse(r.book.id, r.chapter!, r.verse!);
+      } else if (r.kind === "chapter") {
+        onSelectChapter(r.book.id, r.chapter!);
+      } else {
+        onSelectBook(r.book.id);
+      }
       close();
     },
-    [onSelectBook, close],
+    [onSelectBook, onSelectChapter, onSelectVerse, close],
   );
 
   // Keep the selected option scrolled into view.
@@ -111,9 +208,7 @@ export default function SearchPalette({ isOpen, onClose, onSelectBook }: Props) 
     }
   }, [selectedIdx, results]);
 
-  // Palette-local keyboard handler (arrow nav, enter, escape, home/end).
-  // Registered on document in capture phase so Escape closes the palette
-  // before any bubble-phase handlers (e.g. DetailPanel) can act on it.
+  // Palette-local keyboard handler.
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -141,7 +236,7 @@ export default function SearchPalette({ isOpen, onClose, onSelectBook }: Props) 
       } else if (e.key === "Enter") {
         e.preventDefault();
         const pick = results[selectedIdx];
-        if (pick) execute(pick.book);
+        if (pick) execute(pick);
       }
     };
     document.addEventListener("keydown", handler, { capture: true });
@@ -209,7 +304,7 @@ export default function SearchPalette({ isOpen, onClose, onSelectBook }: Props) 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Find a passage"
-            aria-label="Search for a book"
+            aria-label="Search for a passage"
             aria-autocomplete="list"
             aria-controls={listboxId}
             aria-activedescendant={
@@ -237,40 +332,156 @@ export default function SearchPalette({ isOpen, onClose, onSelectBook }: Props) 
           >
             {showNoMatch ? (
               <div className="search-palette-empty">
-                No books match &ldquo;{debounced}&rdquo;
+                No passages match &ldquo;{debounced}&rdquo;
               </div>
             ) : (
-              results.map((m, idx) => {
-                const isSelected = idx === selectedIdx;
-                return (
-                  <div
-                    key={m.book.id}
-                    id={`${listboxId}-opt-${idx}`}
-                    role="option"
-                    aria-selected={isSelected}
-                    data-idx={idx}
-                    tabIndex={-1}
-                    className={`search-palette-result${isSelected ? " selected" : ""}`}
-                    onMouseEnter={() => setSelectedIdx(idx)}
-                    onClick={() => execute(m.book)}
-                  >
-                    <span className="search-palette-badge">
-                      {testamentBadge(m.book.testament)}
-                    </span>
-                    <span className="search-palette-book-name">
-                      {m.book.name}
-                    </span>
-                    <span className="search-palette-meta">
-                      {m.book.genre} · {m.book.chapters} chapters
-                    </span>
-                  </div>
-                );
-              })
+              results.map((r, idx) => (
+                <PaletteResultRow
+                  key={`${r.kind}-${r.book.id}-${r.chapter ?? ""}-${r.verse ?? ""}`}
+                  result={r}
+                  idx={idx}
+                  selected={idx === selectedIdx}
+                  optionId={`${listboxId}-opt-${idx}`}
+                  translation={translation}
+                  onHover={() => setSelectedIdx(idx)}
+                  onClick={() => execute(r)}
+                />
+              ))
             )}
           </div>
         )}
       </div>
-
     </>
+  );
+}
+
+interface RowProps {
+  result: PaletteResult;
+  idx: number;
+  selected: boolean;
+  optionId: string;
+  translation: string;
+  onHover: () => void;
+  onClick: () => void;
+}
+
+function PaletteResultRow({
+  result,
+  idx,
+  selected,
+  optionId,
+  translation,
+  onHover,
+  onClick,
+}: RowProps) {
+  const { kind, book } = result;
+
+  if (kind === "book") {
+    return (
+      <div
+        id={optionId}
+        role="option"
+        aria-selected={selected}
+        data-idx={idx}
+        tabIndex={-1}
+        className={`search-palette-result${selected ? " selected" : ""}`}
+        onMouseEnter={onHover}
+        onClick={onClick}
+      >
+        <span className="search-palette-badge">{testamentBadge(book.testament)}</span>
+        <span className="search-palette-book-name">{book.name}</span>
+        <span className="search-palette-meta">
+          {book.genre} · {book.chapters} chapters
+        </span>
+      </div>
+    );
+  }
+
+  if (kind === "chapter") {
+    const chapter = result.chapter!;
+    const chapterVerses = verseCountForChapter(book.id, chapter);
+    const outOfRange = chapterVerses === null;
+    return (
+      <div
+        id={optionId}
+        role="option"
+        aria-selected={selected}
+        data-idx={idx}
+        tabIndex={-1}
+        className={`search-palette-result${selected ? " selected" : ""}`}
+        onMouseEnter={onHover}
+        onClick={onClick}
+      >
+        <span className="search-palette-badge">{testamentBadge(book.testament)}</span>
+        <span className="search-palette-book-name">
+          {book.name}{" "}
+          <span style={{ color: "var(--accent)" }}>{chapter}</span>
+        </span>
+        {outOfRange ? (
+          <span className="search-palette-meta search-palette-warn">
+            chapter out of range
+          </span>
+        ) : (
+          <span className="search-palette-meta">{chapterVerses} verses</span>
+        )}
+      </div>
+    );
+  }
+
+  // Verse result (Type C)
+  const chapter = result.chapter!;
+  const verse = result.verse!;
+  const chapterVerses = verseCountForChapter(book.id, chapter);
+  const chapterOutOfRange = chapterVerses === null;
+  const verseOutOfRange = !chapterOutOfRange && (verse < 1 || verse > chapterVerses);
+  const outOfRange = chapterOutOfRange || verseOutOfRange;
+
+  let previewLine: ReactNode;
+  if (outOfRange) {
+    previewLine = (
+      <span className="search-palette-verse-status">
+        {chapterOutOfRange ? "chapter out of range" : "verse out of range"}
+      </span>
+    );
+  } else {
+    const cached = getCachedVerseText(translation, book.name, chapter, verse);
+    if (cached === undefined) {
+      previewLine = (
+        <span className="search-palette-verse-status">Loading verse…</span>
+      );
+    } else if (cached === null) {
+      previewLine = (
+        <span className="search-palette-verse-status">
+          Verse text unavailable
+        </span>
+      );
+    } else {
+      previewLine = (
+        <span className="search-palette-verse-preview">
+          {truncatePreview(cached)}
+        </span>
+      );
+    }
+  }
+
+  return (
+    <div
+      id={optionId}
+      role="option"
+      aria-selected={selected}
+      data-idx={idx}
+      tabIndex={-1}
+      className={`search-palette-result search-palette-result-verse${selected ? " selected" : ""}`}
+      onMouseEnter={onHover}
+      onClick={onClick}
+    >
+      <span className="search-palette-badge">{testamentBadge(book.testament)}</span>
+      <div className="search-palette-verse-body">
+        <div className="search-palette-verse-ref">
+          {book.name} {chapter}:{verse}
+        </div>
+        <div className="search-palette-verse-line">{previewLine}</div>
+      </div>
+    </div>
   );
 }

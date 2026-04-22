@@ -19,6 +19,8 @@ import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
 import { getMajorFeast } from "@/lib/liturgical";
 import { parseReadingReference } from "@/lib/bible-api";
+import { clearVerseTextCache } from "@/lib/search-index";
+import { buildVerseNavigation } from "@/lib/verse-navigation";
 import { getVerseCrossRefs, getTargetBookCounts } from "@/lib/crossref-utils";
 import { bookMap } from "@/data/books";
 import ArcZoomControls from "@/components/ArcZoomControls";
@@ -365,6 +367,9 @@ export default function Home() {
   const handleTranslationChange = useCallback((next: string) => {
     setTranslation(next);
     setPreference<string>("translation", next);
+    // Palette verse previews are translation-scoped; drop cached text so
+    // subsequent lookups refetch in the new translation.
+    clearVerseTextCache();
   }, []);
 
   const handleDismissContinue = useCallback(() => {
@@ -506,6 +511,30 @@ export default function Home() {
     setReadingsFilterActive(false);
     setRestoredChip(null);
   }, []);
+
+  const handleSearchSelectChapter = useCallback(
+    (bookId: string, chapter: number) => {
+      setSelectedBookId(bookId);
+      setDrillState(null);
+      setArcHighlightBookId(null);
+      setPendingNavigation(buildVerseNavigation(bookId, chapter, 1));
+      setReadingsFilterActive(false);
+      setRestoredChip(null);
+    },
+    [],
+  );
+
+  const handleSearchSelectVerse = useCallback(
+    (bookId: string, chapter: number, verse: number) => {
+      setSelectedBookId(bookId);
+      setDrillState(null);
+      setArcHighlightBookId(null);
+      setPendingNavigation(buildVerseNavigation(bookId, chapter, verse));
+      setReadingsFilterActive(false);
+      setRestoredChip(null);
+    },
+    [],
+  );
 
   // Global Cmd/Ctrl+K and `/` shortcuts. Ignore key presses inside form fields
   // or contenteditable regions, except the palette's own input which this
@@ -972,8 +1001,11 @@ export default function Home() {
 
       <SearchPalette
         isOpen={searchOpen}
+        translation={translation}
         onClose={closeSearch}
         onSelectBook={handleSearchSelectBook}
+        onSelectChapter={handleSearchSelectChapter}
+        onSelectVerse={handleSearchSelectVerse}
       />
 
     </main>
