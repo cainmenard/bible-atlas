@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-// useState is retained for `expanded`; position is applied imperatively
-// to avoid a re-render after DOM measurement.
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Reference } from "@/lib/verse-index";
 import { fetchVerseText, BIBLE_API_NAMES } from "@/lib/bible-api";
 
@@ -65,7 +63,6 @@ interface VerseMarginPopoverProps {
   onMouseLeave: () => void;
 }
 
-const INITIAL_VISIBLE = 3;
 const POPOVER_WIDTH = 320;
 const VIEWPORT_MARGIN = 16;
 
@@ -78,20 +75,13 @@ export default function VerseMarginPopover({
   onMouseEnter,
   onMouseLeave,
 }: VerseMarginPopoverProps) {
-  const [expanded, setExpanded] = useState(false);
   const [, forceRender] = useState(0);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  const visibleRefs = useMemo(
-    () => (expanded ? refs : refs.slice(0, INITIAL_VISIBLE)),
-    [expanded, refs]
-  );
-  const hiddenCount = Math.max(0, refs.length - INITIAL_VISIBLE);
-
-  // Kick off fetches for the currently visible references on mount / expand.
+  // Fetch verse text for all refs.
   useEffect(() => {
     let cancelled = false;
-    for (const r of visibleRefs) {
+    for (const r of refs) {
       const cached = getCached(r.bookId, r.chapter, r.verse, translation);
       if (cached === undefined) {
         loadVerseText(r.bookId, r.chapter, r.verse, translation).then(() => {
@@ -102,10 +92,10 @@ export default function VerseMarginPopover({
     return () => {
       cancelled = true;
     };
-  }, [visibleRefs, translation]);
+  }, [refs, translation]);
 
   // Position: anchored to dot, viewport-clamped, flipped upward if needed.
-  // We write style directly so no extra render is required after measuring.
+  // Written directly to style to avoid a re-render after DOM measurement.
   useLayoutEffect(() => {
     const el = popoverRef.current;
     if (!el) return;
@@ -129,7 +119,7 @@ export default function VerseMarginPopover({
     el.style.top = `${top}px`;
     el.style.left = `${left}px`;
     el.style.visibility = "visible";
-  }, [anchorRect, visibleRefs.length]);
+  }, [anchorRect, refs.length]);
 
   // Dismiss on scroll anywhere in the document (capture phase catches
   // non-bubbling scroll events from scroll containers like DetailPanel).
@@ -162,7 +152,8 @@ export default function VerseMarginPopover({
         .verse-margin-popover {
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 10px;
+          max-height: min(480px, calc(100vh - 32px));
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
           animation: verse-popover-in 180ms ease-out both;
         }
@@ -170,6 +161,48 @@ export default function VerseMarginPopover({
         @keyframes verse-popover-in {
           from { opacity: 0; transform: translateY(-2px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .verse-margin-popover-header {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          flex-shrink: 0;
+        }
+
+        .verse-margin-popover-count {
+          font-family: var(--font-mono);
+          font-size: var(--text-xs);
+          letter-spacing: 0.08em;
+          color: var(--color-text-muted);
+          text-transform: uppercase;
+        }
+
+        .verse-margin-popover-scroll {
+          flex: 1 1 auto;
+          overflow-y: auto;
+          min-height: 0;
+          padding-right: 8px;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(212, 160, 74, 0.4) transparent;
+        }
+
+        .verse-margin-popover-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .verse-margin-popover-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .verse-margin-popover-scroll::-webkit-scrollbar-thumb {
+          background: var(--color-accent);
+          opacity: 0.4;
+          border-radius: 3px;
+        }
+
+        .verse-margin-popover-scroll::-webkit-scrollbar-thumb:hover {
+          opacity: 0.8;
         }
 
         .verse-margin-popover-entry {
@@ -183,7 +216,7 @@ export default function VerseMarginPopover({
           border-top: 1px solid var(--glass-border);
         }
 
-        .verse-margin-popover-header {
+        .verse-margin-popover-entry-header {
           font-family: var(--font-mono);
           font-size: 11px;
           letter-spacing: 0.04em;
@@ -235,23 +268,6 @@ export default function VerseMarginPopover({
           color: var(--color-accent-hover);
         }
 
-        .verse-margin-popover-expand {
-          align-self: flex-start;
-          font-family: var(--font-mono);
-          font-size: 10px;
-          letter-spacing: 0.06em;
-          color: var(--text-secondary);
-          background: none;
-          border: none;
-          padding: 0;
-          cursor: pointer;
-          transition: color var(--transition-fast);
-        }
-
-        .verse-margin-popover-expand:hover {
-          color: var(--accent);
-        }
-
         @media (prefers-reduced-motion: reduce) {
           .verse-margin-popover {
             animation: none;
@@ -263,60 +279,57 @@ export default function VerseMarginPopover({
         }
       `}</style>
 
-      {visibleRefs.map((r) => {
-        const bookName = BIBLE_API_NAMES[r.bookId] ?? r.bookId;
-        const cached = getCached(r.bookId, r.chapter, r.verse, translation);
-        const isText =
-          cached && cached !== "pending" && cached !== "error";
-        const isError = cached === "error";
-        return (
-          <div
-            key={`${r.bookId}-${r.chapter}-${r.verse}`}
-            className="verse-margin-popover-entry"
-          >
-            <span className="verse-margin-popover-header">
-              {bookName} {r.chapter}:{r.verse}
-            </span>
-            {isText ? (
-              <p className="verse-margin-popover-body">
-                {(cached as VerseText).text}
-              </p>
-            ) : isError ? (
-              <p className="verse-margin-popover-body-error">
-                Unable to load referenced verse.
-              </p>
-            ) : (
-              <span
-                className="verse-margin-popover-skeleton"
-                aria-hidden="true"
-              />
-            )}
-            <button
-              type="button"
-              className="verse-margin-popover-jump"
-              onClick={(e) => {
-                e.stopPropagation();
-                onJump(r.bookId, r.chapter, r.verse);
-              }}
-            >
-              Jump to passage →
-            </button>
-          </div>
-        );
-      })}
-
-      {!expanded && hiddenCount > 0 && (
-        <button
-          type="button"
-          className="verse-margin-popover-expand"
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpanded(true);
-          }}
-        >
-          + {hiddenCount} more
-        </button>
+      {refs.length > 5 && (
+        <div className="verse-margin-popover-header">
+          <span className="verse-margin-popover-count">
+            {refs.length} REFERENCES
+          </span>
+        </div>
       )}
+
+      <div className="verse-margin-popover-scroll">
+        {refs.map((r) => {
+          const bookName = BIBLE_API_NAMES[r.bookId] ?? r.bookId;
+          const cached = getCached(r.bookId, r.chapter, r.verse, translation);
+          const isText =
+            cached && cached !== "pending" && cached !== "error";
+          const isError = cached === "error";
+          return (
+            <div
+              key={`${r.bookId}-${r.chapter}-${r.verse}`}
+              className="verse-margin-popover-entry"
+            >
+              <span className="verse-margin-popover-entry-header">
+                {bookName} {r.chapter}:{r.verse}
+              </span>
+              {isText ? (
+                <p className="verse-margin-popover-body">
+                  {(cached as VerseText).text}
+                </p>
+              ) : isError ? (
+                <p className="verse-margin-popover-body-error">
+                  Unable to load referenced verse.
+                </p>
+              ) : (
+                <span
+                  className="verse-margin-popover-skeleton"
+                  aria-hidden="true"
+                />
+              )}
+              <button
+                type="button"
+                className="verse-margin-popover-jump"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onJump(r.bookId, r.chapter, r.verse);
+                }}
+              >
+                Jump to passage →
+              </button>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
