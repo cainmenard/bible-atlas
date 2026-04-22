@@ -6,9 +6,17 @@ export type PreferenceKey =
   | 'last-chapter'
   | 'last-verse'
   | 'last-view-date'
-  | 'readings-dismissed-date'     // for 6B
-  | 'default-daily-view'          // for 6B
-  | 'consecutive-dismissals';     // for 6B
+  | 'readings-dismissed-date'
+  | 'default-daily-view'
+  | 'consecutive-dismissals'
+  | 'recent-passages';
+
+export interface RecentPassage {
+  book: string;
+  chapter: number | null;
+  verse: number | null;
+  timestamp: number;
+}
 
 const NAMESPACE = 'bible-atlas-';
 
@@ -63,6 +71,43 @@ export function setPreference<T>(key: PreferenceKey, value: T | null): void {
   }
 }
 
+const MAX_RECENT_PASSAGES = 10;
+let recentPassagesCache: RecentPassage[] | null = null;
+let recentPassagesWriteTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleRecentPassagesFlush(passages: RecentPassage[]): void {
+  if (recentPassagesWriteTimer) clearTimeout(recentPassagesWriteTimer);
+  recentPassagesWriteTimer = setTimeout(() => {
+    setPreference<RecentPassage[]>('recent-passages', passages);
+    recentPassagesWriteTimer = null;
+  }, 500);
+}
+
+export function getRecentPassages(limit = 5): RecentPassage[] {
+  if (typeof window === 'undefined') return [];
+  if (recentPassagesCache !== null) return recentPassagesCache.slice(0, limit);
+  const raw = getPreference<RecentPassage[]>('recent-passages');
+  if (!Array.isArray(raw)) {
+    if (raw !== null) setPreference<RecentPassage[]>('recent-passages', null);
+    recentPassagesCache = [];
+    return [];
+  }
+  recentPassagesCache = raw;
+  return raw.slice(0, limit);
+}
+
+export function addRecentPassage(passage: Omit<RecentPassage, 'timestamp'>): void {
+  if (typeof window === 'undefined') return;
+  getRecentPassages(MAX_RECENT_PASSAGES);
+  const current = recentPassagesCache!;
+  const filtered = current.filter(
+    (p) => !(p.book === passage.book && p.chapter === passage.chapter && p.verse === passage.verse),
+  );
+  const updated = [{ ...passage, timestamp: Date.now() }, ...filtered].slice(0, MAX_RECENT_PASSAGES);
+  recentPassagesCache = updated;
+  scheduleRecentPassagesFlush(updated);
+}
+
 export function clearPreferences(): void {
   if (typeof window === 'undefined') return;
   const keys: PreferenceKey[] = [
@@ -76,6 +121,7 @@ export function clearPreferences(): void {
     'readings-dismissed-date',
     'default-daily-view',
     'consecutive-dismissals',
+    'recent-passages',
   ];
   keys.forEach((key) => {
     const k = storageKey(key);
@@ -86,4 +132,9 @@ export function clearPreferences(): void {
     }
     memoryFallback.delete(k);
   });
+  recentPassagesCache = null;
+  if (recentPassagesWriteTimer) {
+    clearTimeout(recentPassagesWriteTimer);
+    recentPassagesWriteTimer = null;
+  }
 }

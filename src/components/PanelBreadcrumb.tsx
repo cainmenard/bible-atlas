@@ -12,6 +12,7 @@ interface PanelBreadcrumbProps {
   dispatch: React.Dispatch<PanelNavigationAction>;
   onClose: () => void;
   totalChapters?: number;
+  onChapterChange?: (chapter: number) => void;
 }
 
 export default function PanelBreadcrumb({
@@ -19,6 +20,7 @@ export default function PanelBreadcrumb({
   dispatch,
   onClose,
   totalChapters,
+  onChapterChange,
 }: PanelBreadcrumbProps) {
   const items = getBreadcrumbItems(state);
   const showBackButton = state.level !== "book";
@@ -35,11 +37,15 @@ export default function PanelBreadcrumb({
 
   const goPrev = () => {
     if (prevDisabled) return;
-    dispatch({ type: "CHANGE_CHAPTER", chapter: currentChapter - 1 });
+    const prev = currentChapter - 1;
+    dispatch({ type: "CHANGE_CHAPTER", chapter: prev });
+    onChapterChange?.(prev);
   };
   const goNext = () => {
     if (nextDisabled) return;
-    dispatch({ type: "CHANGE_CHAPTER", chapter: currentChapter + 1 });
+    const next = currentChapter + 1;
+    dispatch({ type: "CHANGE_CHAPTER", chapter: next });
+    onChapterChange?.(next);
   };
 
   return (

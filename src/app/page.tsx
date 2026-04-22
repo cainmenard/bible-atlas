@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { getPreference, setPreference } from "@/lib/preferences";
+import { getPreference, setPreference, addRecentPassage } from "@/lib/preferences";
 import dynamic from "next/dynamic";
 import StarBackground from "@/components/StarBackground";
 import Tooltip, { TooltipContext } from "@/components/Tooltip";
@@ -360,6 +360,8 @@ export default function Home() {
       setSelectedBookId(bookId);
       setPendingNavigation({ bookId, chapter, verse, key });
       setRestoredChip(null);
+      const book = bookMap.get(bookId);
+      if (book) addRecentPassage({ book: book.name, chapter, verse });
     },
     []
   );
