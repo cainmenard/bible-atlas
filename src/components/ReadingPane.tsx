@@ -69,6 +69,9 @@ interface ReadingPaneProps {
   onViewConnections?: (bookId: string) => void;
   crossReferenceData?: VerseCrossRef[];
   onSelectVerse?: (bookId: string, chapter: number, verse: number) => void;
+  /** Set when the active lectionary is a placeholder rotation (e.g. Lent
+   * weekday readings indexed by dayOfWeek). Surfaced as an italic note. */
+  placeholderNote?: string;
 }
 
 /* ─── Component ─── */
@@ -85,6 +88,7 @@ export default function ReadingPane({
   onViewConnections,
   crossReferenceData,
   onSelectVerse,
+  placeholderNote,
 }: ReadingPaneProps) {
   const isMobile = useSyncExternalStore(subscribeMobile, getIsMobile, getIsMobileServer);
 
@@ -331,6 +335,24 @@ export default function ReadingPane({
               >
                 {passage?.translation || effectiveTranslation.toUpperCase()}
               </span>
+
+              {/* Placeholder lectionary notice */}
+              {placeholderNote && (
+                <p
+                  style={{
+                    marginTop: "var(--space-sm)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    lineHeight: 1.5,
+                    color: "var(--color-text-muted)",
+                    fontStyle: "italic",
+                    letterSpacing: "0.02em",
+                    margin: "var(--space-sm) 0 0",
+                  }}
+                >
+                  {placeholderNote}
+                </p>
+              )}
 
               {/* Fallback translation notice */}
               {isFallback && (

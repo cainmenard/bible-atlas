@@ -968,6 +968,7 @@ export default function Home() {
         onViewConnections={handleViewConnectionsFromReading}
         crossReferenceData={readingPaneCrossRefs}
         onSelectVerse={handleVerseFromReading}
+        placeholderNote={readings?.placeholderNote}
       />
 
       {/* Bottom-left control dock */}

@@ -62,6 +62,9 @@ export interface DailyReadingsData {
   date: string;
   readings: DailyReading[];
   season: LiturgicalSeason;
+  /** Set when the readings come from a placeholder rotation (e.g. the Lent
+   * weekday array indexed by `dayOfWeek`) rather than a real lectionary. */
+  placeholderNote?: string;
 }
 
 export type LiturgicalSeason =

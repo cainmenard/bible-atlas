@@ -7,15 +7,19 @@ import { getLiturgicalSeason } from "./liturgical";
 
 interface LectionaryEntry {
   readings: DailyReading[];
+  placeholderNote?: string;
 }
 
+const LENT_PLACEHOLDER_NOTE =
+  "Sample readings (lectionary placeholder) — a full Lenten weekday lectionary is not yet wired up.";
+
 function getLectionaryReadings(date: Date): LectionaryEntry {
-  const month = date.getMonth();
-  const day = date.getDate();
   const dayOfWeek = date.getDay();
   const season = getLiturgicalSeason(date);
 
-  // Lent weekday readings (approximate)
+  // Lent weekday readings (approximate — indexed by dayOfWeek so every
+  // Monday of Lent returns the same reading until a proper week×weekday
+  // lectionary is wired up; the UI surfaces `placeholderNote` to flag this).
   if (season === "lent") {
     const lentWeekday: LectionaryEntry[] = [
       { readings: [
@@ -39,7 +43,8 @@ function getLectionaryReadings(date: Date): LectionaryEntry {
         { type: "Gospel", reference: "John 5:31-47", bookId: "JHN" },
       ]},
       { readings: [
-        { type: "First Reading", reference: "Wisdom 2:1-22", bookId: "WIS" },
+        // Swapped from Wisdom 2:1-22 (DC, not available via bible-api.com).
+        { type: "First Reading", reference: "Proverbs 1:10-19", bookId: "PRO" },
         { type: "Psalm", reference: "Psalm 34:17-23", bookId: "PSA" },
         { type: "Gospel", reference: "John 7:1-30", bookId: "JHN" },
       ]},
@@ -54,7 +59,8 @@ function getLectionaryReadings(date: Date): LectionaryEntry {
         { type: "Gospel", reference: "John 8:51-59", bookId: "JHN" },
       ]},
     ];
-    return lentWeekday[dayOfWeek] || lentWeekday[0];
+    const entry = lentWeekday[dayOfWeek] || lentWeekday[0];
+    return { ...entry, placeholderNote: LENT_PLACEHOLDER_NOTE };
   }
 
   // Advent readings
@@ -83,6 +89,16 @@ function getLectionaryReadings(date: Date): LectionaryEntry {
       { type: "Psalm", reference: "Psalm 16:1-11", bookId: "PSA" },
       { type: "Second Reading", reference: "1 Peter 1:17-21", bookId: "1PE" },
       { type: "Gospel", reference: "Luke 24:13-35", bookId: "LUK" },
+    ]};
+  }
+
+  // Pentecost Sunday — Mass of the Day readings (Lectionary Year A/B/C share this set).
+  if (season === "pentecost") {
+    return { readings: [
+      { type: "First Reading", reference: "Acts 2:1-11", bookId: "ACT" },
+      { type: "Psalm", reference: "Psalm 104:1, 24, 29-30, 31, 34", bookId: "PSA" },
+      { type: "Second Reading", reference: "1 Corinthians 12:3-7, 12-13", bookId: "1CO" },
+      { type: "Gospel", reference: "John 20:19-23", bookId: "JHN" },
     ]};
   }
 
@@ -118,7 +134,9 @@ function getLectionaryReadings(date: Date): LectionaryEntry {
       { type: "Gospel", reference: "John 11:1-45", bookId: "JHN" },
     ]},
     { readings: [
-      { type: "First Reading", reference: "Sirach 27:4-7", bookId: "SIR" },
+      // Swapped from Sirach 27:4-7 (DC, not available via bible-api.com).
+      // Proverbs 12:15-22 matches the theme: speech and the heart revealed.
+      { type: "First Reading", reference: "Proverbs 12:15-22", bookId: "PRO" },
       { type: "Psalm", reference: "Psalm 92:2-3, 13-16", bookId: "PSA" },
       { type: "Second Reading", reference: "1 Corinthians 15:54-58", bookId: "1CO" },
       { type: "Gospel", reference: "Luke 6:39-45", bookId: "LUK" },
@@ -150,5 +168,6 @@ export function getDailyReadings(): DailyReadingsData {
     date: displayDate,
     readings: lectionary.readings,
     season,
+    placeholderNote: lectionary.placeholderNote,
   };
 }
