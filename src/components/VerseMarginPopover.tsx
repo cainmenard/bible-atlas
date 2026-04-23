@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Reference } from "@/lib/verse-index";
 import { fetchVerseText, BIBLE_API_NAMES } from "@/lib/bible-api";
+import { bookMap } from "@/data/books";
 
 /* ──────────────────────────────────────────────────────────────
    Session-duration cache for referenced verse text.
@@ -82,10 +83,13 @@ export default function VerseMarginPopover({
   const [, forceRender] = useState(0);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Fetch verse text for all refs.
+  // Fetch verse text for all refs. DC books have no text source today
+  // (see DATA-LAYER-AUDIT §1.2) — skip the fetch and render an explicit
+  // "unavailable" row instead of a failed request.
   useEffect(() => {
     let cancelled = false;
     for (const r of refs) {
+      if (bookMap.get(r.bookId)?.testament === "DC") continue;
       const cached = getCached(r.bookId, r.chapter, r.verse, translation);
       if (cached === undefined) {
         loadVerseText(r.bookId, r.chapter, r.verse, translation).then(() => {
@@ -337,8 +341,13 @@ export default function VerseMarginPopover({
         onWheel={(e) => e.stopPropagation()}
       >
         {refs.map((r) => {
-          const bookName = BIBLE_API_NAMES[r.bookId] ?? r.bookId;
-          const cached = getCached(r.bookId, r.chapter, r.verse, translation);
+          const refBook = bookMap.get(r.bookId);
+          const bookName =
+            BIBLE_API_NAMES[r.bookId] ?? refBook?.name ?? r.bookId;
+          const isDeuterocanonical = refBook?.testament === "DC";
+          const cached = isDeuterocanonical
+            ? undefined
+            : getCached(r.bookId, r.chapter, r.verse, translation);
           const isText =
             cached && cached !== "pending" && cached !== "error";
           const isError = cached === "error";
@@ -350,7 +359,11 @@ export default function VerseMarginPopover({
               <span className="verse-margin-popover-entry-header">
                 {bookName} {r.chapter}:{r.verse}
               </span>
-              {isText ? (
+              {isDeuterocanonical ? (
+                <p className="verse-margin-popover-body-error">
+                  Text not available for this canon in the current translation.
+                </p>
+              ) : isText ? (
                 <p className="verse-margin-popover-body">
                   {(cached as VerseText).text}
                 </p>
@@ -364,16 +377,18 @@ export default function VerseMarginPopover({
                   aria-hidden="true"
                 />
               )}
-              <button
-                type="button"
-                className="verse-margin-popover-jump"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onJump(r.bookId, r.chapter, r.verse);
-                }}
-              >
-                Jump to passage →
-              </button>
+              {!isDeuterocanonical && (
+                <button
+                  type="button"
+                  className="verse-margin-popover-jump"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onJump(r.bookId, r.chapter, r.verse);
+                  }}
+                >
+                  Jump to passage →
+                </button>
+              )}
             </div>
           );
         })}

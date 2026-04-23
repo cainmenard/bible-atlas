@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { fetchPassageText, parseReadingReference } from "@/lib/bible-api";
 import { getDailyReadings } from "@/lib/readings";
 import { buildVerseIndex, getReferencesForVerse } from "@/lib/verse-index";
+import { bookByCanonicalName } from "@/lib/search-index";
 import VerseMarginDot from "@/components/VerseMarginDot";
 
 interface VerseReaderProps {
@@ -15,7 +16,7 @@ interface VerseReaderProps {
   onOpenReadingsCard?: () => void;
 }
 
-type Status = "loading" | "ready" | "error";
+type Status = "loading" | "ready" | "error" | "unavailable";
 
 interface VerseLine {
   verse: number;
@@ -54,9 +55,17 @@ export default function VerseReader({
   onNavigate,
   onOpenReadingsCard,
 }: VerseReaderProps) {
+  // DC books have no verse data source today (see DATA-LAYER-AUDIT §1.2):
+  // bible-api.com does not serve most deuterocanonical passages, and the
+  // project ships no local text for them. Surface that explicitly instead
+  // of spinning on a request that will always return empty.
+  const isDeuterocanonical =
+    bookByCanonicalName.get(book)?.testament === "DC";
+  const initialStatus: Status = isDeuterocanonical ? "unavailable" : "loading";
+
   const requestKey = `${book}|${chapter}|${translation}`;
   const [lastKey, setLastKey] = useState(requestKey);
-  const [status, setStatus] = useState<Status>("loading");
+  const [status, setStatus] = useState<Status>(initialStatus);
   const [verses, setVerses] = useState<VerseLine[]>([]);
   const [xrefCounts, setXrefCounts] = useState<Map<number, number>>(new Map());
   const anchorRef = useRef<HTMLElement>(null);
@@ -67,7 +76,7 @@ export default function VerseReader({
 
   if (lastKey !== requestKey) {
     setLastKey(requestKey);
-    setStatus("loading");
+    setStatus(initialStatus);
     setVerses([]);
     setXrefCounts(new Map());
   }
@@ -108,6 +117,8 @@ export default function VerseReader({
   }, [pulseKey, pulseTargetVerse, status]);
 
   useEffect(() => {
+    if (isDeuterocanonical) return;
+
     let cancelled = false;
     const ref = `${book} ${chapter}`;
 
@@ -129,7 +140,7 @@ export default function VerseReader({
     return () => {
       cancelled = true;
     };
-  }, [book, chapter, translation]);
+  }, [book, chapter, translation, isDeuterocanonical]);
 
   useEffect(() => {
     if (verses.length === 0) return;
@@ -307,6 +318,32 @@ export default function VerseReader({
           opacity: 0.6;
         }
 
+        .verse-reader-unavailable {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          max-width: 60ch;
+          padding: 20px 24px;
+          border: 1px solid var(--glass-border);
+          border-radius: 4px;
+          background: var(--glass-bg-heavy);
+        }
+
+        .verse-reader-unavailable-title {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--accent);
+        }
+
+        .verse-reader-unavailable-body {
+          font-family: var(--font-display);
+          font-size: 15px;
+          line-height: 1.55;
+          color: var(--text-secondary);
+        }
+
         .verse-reader-skeleton {
           max-width: 60ch;
           display: flex;
@@ -373,6 +410,19 @@ export default function VerseReader({
       {status === "error" && (
         <p className="verse-reader-error">
           Unable to load {book} {chapter}. Try another translation.
+        </p>
+      )}
+
+      {status === "unavailable" && (
+        <p className="verse-reader-unavailable">
+          <span className="verse-reader-unavailable-title">
+            Text not available for this canon
+          </span>
+          <span className="verse-reader-unavailable-body">
+            {book} is a deuterocanonical book and its full text isn&rsquo;t
+            bundled with the current translation. Cross-reference navigation
+            and the reader will return when text data is added.
+          </span>
         </p>
       )}
 

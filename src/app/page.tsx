@@ -1080,6 +1080,7 @@ export default function Home() {
       <SearchPalette
         isOpen={searchOpen}
         translation={translation}
+        canon={canon}
         onClose={closeSearch}
         onSelectBook={handleSearchSelectBook}
         onSelectChapter={handleSearchSelectChapter}
