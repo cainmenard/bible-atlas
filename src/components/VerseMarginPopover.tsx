@@ -12,6 +12,9 @@ import { bookMap } from "@/data/books";
 interface VerseText {
   text: string;
   reference: string;
+  /** Translation actually returned by the server — may differ from the
+   *  requested translation when the fallback path was taken. */
+  translation: string;
 }
 
 type CacheEntry = "pending" | "error" | VerseText;
@@ -35,7 +38,11 @@ async function loadVerseText(
   verseTextCache.set(key, "pending");
   const result = await fetchVerseText(bookId, ch, v, translation);
   if (result && result.text) {
-    const vt: VerseText = { text: result.text, reference: result.reference };
+    const vt: VerseText = {
+      text: result.text,
+      reference: result.reference,
+      translation: result.translation,
+    };
     verseTextCache.set(key, vt);
     return vt;
   }
@@ -243,6 +250,11 @@ export default function VerseMarginPopover({
           color: var(--text-secondary);
         }
 
+        .verse-margin-popover-entry-translation {
+          margin-left: 4px;
+          opacity: 0.7;
+        }
+
         .verse-margin-popover-body {
           font-family: var(--font-display);
           font-size: 14px;
@@ -351,6 +363,9 @@ export default function VerseMarginPopover({
           const isText =
             cached && cached !== "pending" && cached !== "error";
           const isError = cached === "error";
+          const actualTranslation = isText
+            ? (cached as VerseText).translation
+            : null;
           return (
             <div
               key={`${r.bookId}-${r.chapter}-${r.verse}`}
@@ -358,6 +373,11 @@ export default function VerseMarginPopover({
             >
               <span className="verse-margin-popover-entry-header">
                 {bookName} {r.chapter}:{r.verse}
+                {actualTranslation && (
+                  <span className="verse-margin-popover-entry-translation">
+                    · {actualTranslation.toUpperCase()}
+                  </span>
+                )}
               </span>
               {isDeuterocanonical ? (
                 <p className="verse-margin-popover-body-error">

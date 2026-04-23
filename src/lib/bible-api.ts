@@ -48,8 +48,21 @@ export function getBookName(bookId: string): string {
   return BIBLE_API_NAMES[bookId] || bookMap.get(bookId)?.name || bookId;
 }
 
+export interface VerseResult {
+  text: string;
+  reference: string;
+  /**
+   * The translation the server actually returned — `translation_id` when
+   * available, otherwise the requested code. On fallback this is `"web"`,
+   * not the originally-requested code, so labels reflect reality.
+   */
+  translation: string;
+}
+
 /** In-memory cache: key → settled result. Prevents redundant network calls. */
-const verseCache = new Map<string, { text: string; reference: string } | null>();
+const verseCache = new Map<string, VerseResult | null>();
+/** Dedupe concurrent in-flight fetches for the same cacheKey. */
+const versePending = new Map<string, Promise<VerseResult | null>>();
 
 export interface PassageResult {
   reference: string;
@@ -59,18 +72,22 @@ export interface PassageResult {
 }
 
 const passageCache = new Map<string, PassageResult | null>();
+/** Dedupe concurrent in-flight passage fetches for the same cacheKey. */
+const passagePending = new Map<string, Promise<PassageResult | null>>();
 
 /**
  * Fetch the text of a single verse from bible-api.com.
  * Results are cached in memory for the lifetime of the page session.
- * Falls back to WEB translation if the requested translation fails.
+ * Concurrent fetches for the same key are deduplicated via `versePending`.
+ * Falls back to WEB translation if the requested translation fails; the
+ * returned `translation` reflects what the server actually served.
  */
 export async function fetchVerseText(
   bookId: string,
   chapter: number,
   verse: number,
   translation: string = "web",
-): Promise<{ text: string; reference: string } | null> {
+): Promise<VerseResult | null> {
   // DC books have no entry in BIBLE_API_NAMES — bail before a doomed fetch.
   const bookName = BIBLE_API_NAMES[bookId];
   if (!bookName) return null;
@@ -79,48 +96,65 @@ export async function fetchVerseText(
   if (verseCache.has(cacheKey)) {
     return verseCache.get(cacheKey)!;
   }
+  const inFlight = versePending.get(cacheKey);
+  if (inFlight) return inFlight;
 
   const ref = `${bookName} ${chapter}:${verse}`;
 
   const makeUrl = (t: string) =>
     `https://bible-api.com/${encodeURIComponent(ref)}?translation=${t}`;
 
-  try {
-    const res = await fetch(makeUrl(translation));
-    const data = await res.json();
-    if (data.text) {
-      const result = { text: data.text.trim(), reference: data.reference || ref };
-      verseCache.set(cacheKey, result);
-      return result;
-    }
-  } catch {
-    // ignore
-  }
-
-  // Fallback to WEB translation
-  if (translation !== "web") {
-    const webKey = `${bookId}:${chapter}:${verse}:web`;
-    if (verseCache.has(webKey)) {
-      const cached = verseCache.get(webKey)!;
-      verseCache.set(cacheKey, cached);
-      return cached;
-    }
+  const promise = (async (): Promise<VerseResult | null> => {
     try {
-      const res = await fetch(makeUrl("web"));
+      const res = await fetch(makeUrl(translation));
       const data = await res.json();
       if (data.text) {
-        const result = { text: data.text.trim(), reference: data.reference || ref };
+        const result: VerseResult = {
+          text: data.text.trim(),
+          reference: data.reference || ref,
+          translation: data.translation_id || translation,
+        };
         verseCache.set(cacheKey, result);
-        verseCache.set(webKey, result);
         return result;
       }
     } catch {
       // ignore
     }
-  }
 
-  verseCache.set(cacheKey, null);
-  return null;
+    // Fallback to WEB translation
+    if (translation !== "web") {
+      const webKey = `${bookId}:${chapter}:${verse}:web`;
+      if (verseCache.has(webKey)) {
+        const cached = verseCache.get(webKey)!;
+        verseCache.set(cacheKey, cached);
+        return cached;
+      }
+      try {
+        const res = await fetch(makeUrl("web"));
+        const data = await res.json();
+        if (data.text) {
+          const result: VerseResult = {
+            text: data.text.trim(),
+            reference: data.reference || ref,
+            translation: data.translation_id || "web",
+          };
+          verseCache.set(cacheKey, result);
+          verseCache.set(webKey, result);
+          return result;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    verseCache.set(cacheKey, null);
+    return null;
+  })().finally(() => {
+    versePending.delete(cacheKey);
+  });
+
+  versePending.set(cacheKey, promise);
+  return promise;
 }
 
 /**
@@ -137,40 +171,15 @@ export async function fetchPassageText(
   if (passageCache.has(cacheKey)) {
     return passageCache.get(cacheKey)!;
   }
+  const inFlight = passagePending.get(cacheKey);
+  if (inFlight) return inFlight;
 
   const makeUrl = (t: string) =>
     `https://bible-api.com/${encodeURIComponent(reference)}?translation=${t}`;
 
-  try {
-    const res = await fetch(makeUrl(translation));
-    const data = await res.json();
-    if (data.verses && Array.isArray(data.verses)) {
-      const result: PassageResult = {
-        reference: data.reference || reference,
-        verses: data.verses.map((v: { verse: number; text: string }) => ({
-          verse: v.verse,
-          text: v.text.trim(),
-        })),
-        fullText: (data.text || "").trim(),
-        translation: data.translation_name || translation,
-      };
-      passageCache.set(cacheKey, result);
-      return result;
-    }
-  } catch {
-    // ignore
-  }
-
-  // Fallback to WEB translation
-  if (translation !== "web") {
-    const webKey = `${reference}:web`;
-    if (passageCache.has(webKey)) {
-      const cached = passageCache.get(webKey)!;
-      passageCache.set(cacheKey, cached);
-      return cached;
-    }
+  const promise = (async (): Promise<PassageResult | null> => {
     try {
-      const res = await fetch(makeUrl("web"));
+      const res = await fetch(makeUrl(translation));
       const data = await res.json();
       if (data.verses && Array.isArray(data.verses)) {
         const result: PassageResult = {
@@ -180,19 +189,53 @@ export async function fetchPassageText(
             text: v.text.trim(),
           })),
           fullText: (data.text || "").trim(),
-          translation: data.translation_name || "web",
+          translation: data.translation_name || translation,
         };
         passageCache.set(cacheKey, result);
-        passageCache.set(webKey, result);
         return result;
       }
     } catch {
       // ignore
     }
-  }
 
-  passageCache.set(cacheKey, null);
-  return null;
+    // Fallback to WEB translation
+    if (translation !== "web") {
+      const webKey = `${reference}:web`;
+      if (passageCache.has(webKey)) {
+        const cached = passageCache.get(webKey)!;
+        passageCache.set(cacheKey, cached);
+        return cached;
+      }
+      try {
+        const res = await fetch(makeUrl("web"));
+        const data = await res.json();
+        if (data.verses && Array.isArray(data.verses)) {
+          const result: PassageResult = {
+            reference: data.reference || reference,
+            verses: data.verses.map((v: { verse: number; text: string }) => ({
+              verse: v.verse,
+              text: v.text.trim(),
+            })),
+            fullText: (data.text || "").trim(),
+            translation: data.translation_name || "web",
+          };
+          passageCache.set(cacheKey, result);
+          passageCache.set(webKey, result);
+          return result;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    passageCache.set(cacheKey, null);
+    return null;
+  })().finally(() => {
+    passagePending.delete(cacheKey);
+  });
+
+  passagePending.set(cacheKey, promise);
+  return promise;
 }
 
 /**

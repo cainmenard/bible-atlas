@@ -22,6 +22,7 @@ export default function CrossRefItem({
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [verseText, setVerseText] = useState<string | null>(null);
+  const [verseTranslation, setVerseTranslation] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const refStr = direction === "outbound" ? crossRef.to : crossRef.from;
@@ -45,6 +46,7 @@ export default function CrossRefItem({
       translation
     );
     setVerseText(result?.text || null);
+    setVerseTranslation(result?.translation || null);
     setLoading(false);
   };
 
@@ -140,12 +142,22 @@ export default function CrossRefItem({
               Loading verse...
             </div>
           ) : verseText ? (
-            <p
-              className="font-serif text-[12px] leading-relaxed italic mb-2"
-              style={{ color: "var(--text-primary)", opacity: 0.85 }}
-            >
-              &ldquo;{verseText}&rdquo;
-            </p>
+            <>
+              <p
+                className="font-serif text-[12px] leading-relaxed italic mb-2"
+                style={{ color: "var(--text-primary)", opacity: 0.85 }}
+              >
+                &ldquo;{verseText}&rdquo;
+              </p>
+              {verseTranslation && (
+                <div
+                  className="font-mono text-[9px] mb-2"
+                  style={{ color: "var(--text-dim)", letterSpacing: "0.06em" }}
+                >
+                  {verseTranslation.toUpperCase()}
+                </div>
+              )}
+            </>
           ) : (
             <div
               className="font-mono text-[10px] mb-2"
