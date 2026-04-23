@@ -719,6 +719,17 @@ export default function Home() {
             onZoomChange={setArcZoomLevel}
             todayBookIds={todayBookIds}
             focusMode="auto"
+            onOpenReader={(bookId, chapter, verse) => {
+              setSelectedBookId(bookId);
+              setDrillState(null);
+              setArcHighlightBookId(null);
+              setPendingNavigation(
+                buildVerseNavigation(bookId, chapter, verse ?? 1),
+              );
+              setReadingsFilterActive(false);
+              setRestoredChip(null);
+              setReadingHistory([]);
+            }}
           />
         )}
       </div>
