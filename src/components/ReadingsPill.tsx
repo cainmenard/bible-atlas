@@ -497,6 +497,23 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOp
             </span>
           </div>
 
+          {/* Placeholder lectionary notice */}
+          {data.placeholderNote && (
+            <p
+              style={{
+                marginTop: "12px",
+                fontFamily: "var(--font-mono)",
+                fontSize: "11px",
+                lineHeight: 1.5,
+                color: "var(--color-text-muted)",
+                fontStyle: "italic",
+                letterSpacing: "0.02em",
+              }}
+            >
+              {data.placeholderNote}
+            </p>
+          )}
+
           {/* Read All button */}
           {onReadAll && (
             <button
