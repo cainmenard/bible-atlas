@@ -51,6 +51,7 @@ interface Props {
   onZoomChange?: (zoomPercent: number) => void;
   todayBookIds?: string[];
   focusMode?: "auto" | "off" | "on";
+  onOpenReader?: (bookId: string, chapter: number, verse?: number) => void;
 }
 
 export interface ArcDiagramHandle {
@@ -269,6 +270,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   onZoomChange,
   todayBookIds,
   focusMode = "auto",
+  onOpenReader,
 }: Props, ref) {
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -288,6 +290,28 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   } | null>(null);
   const [selectedArc, setSelectedArc] = useState<SelectedArc | null>(null);
   const selectedArcRef = useRef<SelectedArc | null>(null);
+
+  // --- Reader-handoff chip (Layer C) -----------------------------------------
+  const lastInteractionAtRef = useRef<number>(
+    typeof performance !== "undefined" ? performance.now() : Date.now(),
+  );
+  const readerChipBoundsRef = useRef<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    bookId: string;
+    chapter: number;
+    verse: number;
+  } | null>(null);
+  const onOpenReaderRef = useRef(onOpenReader);
+  onOpenReaderRef.current = onOpenReader;
+  const dwellTickRef = useRef<number | null>(null);
+
+  const noteInteraction = useCallback(() => {
+    lastInteractionAtRef.current = performance.now();
+    readerChipBoundsRef.current = null;
+  }, []);
 
   // Verse text fetched for the arc detail card
   const [arcFromText, setArcFromText] = useState<string | null>(null);
@@ -1010,6 +1034,79 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         ctx.fillText(locText, width - 16, height - 16);
       }
     }
+
+    // --- Reader handoff chip at extreme zoom ---
+    readerChipBoundsRef.current = null;
+    if (scaleX >= READER_HANDOFF_SCALE) {
+      const dwellElapsed = performance.now() - lastInteractionAtRef.current;
+      if (dwellElapsed >= READER_HANDOFF_DWELL_MS) {
+        const centerIdx = Math.floor(
+          (width / 2 - MARGIN - offsetX) / xScale,
+        );
+        const ref = indexToVerseRef(centerIdx, data.books);
+        if (ref) {
+          const bookName = bookNameMap.get(ref.bookId) || ref.bookId;
+          const label = `Open ${bookName} ${ref.chapter}:${ref.verse} in reader \u2192`;
+          const fadeMs = 250;
+          const fadeProgress = Math.min(
+            1,
+            (dwellElapsed - READER_HANDOFF_DWELL_MS) / fadeMs,
+          );
+          const alpha = fadeProgress;
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.font = "12px 'JetBrains Mono', monospace";
+          const textMetrics = ctx.measureText(label);
+          const padX = 14;
+          const chipW = textMetrics.width + padX * 2;
+          const chipH = 32;
+          const chipX = (width - chipW) / 2;
+          const chipY = height - 120;
+
+          // Glass-panel background.
+          ctx.fillStyle = "rgba(20, 20, 40, 0.85)";
+          ctx.beginPath();
+          const r = 10;
+          ctx.moveTo(chipX + r, chipY);
+          ctx.lineTo(chipX + chipW - r, chipY);
+          ctx.quadraticCurveTo(chipX + chipW, chipY, chipX + chipW, chipY + r);
+          ctx.lineTo(chipX + chipW, chipY + chipH - r);
+          ctx.quadraticCurveTo(
+            chipX + chipW,
+            chipY + chipH,
+            chipX + chipW - r,
+            chipY + chipH,
+          );
+          ctx.lineTo(chipX + r, chipY + chipH);
+          ctx.quadraticCurveTo(chipX, chipY + chipH, chipX, chipY + chipH - r);
+          ctx.lineTo(chipX, chipY + r);
+          ctx.quadraticCurveTo(chipX, chipY, chipX + r, chipY);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = "rgba(212, 160, 74, 0.45)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.fillStyle = "#d4a04a";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(label, chipX + chipW / 2, chipY + chipH / 2);
+          ctx.restore();
+
+          readerChipBoundsRef.current = {
+            x: chipX,
+            y: chipY,
+            w: chipW,
+            h: chipH,
+            bookId: ref.bookId,
+            chapter: ref.chapter,
+            verse: ref.verse,
+          };
+        }
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loaded triggers initial draw after data fetch
   }, [canon, selectedBookId, selectedChapter, selectedVerse, loaded]);
 
@@ -1025,7 +1122,8 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     animRef.current = requestAnimationFrame(draw);
     applyFocusSelection();
     scheduleVisibilityRebuild();
-  }, [draw, applyFocusSelection, scheduleVisibilityRebuild]);
+    noteInteraction();
+  }, [draw, applyFocusSelection, scheduleVisibilityRebuild, noteInteraction]);
 
   const resetZoom = useCallback(() => {
     transformRef.current = { offsetX: 0, scaleX: 1 };
@@ -1033,7 +1131,8 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     animRef.current = requestAnimationFrame(draw);
     applyFocusSelection();
     scheduleVisibilityRebuild();
-  }, [draw, applyFocusSelection, scheduleVisibilityRebuild]);
+    noteInteraction();
+  }, [draw, applyFocusSelection, scheduleVisibilityRebuild, noteInteraction]);
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => applyZoom(1.3, window.innerWidth / 2),
@@ -1058,7 +1157,8 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     animRef.current = requestAnimationFrame(draw);
     applyFocusSelection();
     scheduleVisibilityRebuild();
-  }, [draw, applyFocusSelection, scheduleVisibilityRebuild]);
+    noteInteraction();
+  }, [draw, applyFocusSelection, scheduleVisibilityRebuild, noteInteraction]);
 
   // Auto-zoom to chapter/verse range when drilling down
   useEffect(() => {
@@ -1096,6 +1196,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       animRef.current = requestAnimationFrame(draw);
       applyFocusSelection();
       scheduleVisibilityRebuild();
+      noteInteraction();
     }
 
     function handleMouseDown(e: MouseEvent) {
@@ -1115,6 +1216,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         animRef.current = requestAnimationFrame(draw);
         applyFocusSelection();
         scheduleVisibilityRebuild();
+        noteInteraction();
         return;
       }
 
@@ -1134,6 +1236,20 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       const { offsetX, scaleX } = transformRef.current;
       const width = window.innerWidth;
       const height = window.innerHeight;
+
+      // 0. Reader-handoff chip takes precedence over every other hit-test.
+      const chip = readerChipBoundsRef.current;
+      if (chip) {
+        if (
+          clickX >= chip.x &&
+          clickX <= chip.x + chip.w &&
+          clickY >= chip.y &&
+          clickY <= chip.y + chip.h
+        ) {
+          onOpenReaderRef.current?.(chip.bookId, chip.chapter, chip.verse);
+          return;
+        }
+      }
 
       // 1. Check label hit-test first
       const hitLabel = findLabelAtPoint(clickX, clickY, renderedLabelsRef.current);
@@ -1267,12 +1383,14 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         animRef.current = requestAnimationFrame(draw);
         applyFocusSelection();
         scheduleVisibilityRebuild();
+        noteInteraction();
       } else if (e.key === "ArrowRight") {
         transformRef.current.offsetX -= window.innerWidth * 0.1;
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
         applyFocusSelection();
         scheduleVisibilityRebuild();
+        noteInteraction();
       } else if (e.key === "Escape") {
         setSelectedArc(null);
         setVersePopover(null);
@@ -1319,6 +1437,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         animRef.current = requestAnimationFrame(draw);
         applyFocusSelection();
         scheduleVisibilityRebuild();
+        noteInteraction();
       } else if (e.touches.length === 2) {
         const newDist = getTouchDist(e.touches);
         if (lastPinchDist > 0) {
@@ -1334,6 +1453,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
           animRef.current = requestAnimationFrame(draw);
           applyFocusSelection();
           scheduleVisibilityRebuild();
+          noteInteraction();
         }
         lastPinchDist = newDist;
       }
@@ -1385,7 +1505,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       overlay.removeEventListener("touchmove", handleTouchMove);
       overlay.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [draw, applyZoom, resetZoom, zoomToRange, canon, selectedBookId, onSelectBook, versePopover, applyFocusSelection, scheduleVisibilityRebuild]);
+  }, [draw, applyZoom, resetZoom, zoomToRange, canon, selectedBookId, onSelectBook, versePopover, applyFocusSelection, scheduleVisibilityRebuild, noteInteraction]);
 
   // Redraw on data load, resize, or prop changes
   useEffect(() => {
@@ -1397,6 +1517,31 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, [draw]);
+
+  // Low-frequency wakeup so the reader-handoff chip can fade in while idle at
+  // deep zoom. Ticks 10Hz when above the handoff threshold, 2Hz otherwise. The
+  // per-interaction rAF redraws are unaffected.
+  useEffect(() => {
+    let cancelled = false;
+    function tick() {
+      if (cancelled) return;
+      const { scaleX } = transformRef.current;
+      if (scaleX >= READER_HANDOFF_SCALE) {
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(draw);
+        dwellTickRef.current = window.setTimeout(tick, 100);
+      } else {
+        dwellTickRef.current = window.setTimeout(tick, 500);
+      }
+    }
+    tick();
+    return () => {
+      cancelled = true;
+      if (dwellTickRef.current !== null) {
+        window.clearTimeout(dwellTickRef.current);
+      }
+    };
   }, [draw]);
 
   // Build arc detail card content
