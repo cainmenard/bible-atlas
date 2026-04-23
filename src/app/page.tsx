@@ -537,6 +537,19 @@ export default function Home() {
   // ─── ARC HIGHLIGHT STATE (separate from selectedBookId to avoid opening DetailPanel) ───
   const [arcHighlightBookId, setArcHighlightBookId] = useState<string | null>(null);
 
+  // ─── ARC FOCUS MODE (persisted) ───
+  const [arcFocusMode, setArcFocusMode] = useState<"auto" | "off" | "on">(
+    () => (getPreference("arc-focus-mode") as "auto" | "off" | "on" | null) ?? "auto",
+  );
+
+  const handleArcFocusModeChange = useCallback(
+    (mode: "auto" | "off" | "on") => {
+      setArcFocusMode(mode);
+      setPreference("arc-focus-mode", mode);
+    },
+    [],
+  );
+
   const handleViewConnectionsFromReading = useCallback((bookId: string) => {
     setActiveReading(null);
     setArcHighlightBookId(bookId);
@@ -718,7 +731,8 @@ export default function Home() {
             selectedVerse={selectedVerse}
             onZoomChange={setArcZoomLevel}
             todayBookIds={todayBookIds}
-            focusMode="auto"
+            focusMode={arcFocusMode}
+            onFocusModeChange={handleArcFocusModeChange}
             onOpenReader={(bookId, chapter, verse) => {
               setSelectedBookId(bookId);
               setDrillState(null);

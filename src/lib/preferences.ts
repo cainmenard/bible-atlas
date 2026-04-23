@@ -9,7 +9,8 @@ export type PreferenceKey =
   | 'readings-dismissed-date'
   | 'default-daily-view'
   | 'consecutive-dismissals'
-  | 'recent-passages';
+  | 'recent-passages'
+  | 'arc-focus-mode';
 
 export interface RecentPassage {
   book: string;
@@ -122,6 +123,7 @@ export function clearPreferences(): void {
     'default-daily-view',
     'consecutive-dismissals',
     'recent-passages',
+    'arc-focus-mode',
   ];
   keys.forEach((key) => {
     const k = storageKey(key);
