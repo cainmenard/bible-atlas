@@ -1,4 +1,5 @@
 import { books } from "@/data/books";
+import { CHAPTER_VERSES } from "@/data/chapter-verses";
 import { fetchVerseText } from "@/lib/bible-api";
 import type { BibleBook, Canon } from "@/lib/types";
 
@@ -388,9 +389,23 @@ export function parseQuery(query: string, canon?: Canon): ParsedQuery[] {
   // Filter out books that aren't in the active canon. DC books without any
   // derived data (verse counts, cross-refs, bible-api names) would otherwise
   // route into a dead reader pipeline.
-  const filtered = canon
-    ? matches.filter((m) => m.book.canons.includes(canon))
-    : matches;
+  //
+  // Also drop entries whose chapter/verse fall outside the book's range so
+  // the palette doesn't navigate to dead references (e.g. "Obadiah 99") and
+  // pollute recent-passages with addresses that will 404 on every restore.
+  const filtered = matches.filter((m) => {
+    if (canon && !m.book.canons.includes(canon)) return false;
+    if (parts.chapter !== undefined) {
+      if (parts.chapter < 1 || parts.chapter > m.book.chapters) return false;
+      if (parts.verse !== undefined) {
+        const verses = CHAPTER_VERSES[m.book.id];
+        if (verses && (parts.verse < 1 || parts.verse > verses[parts.chapter - 1])) {
+          return false;
+        }
+      }
+    }
+    return true;
+  });
 
   return filtered.map((m) => ({
     book: m.book.name,
