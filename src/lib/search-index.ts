@@ -1,6 +1,6 @@
 import { books } from "@/data/books";
 import { fetchVerseText } from "@/lib/bible-api";
-import type { BibleBook } from "@/lib/types";
+import type { BibleBook, Canon } from "@/lib/types";
 
 export interface BookAlias {
   canonical: string;
@@ -374,7 +374,7 @@ function parseReferenceParts(raw: string): ReferenceParts | null {
  * their own (`rsv`, `kjv`, …) never produce results — translations aren't
  * passages.
  */
-export function parseQuery(query: string): ParsedQuery[] {
+export function parseQuery(query: string, canon?: Canon): ParsedQuery[] {
   const raw = query.trim().toLowerCase();
   if (raw.length === 0) return [];
   if (TRANSLATION_CODES.has(raw)) return [];
@@ -385,7 +385,14 @@ export function parseQuery(query: string): ParsedQuery[] {
   const matches = searchBooks(parts.bookText);
   if (matches.length === 0) return [];
 
-  return matches.map((m) => ({
+  // Filter out books that aren't in the active canon. DC books without any
+  // derived data (verse counts, cross-refs, bible-api names) would otherwise
+  // route into a dead reader pipeline.
+  const filtered = canon
+    ? matches.filter((m) => m.book.canons.includes(canon))
+    : matches;
+
+  return filtered.map((m) => ({
     book: m.book.name,
     chapter: parts.chapter,
     verse: parts.verse,
@@ -520,7 +527,7 @@ const GENRE_QUERIES: GenreQueryEntry[] = [
  * Only exact-alias matches are supported — this is not a fuzzy search.
  * Returns an empty array if the query does not match any known genre alias.
  */
-export function searchGenres(query: string): GenreMatch[] {
+export function searchGenres(query: string, canon?: Canon): GenreMatch[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
@@ -532,6 +539,7 @@ export function searchGenres(query: string): GenreMatch[] {
       const extraSet = new Set(group.extraBookNames ?? []);
       const matchingBooks: BookMatch[] = [];
       for (const b of books) {
+        if (canon && !b.canons.includes(canon)) continue;
         if (genreSet.has(b.genre) || extraSet.has(b.name)) {
           matchingBooks.push({ book: b, score: 0 });
         }

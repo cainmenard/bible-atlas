@@ -1,6 +1,15 @@
 import { bookMap } from "@/data/books";
 
-/** Map book IDs to bible-api.com compatible names */
+/**
+ * Map book IDs to bible-api.com compatible names.
+ *
+ * Only the 66 Protestant books are listed. Deuterocanonical books (TOB, JDT,
+ * WIS, SIR, BAR, 1MA, 2MA, 1ES, PMA, P151, 3MA, 1EN, JUB, 4BA) are intentionally
+ * omitted — bible-api.com does not serve them in the translations we use, and
+ * the project ships no local text source. Callers that miss the map fall
+ * through to a `null` result (see `fetchVerseText`), and the reader /
+ * `VerseMarginPopover` render an explicit "text not available" state instead.
+ */
 export const BIBLE_API_NAMES: Record<string, string> = {
   GEN: "Genesis", EXO: "Exodus", LEV: "Leviticus", NUM: "Numbers",
   DEU: "Deuteronomy", JOS: "Joshua", JDG: "Judges", RUT: "Ruth",
@@ -62,6 +71,7 @@ export async function fetchVerseText(
   verse: number,
   translation: string = "web",
 ): Promise<{ text: string; reference: string } | null> {
+  // DC books have no entry in BIBLE_API_NAMES — bail before a doomed fetch.
   const bookName = BIBLE_API_NAMES[bookId];
   if (!bookName) return null;
 

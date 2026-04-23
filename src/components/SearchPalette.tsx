@@ -25,11 +25,12 @@ import {
   type RecentPassage,
 } from "@/lib/preferences";
 import { CHAPTER_VERSES } from "@/data/chapter-verses";
-import type { BibleBook } from "@/lib/types";
+import type { BibleBook, Canon } from "@/lib/types";
 
 interface Props {
   isOpen: boolean;
   translation: string;
+  canon: Canon;
   onClose: () => void;
   onSelectBook: (bookId: string) => void;
   onSelectChapter: (bookId: string, chapter: number) => void;
@@ -147,6 +148,7 @@ function formatRelativeTime(timestamp: number): string {
 export default function SearchPalette({
   isOpen,
   translation,
+  canon,
   onClose,
   onSelectBook,
   onSelectChapter,
@@ -181,8 +183,8 @@ export default function SearchPalette({
     const q = debounced.trim();
     if (!q) return { bookResults: [], genreGroups: [] as GenreMatch[], showGenreSeparator: false };
 
-    const genres = searchGenres(q);
-    const parsed = parseQuery(q);
+    const genres = searchGenres(q, canon);
+    const parsed = parseQuery(q, canon);
     const books: PaletteResult[] = [];
     for (const p of parsed) {
       const r = toResult(p);
@@ -196,7 +198,7 @@ export default function SearchPalette({
       return { bookResults: books, genreGroups: genres, showGenreSeparator: true };
     }
     return { bookResults: books, genreGroups: [] as GenreMatch[], showGenreSeparator: false };
-  }, [debounced]);
+  }, [debounced, canon]);
 
   // Precompute flat index offset for each genre group (for keyboard nav).
   const genreGroupOffsets = useMemo(() => {
