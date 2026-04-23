@@ -718,6 +718,7 @@ export default function Home() {
             selectedVerse={selectedVerse}
             onZoomChange={setArcZoomLevel}
             todayBookIds={todayBookIds}
+            focusMode="auto"
           />
         )}
       </div>

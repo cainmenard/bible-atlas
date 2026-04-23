@@ -50,6 +50,7 @@ interface Props {
   selectedVerse?: number | null;
   onZoomChange?: (zoomPercent: number) => void;
   todayBookIds?: string[];
+  focusMode?: "auto" | "off" | "on";
 }
 
 export interface ArcDiagramHandle {
@@ -60,6 +61,19 @@ export interface ArcDiagramHandle {
 
 const GENRE_COLOR_LIST = Object.values(GENRE_COLORS);
 const MARGIN = 40;
+
+// --- Focus mode thresholds -----------------------------------------------
+// Selection alpha tier (0.018 highlight / 0.0005 dim) kicks in when the
+// viewport is used as an implicit selection past this zoom level.
+const FOCUS_SELECTION_SCALE = 6;
+// Visibility rebuild (endpoint-mask intersection) kicks in past this level.
+const FOCUS_VISIBILITY_SCALE = 30;
+// Reader-handoff chip appears once the viewport spans ≤ ~150 verses.
+const READER_HANDOFF_SCALE = 200;
+// Debounce window for the visibility rebuild (Layer B).
+const VISIBILITY_REBUILD_DEBOUNCE_MS = 150;
+// Dwell before the reader-handoff chip fades in (Layer C).
+const READER_HANDOFF_DWELL_MS = 800;
 
 /**
  * Compute the global verse index range for a book, chapter, or specific verse.
@@ -96,6 +110,29 @@ function computeVerseRange(
   }
 
   return [chapterStart, chapterEnd];
+}
+
+/**
+ * Convert the current pan/zoom transform into a [startIdx, endIdx) verse range
+ * covering the visible viewport. Returns null if totalVerses is 0.
+ */
+function computeViewportRange(
+  offsetX: number,
+  scaleX: number,
+  totalVerses: number,
+  viewportWidth: number,
+): [number, number] | null {
+  if (totalVerses <= 0) return null;
+  const totalWidth = (viewportWidth - MARGIN * 2) * scaleX;
+  const xScale = totalWidth / totalVerses;
+  if (xScale <= 0) return null;
+  const start = Math.max(0, Math.floor((-offsetX) / xScale));
+  const end = Math.min(
+    totalVerses,
+    Math.ceil((viewportWidth - MARGIN - offsetX) / xScale),
+  );
+  if (end <= start) return null;
+  return [start, end];
 }
 
 /** Find the label at a screen point. Returns the label or null. */
@@ -231,6 +268,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   selectedVerse = null,
   onZoomChange,
   todayBookIds,
+  focusMode = "auto",
 }: Props, ref) {
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -359,28 +397,52 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     renderer.setVisibility(activeSet);
   }, [canon, loaded]);
 
-  // Update selection uniforms when selectedBookId/chapter/verse changes
-  useEffect(() => {
+  // Precedence for what drives the shader's selection alpha tier:
+  //   1. Explicit user selection (book/chapter/verse) — always wins.
+  //   2. focusMode === "off" — no selection, full field.
+  //   3. focusMode === "on" — viewport selection at any zoom.
+  //   4. focusMode === "auto" && scaleX ≥ FOCUS_SELECTION_SCALE — viewport.
+  //   5. Otherwise — no selection.
+  const lastSelectionRef = useRef<[number, number]>([-1, -1]);
+
+  const applyFocusSelection = useCallback(() => {
     const data = dataRef.current;
     const renderer = rendererRef.current;
     if (!data || !renderer) return;
 
+    let range: [number, number] = [-1, -1];
+
     if (selectedBookId) {
-      const range = computeVerseRange(
+      const explicit = computeVerseRange(
         data.books,
         selectedBookId,
         selectedChapter ?? null,
         selectedVerse ?? null,
       );
-      if (range) {
-        renderer.setSelection(range[0], range[1]);
-      } else {
-        renderer.setSelection(-1, -1);
+      if (explicit) range = explicit;
+    } else if (focusMode !== "off") {
+      const { offsetX, scaleX } = transformRef.current;
+      if (focusMode === "on" || scaleX >= FOCUS_SELECTION_SCALE) {
+        const viewport = computeViewportRange(
+          offsetX,
+          scaleX,
+          data.totalVerses,
+          window.innerWidth,
+        );
+        if (viewport) range = viewport;
       }
-    } else {
-      renderer.setSelection(-1, -1);
     }
-  }, [selectedBookId, selectedChapter, selectedVerse, loaded]);
+
+    const [last0, last1] = lastSelectionRef.current;
+    if (range[0] === last0 && range[1] === last1) return;
+    lastSelectionRef.current = range;
+    renderer.setSelection(range[0], range[1]);
+  }, [selectedBookId, selectedChapter, selectedVerse, focusMode]);
+
+  // Fire on explicit-selection changes and on focusMode/loaded changes.
+  useEffect(() => {
+    applyFocusSelection();
+  }, [applyFocusSelection, loaded]);
 
   // Draw function: WebGL arcs + Canvas 2D overlay
   const draw = useCallback(() => {
@@ -811,13 +873,15 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     t.scaleX = newScale;
     cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(draw);
-  }, [draw]);
+    applyFocusSelection();
+  }, [draw, applyFocusSelection]);
 
   const resetZoom = useCallback(() => {
     transformRef.current = { offsetX: 0, scaleX: 1 };
     cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(draw);
-  }, [draw]);
+    applyFocusSelection();
+  }, [draw, applyFocusSelection]);
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => applyZoom(1.3, window.innerWidth / 2),
@@ -840,7 +904,8 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     transformRef.current = { offsetX: newOffsetX, scaleX: newScale };
     cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(draw);
-  }, [draw]);
+    applyFocusSelection();
+  }, [draw, applyFocusSelection]);
 
   // Auto-zoom to chapter/verse range when drilling down
   useEffect(() => {
@@ -876,6 +941,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
 
       cancelAnimationFrame(animRef.current);
       animRef.current = requestAnimationFrame(draw);
+      applyFocusSelection();
     }
 
     function handleMouseDown(e: MouseEvent) {
@@ -893,6 +959,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         transformRef.current.offsetX = dragRef.current.startOffsetX + dx;
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
+        applyFocusSelection();
         return;
       }
 
@@ -1043,10 +1110,12 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         transformRef.current.offsetX += window.innerWidth * 0.1;
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
+        applyFocusSelection();
       } else if (e.key === "ArrowRight") {
         transformRef.current.offsetX -= window.innerWidth * 0.1;
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
+        applyFocusSelection();
       } else if (e.key === "Escape") {
         setSelectedArc(null);
         setVersePopover(null);
@@ -1091,6 +1160,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         transformRef.current.offsetX = dragRef.current.startOffsetX + dx;
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
+        applyFocusSelection();
       } else if (e.touches.length === 2) {
         const newDist = getTouchDist(e.touches);
         if (lastPinchDist > 0) {
@@ -1104,6 +1174,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
           tr.scaleX = newScale;
           cancelAnimationFrame(animRef.current);
           animRef.current = requestAnimationFrame(draw);
+          applyFocusSelection();
         }
         lastPinchDist = newDist;
       }
@@ -1155,7 +1226,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       overlay.removeEventListener("touchmove", handleTouchMove);
       overlay.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [draw, applyZoom, resetZoom, zoomToRange, canon, selectedBookId, onSelectBook, versePopover]);
+  }, [draw, applyZoom, resetZoom, zoomToRange, canon, selectedBookId, onSelectBook, versePopover, applyFocusSelection]);
 
   // Redraw on data load, resize, or prop changes
   useEffect(() => {
