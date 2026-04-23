@@ -51,6 +51,7 @@ interface Props {
   onZoomChange?: (zoomPercent: number) => void;
   todayBookIds?: string[];
   focusMode?: "auto" | "off" | "on";
+  onFocusModeChange?: (mode: "auto" | "off" | "on") => void;
   onOpenReader?: (bookId: string, chapter: number, verse?: number) => void;
 }
 
@@ -270,6 +271,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   onZoomChange,
   todayBookIds,
   focusMode = "auto",
+  onFocusModeChange,
   onOpenReader,
 }: Props, ref) {
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -307,6 +309,16 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   const onOpenReaderRef = useRef(onOpenReader);
   onOpenReaderRef.current = onOpenReader;
   const dwellTickRef = useRef<number | null>(null);
+
+  // --- Focus mode pill (Layer D) ---------------------------------------------
+  const focusPillBoundsRef = useRef<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null>(null);
+  const onFocusModeChangeRef = useRef(onFocusModeChange);
+  onFocusModeChangeRef.current = onFocusModeChange;
 
   const noteInteraction = useCallback(() => {
     lastInteractionAtRef.current = performance.now();
@@ -1035,6 +1047,61 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       }
     }
 
+    // --- Focus mode pill ---
+    const focusPillBounds = (() => {
+      const label = `Focus: ${focusMode}`;
+      ctx.save();
+      ctx.font = "10px 'JetBrains Mono', monospace";
+      const m = ctx.measureText(label);
+      const padX = 10;
+      const w = m.width + padX * 2;
+      const h = 22;
+      const x = width - 16 - w;
+      const y = height - 60;
+
+      ctx.fillStyle =
+        focusMode === "auto"
+          ? "rgba(20, 20, 40, 0.7)"
+          : focusMode === "on"
+            ? "rgba(212, 160, 74, 0.18)"
+            : "rgba(40, 20, 20, 0.7)";
+      ctx.strokeStyle =
+        focusMode === "on"
+          ? "rgba(212, 160, 74, 0.5)"
+          : "rgba(255, 255, 255, 0.12)";
+      ctx.lineWidth = 1;
+
+      const r = 11;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle =
+        focusMode === "on"
+          ? "#d4a04a"
+          : focusMode === "off"
+            ? "rgba(232, 224, 208, 0.6)"
+            : "rgba(232, 224, 208, 0.75)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, x + w / 2, y + h / 2);
+      ctx.restore();
+
+      return { x, y, w, h };
+    })();
+
+    focusPillBoundsRef.current = focusPillBounds;
+
     // --- Reader handoff chip at extreme zoom ---
     readerChipBoundsRef.current = null;
     if (scaleX >= READER_HANDOFF_SCALE) {
@@ -1108,7 +1175,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loaded triggers initial draw after data fetch
-  }, [canon, selectedBookId, selectedChapter, selectedVerse, loaded]);
+  }, [canon, selectedBookId, selectedChapter, selectedVerse, loaded, focusMode]);
 
   // Reusable zoom helpers for controls and keyboard
   const applyZoom = useCallback((factor: number, centerX: number) => {
@@ -1247,6 +1314,21 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
           clickY <= chip.y + chip.h
         ) {
           onOpenReaderRef.current?.(chip.bookId, chip.chapter, chip.verse);
+          return;
+        }
+      }
+
+      const pill = focusPillBoundsRef.current;
+      if (pill) {
+        if (
+          clickX >= pill.x &&
+          clickX <= pill.x + pill.w &&
+          clickY >= pill.y &&
+          clickY <= pill.y + pill.h
+        ) {
+          const next: "auto" | "off" | "on" =
+            focusMode === "auto" ? "off" : focusMode === "off" ? "on" : "auto";
+          onFocusModeChangeRef.current?.(next);
           return;
         }
       }
@@ -1394,6 +1476,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       } else if (e.key === "Escape") {
         setSelectedArc(null);
         setVersePopover(null);
+        onFocusModeChangeRef.current?.("auto");
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
       }
