@@ -10,15 +10,13 @@ export interface VerseRef {
 
 /**
  * A single cross-reference entry. `bookId`/`chapter`/`verse` point at the
- * OTHER side of an arc; `idx` is the target's linear verse index (0..31102);
- * `weight` is the third field of the arc (genre classifier / vote count).
+ * OTHER side of an arc; `idx` is the target's linear verse index (0..31102).
  */
 export interface Reference {
   bookId: string;
   chapter: number;
   verse: number;
   idx: number;
-  weight: number;
 }
 
 interface BookEntry {
@@ -175,13 +173,15 @@ export function buildVerseIndex(): Promise<Map<string, Reference[]>> {
     }
 
     const map = new Map<string, Reference[]>();
+    const seenPerKey = new Map<string, Set<string>>();
     const arcs = data.arcs;
 
     for (let i = 0; i < arcs.length; i++) {
       const arc = arcs[i];
       const fromIdx = arc[0];
       const toIdx = arc[1];
-      const weight = arc[2] ?? 0;
+
+      if (fromIdx === toIdx) continue;
 
       const fromBookId = bookIdByIdx[fromIdx];
       const toBookId = bookIdByIdx[toIdx];
@@ -195,31 +195,45 @@ export function buildVerseIndex(): Promise<Map<string, Reference[]>> {
       const fromKey = `${fromBookId}-${fromCh}-${fromV}`;
       const toKey = `${toBookId}-${toCh}-${toV}`;
 
-      let fromList = map.get(fromKey);
-      if (!fromList) {
-        fromList = [];
-        map.set(fromKey, fromList);
+      let fromSeen = seenPerKey.get(fromKey);
+      if (!fromSeen) {
+        fromSeen = new Set<string>();
+        seenPerKey.set(fromKey, fromSeen);
       }
-      fromList.push({
-        bookId: toBookId,
-        chapter: toCh,
-        verse: toV,
-        idx: toIdx,
-        weight,
-      });
+      if (!fromSeen.has(toKey)) {
+        fromSeen.add(toKey);
+        let fromList = map.get(fromKey);
+        if (!fromList) {
+          fromList = [];
+          map.set(fromKey, fromList);
+        }
+        fromList.push({
+          bookId: toBookId,
+          chapter: toCh,
+          verse: toV,
+          idx: toIdx,
+        });
+      }
 
-      let toList = map.get(toKey);
-      if (!toList) {
-        toList = [];
-        map.set(toKey, toList);
+      let toSeen = seenPerKey.get(toKey);
+      if (!toSeen) {
+        toSeen = new Set<string>();
+        seenPerKey.set(toKey, toSeen);
       }
-      toList.push({
-        bookId: fromBookId,
-        chapter: fromCh,
-        verse: fromV,
-        idx: fromIdx,
-        weight,
-      });
+      if (!toSeen.has(fromKey)) {
+        toSeen.add(fromKey);
+        let toList = map.get(toKey);
+        if (!toList) {
+          toList = [];
+          map.set(toKey, toList);
+        }
+        toList.push({
+          bookId: fromBookId,
+          chapter: fromCh,
+          verse: fromV,
+          idx: fromIdx,
+        });
+      }
     }
 
     cachedIndex = map;
