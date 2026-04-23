@@ -377,24 +377,37 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     };
   }, []);
 
-  // Update visibility when canon or data changes
+  const canonMaskRef = useRef<Uint8Array | null>(null);
+  const workingMaskRef = useRef<Uint8Array | null>(null);
+  const lastVisibilityScaleAboveRef = useRef(false);
+
+  // Rebuild canon mask when canon or data changes.
   useEffect(() => {
     const data = dataRef.current;
-    const renderer = rendererRef.current;
-    if (!data || !renderer) return;
+    if (!data) return;
 
     const activeBookIds = new Set(
-      books.filter((b) => b.canons.includes(canon)).map((b) => b.id)
+      books.filter((b) => b.canons.includes(canon)).map((b) => b.id),
     );
-
-    const activeSet = new Uint8Array(data.totalVerses);
+    const mask = new Uint8Array(data.totalVerses);
     for (const b of data.books) {
       if (activeBookIds.has(b.id)) {
-        activeSet.fill(1, b.offset, b.offset + b.verses);
+        mask.fill(1, b.offset, b.offset + b.verses);
       }
     }
-    activeVerseSetRef.current = activeSet;
-    renderer.setVisibility(activeSet);
+    canonMaskRef.current = mask;
+
+    // Pre-allocate the working mask once, reuse on every rebuild.
+    if (
+      !workingMaskRef.current ||
+      workingMaskRef.current.length !== data.totalVerses
+    ) {
+      workingMaskRef.current = new Uint8Array(data.totalVerses);
+    }
+
+    activeVerseSetRef.current = mask;
+    rendererRef.current?.setVisibility(mask);
+    lastVisibilityScaleAboveRef.current = false;
   }, [canon, loaded]);
 
   // Precedence for what drives the shader's selection alpha tier:
@@ -443,6 +456,143 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   useEffect(() => {
     applyFocusSelection();
   }, [applyFocusSelection, loaded]);
+
+  const rebuildVisibilityNow = useCallback(() => {
+    const data = dataRef.current;
+    const renderer = rendererRef.current;
+    const canonMask = canonMaskRef.current;
+    const working = workingMaskRef.current;
+    if (!data || !renderer || !canonMask || !working) return;
+
+    const { offsetX, scaleX } = transformRef.current;
+
+    // Below threshold: push the plain canon mask and we're done.
+    if (focusMode === "off" || scaleX < FOCUS_VISIBILITY_SCALE) {
+      if (activeVerseSetRef.current !== canonMask) {
+        activeVerseSetRef.current = canonMask;
+        renderer.setVisibility(canonMask);
+      }
+      return;
+    }
+
+    // Above threshold: working = canonMask ∩ (viewport-touching ∪ selection-touching)
+    const viewport = computeViewportRange(
+      offsetX,
+      scaleX,
+      data.totalVerses,
+      window.innerWidth,
+    );
+    let selRange: [number, number] | null = null;
+    if (selectedBookId) {
+      selRange = computeVerseRange(
+        data.books,
+        selectedBookId,
+        selectedChapter ?? null,
+        selectedVerse ?? null,
+      );
+    }
+
+    // If neither range exists, fall back to the canon mask.
+    if (!viewport && !selRange) {
+      if (activeVerseSetRef.current !== canonMask) {
+        activeVerseSetRef.current = canonMask;
+        renderer.setVisibility(canonMask);
+      }
+      return;
+    }
+
+    working.fill(0);
+
+    // Mark the viewport range itself + selection range itself.
+    if (viewport) {
+      for (let i = viewport[0]; i < viewport[1]; i++) working[i] = 1;
+    }
+    if (selRange) {
+      for (let i = selRange[0]; i < selRange[1]; i++) working[i] = 1;
+    }
+
+    // Walk all arcs once; mark both endpoints if either endpoint touches
+    // the viewport or the explicit selection.
+    const arcs = data.arcs;
+    for (let i = 0; i < arcs.length; i++) {
+      const a = arcs[i];
+      const from = a[0];
+      const to = a[1];
+      let touches = false;
+      if (viewport) {
+        if (
+          (from >= viewport[0] && from < viewport[1]) ||
+          (to >= viewport[0] && to < viewport[1])
+        ) {
+          touches = true;
+        }
+      }
+      if (!touches && selRange) {
+        if (
+          (from >= selRange[0] && from < selRange[1]) ||
+          (to >= selRange[0] && to < selRange[1])
+        ) {
+          touches = true;
+        }
+      }
+      if (touches) {
+        working[from] = 1;
+        working[to] = 1;
+      }
+    }
+
+    // Intersect with canon mask in place.
+    for (let i = 0; i < working.length; i++) {
+      working[i] = working[i] & canonMask[i];
+    }
+
+    activeVerseSetRef.current = working;
+    renderer.setVisibility(working);
+  }, [focusMode, selectedBookId, selectedChapter, selectedVerse]);
+
+  const visibilityDebounceRef = useRef<number | null>(null);
+
+  const scheduleVisibilityRebuild = useCallback(() => {
+    const { scaleX } = transformRef.current;
+    const isAbove = scaleX >= FOCUS_VISIBILITY_SCALE && focusMode !== "off";
+    const wasAbove = lastVisibilityScaleAboveRef.current;
+
+    // Leading edge: fire immediately when we cross the threshold (either direction).
+    if (isAbove !== wasAbove) {
+      lastVisibilityScaleAboveRef.current = isAbove;
+      if (visibilityDebounceRef.current !== null) {
+        window.clearTimeout(visibilityDebounceRef.current);
+        visibilityDebounceRef.current = null;
+      }
+      rebuildVisibilityNow();
+      return;
+    }
+
+    // Below threshold, nothing to debounce — canon mask is already correct.
+    if (!isAbove) return;
+
+    // Above threshold: trailing-edge debounce.
+    if (visibilityDebounceRef.current !== null) {
+      window.clearTimeout(visibilityDebounceRef.current);
+    }
+    visibilityDebounceRef.current = window.setTimeout(() => {
+      visibilityDebounceRef.current = null;
+      rebuildVisibilityNow();
+    }, VISIBILITY_REBUILD_DEBOUNCE_MS);
+  }, [focusMode, rebuildVisibilityNow]);
+
+  useEffect(() => {
+    return () => {
+      if (visibilityDebounceRef.current !== null) {
+        window.clearTimeout(visibilityDebounceRef.current);
+      }
+    };
+  }, []);
+
+  // Fire on explicit-selection / focusMode / loaded changes.
+  useEffect(() => {
+    scheduleVisibilityRebuild();
+  }, [scheduleVisibilityRebuild, loaded]);
 
   // Draw function: WebGL arcs + Canvas 2D overlay
   const draw = useCallback(() => {
@@ -874,14 +1024,16 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(draw);
     applyFocusSelection();
-  }, [draw, applyFocusSelection]);
+    scheduleVisibilityRebuild();
+  }, [draw, applyFocusSelection, scheduleVisibilityRebuild]);
 
   const resetZoom = useCallback(() => {
     transformRef.current = { offsetX: 0, scaleX: 1 };
     cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(draw);
     applyFocusSelection();
-  }, [draw, applyFocusSelection]);
+    scheduleVisibilityRebuild();
+  }, [draw, applyFocusSelection, scheduleVisibilityRebuild]);
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => applyZoom(1.3, window.innerWidth / 2),
@@ -905,7 +1057,8 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     cancelAnimationFrame(animRef.current);
     animRef.current = requestAnimationFrame(draw);
     applyFocusSelection();
-  }, [draw, applyFocusSelection]);
+    scheduleVisibilityRebuild();
+  }, [draw, applyFocusSelection, scheduleVisibilityRebuild]);
 
   // Auto-zoom to chapter/verse range when drilling down
   useEffect(() => {
@@ -942,6 +1095,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       cancelAnimationFrame(animRef.current);
       animRef.current = requestAnimationFrame(draw);
       applyFocusSelection();
+      scheduleVisibilityRebuild();
     }
 
     function handleMouseDown(e: MouseEvent) {
@@ -960,6 +1114,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
         applyFocusSelection();
+        scheduleVisibilityRebuild();
         return;
       }
 
@@ -1111,11 +1266,13 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
         applyFocusSelection();
+        scheduleVisibilityRebuild();
       } else if (e.key === "ArrowRight") {
         transformRef.current.offsetX -= window.innerWidth * 0.1;
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
         applyFocusSelection();
+        scheduleVisibilityRebuild();
       } else if (e.key === "Escape") {
         setSelectedArc(null);
         setVersePopover(null);
@@ -1161,6 +1318,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
         applyFocusSelection();
+        scheduleVisibilityRebuild();
       } else if (e.touches.length === 2) {
         const newDist = getTouchDist(e.touches);
         if (lastPinchDist > 0) {
@@ -1175,6 +1333,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
           cancelAnimationFrame(animRef.current);
           animRef.current = requestAnimationFrame(draw);
           applyFocusSelection();
+          scheduleVisibilityRebuild();
         }
         lastPinchDist = newDist;
       }
@@ -1226,7 +1385,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       overlay.removeEventListener("touchmove", handleTouchMove);
       overlay.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [draw, applyZoom, resetZoom, zoomToRange, canon, selectedBookId, onSelectBook, versePopover, applyFocusSelection]);
+  }, [draw, applyZoom, resetZoom, zoomToRange, canon, selectedBookId, onSelectBook, versePopover, applyFocusSelection, scheduleVisibilityRebuild]);
 
   // Redraw on data load, resize, or prop changes
   useEffect(() => {
