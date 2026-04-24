@@ -35,12 +35,14 @@ uniform vec3 u_genreColors[10];
 uniform float u_alphaDefault;
 uniform float u_alphaHighlight;
 uniform float u_alphaDimmed;
+uniform float u_alphaOpaque;
 
 // Line rendering
 uniform float u_lineWidth; // in CSS pixels
 uniform float u_dpr;       // device pixel ratio
 
-// Zoom-dependent alpha
+// Zoom-dependent alpha ramp in [0..1]: 0 at low zoom (base tier as-is),
+// 1 at deep zoom (mix toward u_alphaOpaque for crisp threads).
 uniform float u_zoomAlpha;
 
 out vec4 v_color;
@@ -145,18 +147,24 @@ void main() {
     1.0
   );
 
-  // Determine alpha tier based on selection
-  float alpha;
+  // Determine alpha tier based on selection. Dimmed arcs stay faint at every
+  // zoom; non-dimmed arcs ramp toward u_alphaOpaque at deep zoom so an
+  // individual thread reads crisply against the dark background.
+  float baseAlpha;
+  float targetAlpha;
   if (u_selStart < 0.0) {
-    alpha = u_alphaDefault;
+    baseAlpha = u_alphaDefault;
+    targetAlpha = u_alphaOpaque;
   } else {
     bool fromInSel = a_fromIdx >= u_selStart && a_fromIdx < u_selEnd;
     bool toInSel = a_toIdx >= u_selStart && a_toIdx < u_selEnd;
-    alpha = (fromInSel || toInSel) ? u_alphaHighlight : u_alphaDimmed;
+    bool inSel = fromInSel || toInSel;
+    baseAlpha = inSel ? u_alphaHighlight : u_alphaDimmed;
+    targetAlpha = inSel ? u_alphaOpaque : u_alphaDimmed;
   }
 
-  // Apply zoom-dependent alpha boost and per-arc visibility fade
-  alpha *= u_zoomAlpha * a_visible;
+  float ramp = clamp(u_zoomAlpha, 0.0, 1.0);
+  float alpha = mix(baseAlpha, targetAlpha, ramp) * a_visible;
 
   int gi = int(a_genreIdx);
   v_color = vec4(u_genreColors[gi], alpha);
@@ -178,8 +186,10 @@ void main() {
   float edgeAlpha = 1.0 - smoothstep(0.5, 1.0, edgeDist);
   // Fade arcs near the axis so text labels remain readable
   float axisFade = mix(0.15, 1.0, v_axisProximity);
-  // Clamp final alpha to prevent saturation from additive blending at deep zoom
-  float finalAlpha = min(v_color.a * edgeAlpha * axisFade, 0.25);
+  // Cap only where additive stacking would otherwise blow past 1.0. At deep
+  // zoom individual threads need enough opacity to read as distinct lines;
+  // the old 0.25 clamp turned them into a soft low-alpha cloud.
+  float finalAlpha = min(v_color.a * edgeAlpha * axisFade, 0.85);
   fragColor = vec4(v_color.rgb, finalAlpha);
 }
 `;

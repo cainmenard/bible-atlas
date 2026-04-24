@@ -2,7 +2,7 @@ import { VERTEX_SHADER, FRAGMENT_SHADER } from "./arc-shaders";
 import { GENRE_COLORS } from "./colors";
 
 const GENRE_COLOR_LIST = Object.values(GENRE_COLORS);
-const SEGMENTS = 64; // vertices per arc (64-segment polyline, doubled for triangle strip)
+const SEGMENTS = 128; // vertices per arc (128-segment polyline, doubled for triangle strip)
 
 /**
  * Zoom threshold at which the visibility mask trims the drawn arc set to those
@@ -69,6 +69,7 @@ export class ArcRenderer {
   private loc_alphaDefault: WebGLUniformLocation;
   private loc_alphaHighlight: WebGLUniformLocation;
   private loc_alphaDimmed: WebGLUniformLocation;
+  private loc_alphaOpaque: WebGLUniformLocation;
   private loc_lineWidth: WebGLUniformLocation;
   private loc_dpr: WebGLUniformLocation;
   private loc_zoomAlpha: WebGLUniformLocation;
@@ -81,7 +82,7 @@ export class ArcRenderer {
   constructor(canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", {
       alpha: false,
-      antialias: false,
+      antialias: true,
       premultipliedAlpha: false,
     });
     if (!gl) throw new Error("WebGL2 not supported");
@@ -110,6 +111,7 @@ export class ArcRenderer {
     this.loc_alphaDefault = u("u_alphaDefault");
     this.loc_alphaHighlight = u("u_alphaHighlight");
     this.loc_alphaDimmed = u("u_alphaDimmed");
+    this.loc_alphaOpaque = u("u_alphaOpaque");
     this.loc_lineWidth = u("u_lineWidth");
     this.loc_dpr = u("u_dpr");
     this.loc_zoomAlpha = u("u_zoomAlpha");
@@ -187,17 +189,22 @@ export class ArcRenderer {
     gl.uniform3fv(this.loc_genreColors, colorArray);
 
     // Alpha tiers — tuned for triangle-strip quad lines (~1px wide).
-    // zoomAlpha no longer boosts before the mask trims the set (see render()),
-    // so the default must carry low-zoom density on its own without saturating.
+    // zoomAlpha is a [0..1] ramp factor that mixes the base alpha toward
+    // u_alphaOpaque at deep zoom (see render()), so individual arcs read as
+    // crisp threads once the visibility mask has trimmed the set.
+    // 0.7 targets the "0.5-0.7 effective alpha" range from the spec; leaves
+    // headroom against the 0.85 fragment-clamp so overlapping threads still
+    // accumulate before saturating under additive blending.
     gl.uniform1f(this.loc_alphaDefault, 0.0015);
     gl.uniform1f(this.loc_alphaHighlight, 0.018);
     gl.uniform1f(this.loc_alphaDimmed, 0.0005);
+    gl.uniform1f(this.loc_alphaOpaque, 0.7);
     gl.uniform1f(this.loc_margin, 40.0);
 
     // Line width in CSS pixels
     gl.uniform1f(this.loc_lineWidth, 1.0);
     gl.uniform1f(this.loc_dpr, window.devicePixelRatio || 1);
-    gl.uniform1f(this.loc_zoomAlpha, 1.0);
+    gl.uniform1f(this.loc_zoomAlpha, 0.0);
 
     // No selection by default
     gl.uniform1f(this.loc_selStart, -1.0);
@@ -331,17 +338,20 @@ export class ArcRenderer {
     gl.uniform1f(this.loc_maxArcHeightBelow, height - axisY - 30);
     gl.uniform1f(this.loc_dpr, dpr);
 
-    // Zoom-dependent alpha: only boost after the visibility mask has actually
-    // trimmed the arc set (at ARC_MASK_SCALE). Before that, the full canon
-    // mask is still drawing, so a boost saturates via additive blending.
+    // Zoom-dependent alpha ramp: [0..1] factor the vertex shader uses to mix
+    // the base alpha tier toward u_alphaOpaque. Stays at 0 below the mask
+    // threshold (full canon set still draws, boosting saturates additively),
+    // then ramps to 1 by ~scaleX = 100 (10000% zoom) where the viewport-mask
+    // set is sparse enough that crisp threads read cleanly.
     const zoomAlpha =
       scaleX < ARC_MASK_SCALE
-        ? 1.0
-        : Math.min(6.0, 1.0 + Math.log2(scaleX / ARC_MASK_SCALE) * 0.8);
+        ? 0.0
+        : Math.min(1.0, Math.log2(scaleX / ARC_MASK_SCALE) * 0.3);
     gl.uniform1f(this.loc_zoomAlpha, zoomAlpha);
 
-    // Scale line width with zoom so individual arcs are distinguishable at deep zoom
-    const lineWidth = Math.min(5.0, 1.0 + Math.log2(Math.max(1.0, scaleX)) * 0.3);
+    // Nearly-flat line width: fat additively-blended quads turn into a glow
+    // at deep zoom, so keep individual arcs thin and thread-like at all zooms.
+    const lineWidth = scaleX < 10 ? 1.0 : scaleX < 100 ? 1.25 : 1.5;
     gl.uniform1f(this.loc_lineWidth, lineWidth);
 
     // Single instanced draw call for all arcs (triangle strip: 2 vertices per segment)
