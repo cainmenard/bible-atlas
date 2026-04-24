@@ -189,13 +189,15 @@ export class ArcRenderer {
     gl.uniform3fv(this.loc_genreColors, colorArray);
 
     // Alpha tiers — tuned for triangle-strip quad lines (~1px wide).
-    // zoomAlpha is a [0..1] ramp factor that mixes the base alpha toward
-    // u_alphaOpaque at deep zoom (see render()), so individual arcs read as
-    // crisp threads once the visibility mask has trimmed the set.
-    // 0.7 targets the "0.5-0.7 effective alpha" range from the spec; leaves
-    // headroom against the 0.85 fragment-clamp so overlapping threads still
-    // accumulate before saturating under additive blending.
-    gl.uniform1f(this.loc_alphaDefault, 0.0015);
+    // u_alphaDefault is the unselected baseline drawn across the full 1-10x
+    // zoom range, where the visibility mask has not yet trimmed the set.
+    // 0.003 is what the view was calibrated against before #126 halved it
+    // on the (mistaken) assumption that an implicit low-zoom boost was being
+    // removed — at scaleX=1 the old boost was exactly 1.0, so the halving
+    // simply dropped baseline density by 2x and made unselected arcs invisible.
+    // u_alphaOpaque is the deep-zoom target the vertex shader mixes toward
+    // via u_zoomAlpha once the mask trims the set past ARC_MASK_SCALE.
+    gl.uniform1f(this.loc_alphaDefault, 0.003);
     gl.uniform1f(this.loc_alphaHighlight, 0.018);
     gl.uniform1f(this.loc_alphaDimmed, 0.0005);
     gl.uniform1f(this.loc_alphaOpaque, 0.7);
