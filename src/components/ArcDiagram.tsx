@@ -297,6 +297,11 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     startY: number;
     startOffsetX: number;
   } | null>(null);
+  // Tracks whether the current pointer interaction moved past the click
+  // threshold. Set in mousemove/touchmove, reset on mousedown/touchstart.
+  // Survives the mouseup → click boundary so handleClick can suppress the
+  // trailing click after a pan.
+  const didDragRef = useRef(false);
   const [selectedArc, setSelectedArc] = useState<SelectedArc | null>(null);
   const selectedArcRef = useRef<SelectedArc | null>(null);
 
@@ -1305,12 +1310,17 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         startY: e.clientY,
         startOffsetX: transformRef.current.offsetX,
       };
+      didDragRef.current = false;
       overlay!.style.cursor = "grabbing";
     }
 
     function handleMouseMove(e: MouseEvent) {
       if (dragRef.current) {
         const dx = e.clientX - dragRef.current.startX;
+        const dy = e.clientY - dragRef.current.startY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          didDragRef.current = true;
+        }
         transformRef.current.offsetX = dragRef.current.startOffsetX + dx;
         cancelAnimationFrame(animRef.current);
         animRef.current = requestAnimationFrame(draw);
@@ -1476,10 +1486,12 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     }
 
     function handleClick(e: MouseEvent) {
-      if (dragRef.current) {
-        const dx = Math.abs(e.clientX - dragRef.current.startX);
-        const dy = Math.abs(e.clientY - dragRef.current.startY);
-        if (dx > 3 || dy > 3) return;
+      // Suppress the trailing click after a pan. dragRef is nulled in
+      // mouseup (which fires before click), so we can't read drag distance
+      // off it here — didDragRef survives that boundary.
+      if (didDragRef.current) {
+        didDragRef.current = false;
+        return;
       }
       performClick(e.clientX, e.clientY);
     }
