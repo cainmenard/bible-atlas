@@ -53,6 +53,7 @@ interface Props {
   focusMode?: "auto" | "off" | "on";
   onFocusModeChange?: (mode: "auto" | "off" | "on") => void;
   onOpenReader?: (bookId: string, chapter: number, verse?: number) => void;
+  edgeThreshold?: number;
 }
 
 export interface ArcDiagramHandle {
@@ -189,6 +190,31 @@ function computeArcRy(
   return Math.min(ryScaled, maxRy);
 }
 
+/**
+ * Count arcs per unique (fromIdx, toIdx) pair and assign each arc the count
+ * of cross-references sharing its endpoint pair. Serves as the "weight" the
+ * density slider filters against; pairs with ≥N duplicates survive threshold N.
+ */
+function computeArcWeights(
+  arcs: number[][],
+  totalVerses: number,
+): Uint16Array {
+  const counts = new Map<number, number>();
+  for (let i = 0; i < arcs.length; i++) {
+    const a = arcs[i];
+    const key = a[0] * totalVerses + a[1];
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const weights = new Uint16Array(arcs.length);
+  for (let i = 0; i < arcs.length; i++) {
+    const a = arcs[i];
+    const key = a[0] * totalVerses + a[1];
+    const c = counts.get(key) ?? 1;
+    weights[i] = c > 65535 ? 65535 : c;
+  }
+  return weights;
+}
+
 function findArcAtPoint(
   mouseX: number,
   mouseY: number,
@@ -200,7 +226,9 @@ function findArcAtPoint(
   height: number,
   activeBookIds: Set<string>,
   arcBooks: ArcData["books"],
-  activeVerseSet?: Uint8Array
+  activeVerseSet?: Uint8Array,
+  arcWeights?: Uint16Array,
+  edgeThreshold?: number
 ): number | null {
   const axisY = height * 0.52;
   const totalWidth = (width - MARGIN * 2) * scaleX;
@@ -220,6 +248,14 @@ function findArcAtPoint(
 
     // Skip invisible arcs (canon filtering)
     if (activeVerseSet && (!activeVerseSet[fromIdx] || !activeVerseSet[toIdx]))
+      continue;
+
+    // Skip arcs filtered out by the density threshold.
+    if (
+      arcWeights &&
+      edgeThreshold !== undefined &&
+      arcWeights[i] < edgeThreshold
+    )
       continue;
 
     const x1 = MARGIN + offsetX + fromIdx * xScale;
@@ -280,6 +316,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   focusMode = "auto",
   onFocusModeChange,
   onOpenReader,
+  edgeThreshold = 1,
 }: Props, ref) {
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -411,6 +448,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       .then((data: ArcData) => {
         dataRef.current = data;
         renderer!.setArcData(data.arcs, data.totalVerses);
+        arcWeightsRef.current = computeArcWeights(data.arcs, data.totalVerses);
         setLoaded(true);
       });
 
@@ -424,6 +462,12 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   const workingMaskRef = useRef<Uint8Array | null>(null);
   const arcFadeBufferRef = useRef<Float32Array | null>(null);
   const lastVisibilityScaleAboveRef = useRef(false);
+  // Per-arc weight (count of cross-references sharing the same verse-pair
+  // endpoints). Built once on data load from the raw arcs array since
+  // arc-crossrefs.json does not surface per-arc votes.
+  const arcWeightsRef = useRef<Uint16Array | null>(null);
+  const edgeThresholdRef = useRef(edgeThreshold);
+  edgeThresholdRef.current = edgeThreshold;
 
   // Rebuild canon mask when canon or data changes.
   useEffect(() => {
@@ -450,7 +494,6 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     }
 
     activeVerseSetRef.current = mask;
-    rendererRef.current?.setVisibility(mask);
     lastVisibilityScaleAboveRef.current = false;
   }, [canon, loaded]);
 
@@ -506,30 +549,33 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     const renderer = rendererRef.current;
     const canonMask = canonMaskRef.current;
     const working = workingMaskRef.current;
-    if (!data || !renderer || !canonMask || !working) return;
+    const weights = arcWeightsRef.current;
+    if (!data || !renderer || !canonMask || !working || !weights) return;
 
     const { offsetX, scaleX } = transformRef.current;
+    const threshold = edgeThresholdRef.current;
 
-    // Below the fade window: push the plain canon mask, all visible canon
-    // arcs at 1.0.
-    if (focusMode === "off" || scaleX <= FOCUS_FADE_START) {
-      if (activeVerseSetRef.current !== canonMask) {
-        activeVerseSetRef.current = canonMask;
-        renderer.setVisibility(canonMask);
-      }
-      return;
+    const arcs = data.arcs;
+    let fadeBuf = arcFadeBufferRef.current;
+    if (!fadeBuf || fadeBuf.length !== arcs.length) {
+      fadeBuf = new Float32Array(arcs.length);
+      arcFadeBufferRef.current = fadeBuf;
     }
 
-    // Inside / above the fade window: touching arcs stay at 1.0; non-touching
-    // canon arcs fade from 1.0 → 0.0 across [FOCUS_FADE_START, FOCUS_FADE_END].
-    const viewport = computeViewportRange(
-      offsetX,
-      scaleX,
-      data.totalVerses,
-      window.innerWidth,
-    );
+    // Below the fade window (or focus mode off, or nothing to key off inside
+    // the window): every arc that passes both canon and the density threshold
+    // is fully visible.
+    const viewport =
+      focusMode !== "off" && scaleX > FOCUS_FADE_START
+        ? computeViewportRange(
+            offsetX,
+            scaleX,
+            data.totalVerses,
+            window.innerWidth,
+          )
+        : null;
     let selRange: [number, number] | null = null;
-    if (selectedBookId) {
+    if (selectedBookId && focusMode !== "off" && scaleX > FOCUS_FADE_START) {
       selRange = computeVerseRange(
         data.books,
         selectedBookId,
@@ -538,15 +584,25 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       );
     }
 
-    // No viewport or selection to key off — fall back to the canon mask.
-    if (!viewport && !selRange) {
-      if (activeVerseSetRef.current !== canonMask) {
-        activeVerseSetRef.current = canonMask;
-        renderer.setVisibility(canonMask);
+    if (
+      focusMode === "off" ||
+      scaleX <= FOCUS_FADE_START ||
+      (!viewport && !selRange)
+    ) {
+      for (let i = 0; i < arcs.length; i++) {
+        const a = arcs[i];
+        fadeBuf[i] =
+          canonMask[a[0]] && canonMask[a[1]] && weights[i] >= threshold
+            ? 1.0
+            : 0.0;
       }
+      activeVerseSetRef.current = canonMask;
+      renderer.setArcVisibility(fadeBuf);
       return;
     }
 
+    // Inside / above the fade window: touching arcs stay at 1.0; non-touching
+    // canon arcs fade from 1.0 → 0.0 across [FOCUS_FADE_START, FOCUS_FADE_END].
     const fadeT = Math.min(
       1,
       Math.max(
@@ -555,13 +611,6 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       ),
     );
     const fadeValue = 1 - fadeT;
-
-    const arcs = data.arcs;
-    let fadeBuf = arcFadeBufferRef.current;
-    if (!fadeBuf || fadeBuf.length !== arcs.length) {
-      fadeBuf = new Float32Array(arcs.length);
-      arcFadeBufferRef.current = fadeBuf;
-    }
 
     working.fill(0);
     if (viewport) {
@@ -575,7 +624,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       const a = arcs[i];
       const from = a[0];
       const to = a[1];
-      if (!(canonMask[from] && canonMask[to])) {
+      if (!(canonMask[from] && canonMask[to]) || weights[i] < threshold) {
         fadeBuf[i] = 0;
         continue;
       }
@@ -612,7 +661,9 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     // Hit-testing uses activeVerseSetRef. Below the end of the fade window,
     // non-touching canon arcs are still at least partially on-screen, so we
     // keep the canon mask active for clicks. Past FOCUS_FADE_END they're
-    // fully faded out and only the touching set should accept clicks.
+    // fully faded out and only the touching set should accept clicks. In
+    // either case the density threshold is enforced on the hit-test side via
+    // arcWeights so hidden arcs stay unclickable.
     activeVerseSetRef.current = scaleX >= FOCUS_FADE_END ? working : canonMask;
     renderer.setArcVisibility(fadeBuf);
   }, [focusMode, selectedBookId, selectedChapter, selectedVerse]);
@@ -662,6 +713,15 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   useEffect(() => {
     scheduleVisibilityRebuild();
   }, [scheduleVisibilityRebuild, loaded]);
+
+  // Canon or density-threshold change: rebuild immediately regardless of
+  // zoom level. `scheduleVisibilityRebuild` bails below FOCUS_FADE_START
+  // when the zoom state hasn't crossed a boundary, which would otherwise
+  // leave the per-arc visibility stale after a canon swap or density tweak.
+  useEffect(() => {
+    if (!loaded) return;
+    rebuildVisibilityNow();
+  }, [canon, edgeThreshold, loaded, rebuildVisibilityNow]);
 
   // Draw function: WebGL arcs + Canvas 2D overlay
   const draw = useCallback(() => {
@@ -1424,7 +1484,9 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
         height,
         activeBookIds,
         data.books,
-        activeVerseSetRef.current || undefined
+        activeVerseSetRef.current || undefined,
+        arcWeightsRef.current || undefined,
+        edgeThresholdRef.current
       );
 
       if (hitIdx !== null) {
