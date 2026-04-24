@@ -5,7 +5,7 @@ import { GENRE_COLORS } from "@/lib/colors";
 import { Canon } from "@/lib/types";
 import { books, bookMap } from "@/data/books";
 import { CHAPTER_VERSES } from "@/data/chapter-verses";
-import { ArcRenderer } from "@/lib/arc-renderer";
+import { ArcRenderer, ARC_MASK_SCALE } from "@/lib/arc-renderer";
 import { indexToVerseRef, formatVerseRef } from "@/lib/verse-index";
 import {
   computeBookLabels,
@@ -69,7 +69,14 @@ const MARGIN = 40;
 // viewport is used as an implicit selection past this zoom level.
 const FOCUS_SELECTION_SCALE = 6;
 // Visibility rebuild (endpoint-mask intersection) kicks in past this level.
-const FOCUS_VISIBILITY_SCALE = 30;
+// Shared with the renderer's zoomAlpha gate so the boost and the mask-trim
+// engage at the same scale.
+const FOCUS_VISIBILITY_SCALE = ARC_MASK_SCALE;
+// Soft-fade window around the mask-trim threshold. Non-touching arcs fade
+// from 1.0 → 0.0 across [FOCUS_VISIBILITY_SCALE - 2, FOCUS_VISIBILITY_SCALE + 2]
+// so the transition feels continuous instead of a hard flip.
+const FOCUS_FADE_START = FOCUS_VISIBILITY_SCALE - 2;
+const FOCUS_FADE_END = FOCUS_VISIBILITY_SCALE + 2;
 // Reader-handoff chip appears once the viewport spans ≤ ~150 verses.
 const READER_HANDOFF_SCALE = 200;
 // Debounce window for the visibility rebuild (Layer B).
@@ -415,6 +422,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
 
   const canonMaskRef = useRef<Uint8Array | null>(null);
   const workingMaskRef = useRef<Uint8Array | null>(null);
+  const arcFadeBufferRef = useRef<Float32Array | null>(null);
   const lastVisibilityScaleAboveRef = useRef(false);
 
   // Rebuild canon mask when canon or data changes.
@@ -502,8 +510,9 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
 
     const { offsetX, scaleX } = transformRef.current;
 
-    // Below threshold: push the plain canon mask and we're done.
-    if (focusMode === "off" || scaleX < FOCUS_VISIBILITY_SCALE) {
+    // Below the fade window: push the plain canon mask, all visible canon
+    // arcs at 1.0.
+    if (focusMode === "off" || scaleX <= FOCUS_FADE_START) {
       if (activeVerseSetRef.current !== canonMask) {
         activeVerseSetRef.current = canonMask;
         renderer.setVisibility(canonMask);
@@ -511,7 +520,8 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       return;
     }
 
-    // Above threshold: working = canonMask ∩ (viewport-touching ∪ selection-touching)
+    // Inside / above the fade window: touching arcs stay at 1.0; non-touching
+    // canon arcs fade from 1.0 → 0.0 across [FOCUS_FADE_START, FOCUS_FADE_END].
     const viewport = computeViewportRange(
       offsetX,
       scaleX,
@@ -528,7 +538,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       );
     }
 
-    // If neither range exists, fall back to the canon mask.
+    // No viewport or selection to key off — fall back to the canon mask.
     if (!viewport && !selRange) {
       if (activeVerseSetRef.current !== canonMask) {
         activeVerseSetRef.current = canonMask;
@@ -537,9 +547,23 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       return;
     }
 
-    working.fill(0);
+    const fadeT = Math.min(
+      1,
+      Math.max(
+        0,
+        (scaleX - FOCUS_FADE_START) / (FOCUS_FADE_END - FOCUS_FADE_START),
+      ),
+    );
+    const fadeValue = 1 - fadeT;
 
-    // Mark the viewport range itself + selection range itself.
+    const arcs = data.arcs;
+    let fadeBuf = arcFadeBufferRef.current;
+    if (!fadeBuf || fadeBuf.length !== arcs.length) {
+      fadeBuf = new Float32Array(arcs.length);
+      arcFadeBufferRef.current = fadeBuf;
+    }
+
+    working.fill(0);
     if (viewport) {
       for (let i = viewport[0]; i < viewport[1]; i++) working[i] = 1;
     }
@@ -547,13 +571,14 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       for (let i = selRange[0]; i < selRange[1]; i++) working[i] = 1;
     }
 
-    // Walk all arcs once; mark both endpoints if either endpoint touches
-    // the viewport or the explicit selection.
-    const arcs = data.arcs;
     for (let i = 0; i < arcs.length; i++) {
       const a = arcs[i];
       const from = a[0];
       const to = a[1];
+      if (!(canonMask[from] && canonMask[to])) {
+        fadeBuf[i] = 0;
+        continue;
+      }
       let touches = false;
       if (viewport) {
         if (
@@ -574,23 +599,31 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
       if (touches) {
         working[from] = 1;
         working[to] = 1;
+        fadeBuf[i] = 1.0;
+      } else {
+        fadeBuf[i] = fadeValue;
       }
     }
 
-    // Intersect with canon mask in place.
     for (let i = 0; i < working.length; i++) {
       working[i] = working[i] & canonMask[i];
     }
 
-    activeVerseSetRef.current = working;
-    renderer.setVisibility(working);
+    // Hit-testing uses activeVerseSetRef. Below the end of the fade window,
+    // non-touching canon arcs are still at least partially on-screen, so we
+    // keep the canon mask active for clicks. Past FOCUS_FADE_END they're
+    // fully faded out and only the touching set should accept clicks.
+    activeVerseSetRef.current = scaleX >= FOCUS_FADE_END ? working : canonMask;
+    renderer.setArcVisibility(fadeBuf);
   }, [focusMode, selectedBookId, selectedChapter, selectedVerse]);
 
   const visibilityDebounceRef = useRef<number | null>(null);
 
   const scheduleVisibilityRebuild = useCallback(() => {
     const { scaleX } = transformRef.current;
-    const isAbove = scaleX >= FOCUS_VISIBILITY_SCALE && focusMode !== "off";
+    // Enter the rebuild loop at FOCUS_FADE_START so non-touching arcs can
+    // begin fading before the hard mask-trim threshold.
+    const isAbove = scaleX > FOCUS_FADE_START && focusMode !== "off";
     const wasAbove = lastVisibilityScaleAboveRef.current;
 
     // Leading edge: fire immediately when we cross the threshold (either direction).
