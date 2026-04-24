@@ -48,8 +48,9 @@ out float v_side;
 out float v_axisProximity; // 0 = at axis, 1 = far from axis
 
 void main() {
-  // Discard invisible arcs (canon filtering)
-  if (a_visible < 0.5) {
+  // Fully-invisible arcs (canon filtering) are culled out of clip space.
+  // Fractional a_visible values fall through and fade via alpha multiply.
+  if (a_visible <= 0.001) {
     gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
     v_color = vec4(0.0);
     v_side = 0.0;
@@ -154,8 +155,8 @@ void main() {
     alpha = (fromInSel || toInSel) ? u_alphaHighlight : u_alphaDimmed;
   }
 
-  // Apply zoom-dependent alpha boost
-  alpha *= u_zoomAlpha;
+  // Apply zoom-dependent alpha boost and per-arc visibility fade
+  alpha *= u_zoomAlpha * a_visible;
 
   int gi = int(a_genreIdx);
   v_color = vec4(u_genreColors[gi], alpha);

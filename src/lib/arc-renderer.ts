@@ -4,6 +4,15 @@ import { GENRE_COLORS } from "./colors";
 const GENRE_COLOR_LIST = Object.values(GENRE_COLORS);
 const SEGMENTS = 64; // vertices per arc (64-segment polyline, doubled for triangle strip)
 
+/**
+ * Zoom threshold at which the visibility mask trims the drawn arc set to those
+ * touching the viewport/selection. Below this scale the full canon-mask set
+ * draws; above it the rebuild engages. Shared with ArcDiagram's
+ * FOCUS_VISIBILITY_SCALE so the zoomAlpha boost and the mask trim flip on at
+ * the same moment.
+ */
+export const ARC_MASK_SCALE = 10;
+
 function compileShader(
   gl: WebGL2RenderingContext,
   type: number,
@@ -177,10 +186,10 @@ export class ArcRenderer {
     }
     gl.uniform3fv(this.loc_genreColors, colorArray);
 
-    // Alpha tiers — tuned for triangle-strip quad lines (~1px wide)
-    // Wider lines cover more pixel area than LINE_STRIP, so alpha must be
-    // lower than the original values to avoid saturation with additive blending
-    gl.uniform1f(this.loc_alphaDefault, 0.003);
+    // Alpha tiers — tuned for triangle-strip quad lines (~1px wide).
+    // zoomAlpha no longer boosts before the mask trims the set (see render()),
+    // so the default must carry low-zoom density on its own without saturating.
+    gl.uniform1f(this.loc_alphaDefault, 0.0015);
     gl.uniform1f(this.loc_alphaHighlight, 0.018);
     gl.uniform1f(this.loc_alphaDimmed, 0.0005);
     gl.uniform1f(this.loc_margin, 40.0);
@@ -244,18 +253,32 @@ export class ArcRenderer {
   /** Update arc visibility based on active verse set (canon filtering). */
   setVisibility(activeVerseSet: Uint8Array): void {
     if (!this.rawArcs) return;
+    const arcs = this.rawArcs;
+    const perArc = new Float32Array(arcs.length);
+    for (let i = 0; i < arcs.length; i++) {
+      perArc[i] =
+        activeVerseSet[arcs[i][0]] && activeVerseSet[arcs[i][1]] ? 1.0 : 0.0;
+    }
+    this.setArcVisibility(perArc);
+  }
+
+  /**
+   * Set per-arc visibility directly (0..1). Used by the soft viewport-fade
+   * path, where arcs outside the viewport/selection get a fractional value
+   * rather than a hard 0/1 cull.
+   */
+  setArcVisibility(values: Float32Array): void {
+    if (!this.rawArcs) return;
     const gl = this.gl;
     const arcs = this.rawArcs;
 
-    // Rebuild the full buffer with updated visibility
     const buf = new Float32Array(arcs.length * 4);
     for (let i = 0; i < arcs.length; i++) {
       const off = i * 4;
       buf[off] = arcs[i][0];
       buf[off + 1] = arcs[i][1];
       buf[off + 2] = arcs[i][2];
-      buf[off + 3] =
-        activeVerseSet[arcs[i][0]] && activeVerseSet[arcs[i][1]] ? 1.0 : 0.0;
+      buf[off + 3] = values[i];
     }
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
@@ -308,9 +331,13 @@ export class ArcRenderer {
     gl.uniform1f(this.loc_maxArcHeightBelow, height - axisY - 30);
     gl.uniform1f(this.loc_dpr, dpr);
 
-    // Zoom-dependent alpha: boost alpha when zoomed in (fewer visible arcs)
-    // Use a gentler curve with lower cap to prevent saturation at deep zoom
-    const zoomAlpha = Math.min(8.0, 1.0 + Math.log2(Math.max(1.0, scaleX)) * 0.7);
+    // Zoom-dependent alpha: only boost after the visibility mask has actually
+    // trimmed the arc set (at ARC_MASK_SCALE). Before that, the full canon
+    // mask is still drawing, so a boost saturates via additive blending.
+    const zoomAlpha =
+      scaleX < ARC_MASK_SCALE
+        ? 1.0
+        : Math.min(6.0, 1.0 + Math.log2(scaleX / ARC_MASK_SCALE) * 0.8);
     gl.uniform1f(this.loc_zoomAlpha, zoomAlpha);
 
     // Scale line width with zoom so individual arcs are distinguishable at deep zoom
