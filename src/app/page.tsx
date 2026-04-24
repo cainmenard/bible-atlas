@@ -731,6 +731,7 @@ export default function Home() {
             selectedVerse={selectedVerse}
             onZoomChange={setArcZoomLevel}
             todayBookIds={todayBookIds}
+            edgeThreshold={edgeThreshold}
             focusMode={arcFocusMode}
             onFocusModeChange={handleArcFocusModeChange}
             onOpenReader={(bookId, chapter, verse) => {
