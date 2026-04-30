@@ -201,6 +201,7 @@ src/
 │   ├── CelestialOrreryToggle.tsx # Arc/Constellation view switcher in the top bar
 │   ├── CursorHints.tsx         # Desktop-only ambient onboarding overlay — orbiting glyph hints (first-visit pairs + 30s idle re-engagement) that teach Arc gestures and the search palette
 │   ├── ArcZoomControls.tsx     # Zoom in/out/reset controls shown only in Arc view
+│   ├── ResetViewButton.tsx     # Global "reset to default state" button — clears selection, panels, zoom, and reading; fades in when user deviates from default
 │   ├── FilterPanel.tsx         # Canon + translation + density controls (glass panel)
 │   ├── TranslationSelector.tsx # Translation dropdown inside FilterPanel
 │   ├── EdgeDensitySlider.tsx   # Slider that picks an edge-density threshold

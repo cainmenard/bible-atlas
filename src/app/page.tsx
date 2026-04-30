@@ -15,6 +15,7 @@ import SearchPalette from "@/components/SearchPalette";
 import SearchTrigger from "@/components/SearchTrigger";
 import { DensityStop, DENSITY_THRESHOLDS } from "@/components/EdgeDensitySlider";
 import { BibleBook, Canon, LiturgicalSeason, ReadingLocation, ViewMode, VerseCrossRef } from "@/lib/types";
+import { ArcDiagramHandle } from "@/components/ArcDiagram";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
 import { getMajorFeast } from "@/lib/liturgical";
@@ -24,6 +25,7 @@ import { buildVerseNavigation } from "@/lib/verse-navigation";
 import { getVerseCrossRefs, getTargetBookCounts } from "@/lib/crossref-utils";
 import { bookMap } from "@/data/books";
 import ArcZoomControls from "@/components/ArcZoomControls";
+import ResetViewButton from "@/components/ResetViewButton";
 import Link from "next/link";
 
 const ForceGraph = dynamic(() => import("@/components/ForceGraph"), {
@@ -51,7 +53,7 @@ export default function Home() {
     y: number;
   } | null>(null);
   const [constellationReady, setConstellationReady] = useState(false);
-  const arcRef = useRef<{ zoomIn: () => void; zoomOut: () => void; resetZoom: () => void } | null>(null);
+  const arcRef = useRef<ArcDiagramHandle | null>(null);
   const [arcZoomLevel, setArcZoomLevel] = useState(100);
   const [viewTransitionBook, setViewTransitionBook] = useState<string | null>(null);
   const prevViewModeRef = useRef(viewMode);
@@ -79,6 +81,10 @@ export default function Home() {
   const handleOpenReadingsCard = useCallback(() => {
     setReadingsCardOpenSignal((n) => n + 1);
   }, []);
+
+  // ─── READINGS PILL STATE (for Reset View visibility) ───
+  const [readingsPillExpanded, setReadingsPillExpanded] = useState(false);
+  const [readingsPillCollapseSignal, setReadingsPillCollapseSignal] = useState(0);
 
   // ─── DISMISSAL STATE ───
   // showReadingPlan: true when user has dismissed readings for today or prefers plan by default.
@@ -566,6 +572,30 @@ export default function Home() {
 
   const openSearch = useCallback(() => setSearchOpen(true), []);
   const closeSearch = useCallback(() => setSearchOpen(false), []);
+
+  // ─── RESET VIEW ───
+  const isResetViewVisible =
+    selectedBookId !== null ||
+    arcHighlightBookId !== null ||
+    pendingNavigation !== null ||
+    activeReading !== null ||
+    searchOpen ||
+    arcZoomLevel !== 100 ||
+    readingsPillExpanded;
+
+  const handleResetView = useCallback(() => {
+    arcRef.current?.animateResetZoom();
+    arcRef.current?.clearArcSelection();
+    setSelectedBookId(null);
+    setArcHighlightBookId(null);
+    setPendingNavigation(null);
+    setViewTransitionBook(null);
+    setActiveReading(null);
+    setReadingHistory([]);
+    setReadingsFilterActive(true);
+    setSearchOpen(false);
+    setReadingsPillCollapseSignal((n) => n + 1);
+  }, [arcRef]);
 
   const handleSearchSelectBook = useCallback((bookId: string) => {
     setSelectedBookId(bookId);
@@ -1074,6 +1104,8 @@ export default function Home() {
             onOpenReading={handleOpenReading}
             onReadAll={handleReadAll}
             openSignal={readingsCardOpenSignal}
+            collapseSignal={readingsPillCollapseSignal}
+            onExpandedChange={setReadingsPillExpanded}
             onDismiss={handleDismissReadings}
           />
         )}
@@ -1089,6 +1121,11 @@ export default function Home() {
           />
         </div>
       )}
+
+      <ResetViewButton
+        isVisible={isResetViewVisible}
+        onReset={handleResetView}
+      />
 
       <SearchPalette
         isOpen={searchOpen}

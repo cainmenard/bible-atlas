@@ -59,6 +59,8 @@ export interface ArcDiagramHandle {
   zoomIn: () => void;
   zoomOut: () => void;
   resetZoom: () => void;
+  animateResetZoom: (durationMs?: number) => Promise<void>;
+  clearArcSelection: () => void;
 }
 
 const GENRE_COLOR_LIST = Object.values(GENRE_COLORS);
@@ -1239,11 +1241,53 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
     noteInteraction();
   }, [draw, applyFocusSelection, scheduleVisibilityRebuild, noteInteraction]);
 
+  const animateResetZoom = useCallback((durationMs = 400): Promise<void> => {
+    return new Promise((resolve) => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        resetZoom();
+        resolve();
+        return;
+      }
+      const startOffsetX = transformRef.current.offsetX;
+      const startScaleX = transformRef.current.scaleX;
+      if (startOffsetX === 0 && startScaleX === 1) {
+        resolve();
+        return;
+      }
+      const startTime = performance.now();
+      const loop = (now: number) => {
+        const progress = Math.min((now - startTime) / durationMs, 1);
+        const t = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        transformRef.current.offsetX = startOffsetX * (1 - t);
+        transformRef.current.scaleX = startScaleX + (1 - startScaleX) * t;
+        cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(progress < 1 ? loop : () => {
+          transformRef.current = { offsetX: 0, scaleX: 1 };
+          draw();
+          applyFocusSelection();
+          scheduleVisibilityRebuild();
+          noteInteraction();
+          resolve();
+        });
+        if (progress < 1) draw();
+      };
+      cancelAnimationFrame(animRef.current);
+      animRef.current = requestAnimationFrame(loop);
+    });
+  }, [resetZoom, draw, applyFocusSelection, scheduleVisibilityRebuild, noteInteraction]);
+
+  const clearArcSelection = useCallback(() => {
+    setSelectedArc(null);
+    setVersePopover(null);
+  }, []);
+
   useImperativeHandle(ref, () => ({
     zoomIn: () => applyZoom(1.3, window.innerWidth / 2),
     zoomOut: () => applyZoom(1 / 1.3, window.innerWidth / 2),
     resetZoom: () => resetZoom(),
-  }), [applyZoom, resetZoom]);
+    animateResetZoom: (durationMs?: number) => animateResetZoom(durationMs),
+    clearArcSelection: () => clearArcSelection(),
+  }), [applyZoom, resetZoom, animateResetZoom, clearArcSelection]);
 
   /** Smoothly zoom to center a specific verse range in the viewport */
   const zoomToRange = useCallback((startIdx: number, endIdx: number) => {
