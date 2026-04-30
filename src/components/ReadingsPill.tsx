@@ -12,6 +12,10 @@ interface Props {
   onReadAll?: () => void;
   /** Increment to request opening the expanded card (e.g. from the "Reading today" chip). */
   openSignal?: number;
+  /** Increment to collapse the card back to pill state (e.g. from Reset View). */
+  collapseSignal?: number;
+  /** Called whenever the expanded state changes. */
+  onExpandedChange?: (expanded: boolean) => void;
   /** Called when the user clicks "Dismiss for today". */
   onDismiss?: () => void;
 }
@@ -31,7 +35,7 @@ const NOISE_SVG = `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/sv
 
 type DisplayState = "peek" | "pill" | "expanded";
 
-export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading, onReadAll, openSignal, onDismiss }: Props) {
+export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading, onReadAll, openSignal, collapseSignal, onExpandedChange, onDismiss }: Props) {
   // First-session auto-expand: peek only on the first load of the session.
   // Subsequent re-mounts (e.g. navigating back from /about) start collapsed.
   const [displayState, setDisplayState] = useState<DisplayState>(() => {
@@ -50,6 +54,7 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOp
   const [expandedVisible, setExpandedVisible] = useState(false);
   const componentRef = useRef<HTMLDivElement>(null);
   const lastOpenSignalRef = useRef<number | undefined>(openSignal);
+  const lastCollapseSignalRef = useRef<number | undefined>(collapseSignal);
 
   useEffect(() => {
     if (openSignal === undefined) return;
@@ -57,6 +62,17 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOp
     lastOpenSignalRef.current = openSignal;
     setDisplayState("expanded");
   }, [openSignal]);
+
+  useEffect(() => {
+    if (collapseSignal === undefined) return;
+    if (lastCollapseSignalRef.current === collapseSignal) return;
+    lastCollapseSignalRef.current = collapseSignal;
+    setDisplayState("pill");
+  }, [collapseSignal]);
+
+  useEffect(() => {
+    onExpandedChange?.(displayState === "expanded");
+  }, [displayState, onExpandedChange]);
 
   if (!data) return null;
 
