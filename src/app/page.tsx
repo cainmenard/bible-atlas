@@ -34,6 +34,10 @@ const ArcDiagram = dynamic(() => import("@/components/ArcDiagram"), {
   ssr: false,
 });
 
+const CursorHints = dynamic(() => import("@/components/CursorHints"), {
+  ssr: false,
+});
+
 export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>("arcs");
   const [canon, setCanon] = useState<Canon>("catholic");
@@ -936,6 +940,14 @@ export default function Home() {
         x={hoveredBook?.x ?? 0}
         y={hoveredBook?.y ?? 0}
         context={tooltipContext}
+      />
+
+      <CursorHints
+        viewMode={viewMode}
+        isDetailPanelOpen={selectedBookId !== null}
+        isReadingPaneOpen={activeReading !== null}
+        isSearchOpen={searchOpen}
+        hoveredBook={hoveredBook?.book ?? null}
       />
 
       <DetailPanel
