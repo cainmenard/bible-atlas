@@ -200,6 +200,7 @@ src/
 │   ├── StarBackground.tsx      # Animated star field behind the visualization
 │   ├── CelestialOrreryToggle.tsx # Arc/Constellation view switcher in the top bar
 │   ├── CursorHints.tsx         # Desktop-only ambient onboarding overlay — orbiting glyph hints (first-visit pairs + 30s idle re-engagement) that teach Arc gestures and the search palette
+│   ├── WelcomeCard.tsx         # First-time visitor centered glass overlay — Bible Atlas wordmark, one-sentence orientation, "Read today's Gospel" / "Explore the map" CTAs, persistent "What is this?" → /about link; persists `welcome-choice` preference once dismissed
 │   ├── ArcZoomControls.tsx     # Zoom in/out/reset controls shown only in Arc view
 │   ├── ResetViewButton.tsx     # Global "reset to default state" button — clears selection, panels, zoom, and reading; fades in when user deviates from default
 │   ├── FilterPanel.tsx         # Canon + translation + density controls (glass panel)
