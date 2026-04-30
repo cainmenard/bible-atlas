@@ -12,7 +12,10 @@ export type PreferenceKey =
   | 'recent-passages'
   | 'arc-focus-mode'
   | 'cursor-hints-dismissed'
-  | 'cursor-hints-satisfied';
+  | 'cursor-hints-satisfied'
+  // 'welcome-choice': 'gospel' | 'explore' | null. Set once when the first-time
+  // visitor dismisses WelcomeCard; null means the card has never been seen.
+  | 'welcome-choice';
 
 export interface RecentPassage {
   book: string;
@@ -128,6 +131,7 @@ export function clearPreferences(): void {
     'arc-focus-mode',
     'cursor-hints-dismissed',
     'cursor-hints-satisfied',
+    'welcome-choice',
   ];
   keys.forEach((key) => {
     const k = storageKey(key);
