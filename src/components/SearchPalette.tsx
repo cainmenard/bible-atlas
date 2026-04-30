@@ -175,7 +175,13 @@ export default function SearchPalette({
   // Reload recent passages whenever the palette transitions to open (derived state during render).
   if (lastIsOpen !== isOpen) {
     setLastIsOpen(isOpen);
-    if (isOpen) setRecentPassages(getRecentPassages(5));
+    if (isOpen) {
+      setRecentPassages(getRecentPassages(5));
+      setExiting(false);
+      setQuery("");
+      setDebounced("");
+      setSelectedIdx(0);
+    }
   }
 
   // ── Results computation ──────────────────────────────────
@@ -258,12 +264,13 @@ export default function SearchPalette({
     return () => { cancelled = true; };
   }, [bookResults, translation]);
 
-  // Mount-time: capture focused element, autofocus input.
+  // On each open: capture focused element, autofocus input.
   useEffect(() => {
+    if (!isOpen) return;
     previouslyFocused.current = (document.activeElement as HTMLElement | null) ?? null;
     const t = setTimeout(() => inputRef.current?.focus(), 0);
     return () => clearTimeout(t);
-  }, []);
+  }, [isOpen]);
 
   const close = useCallback(() => {
     setExiting(true);
