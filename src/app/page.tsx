@@ -15,6 +15,7 @@ import SearchPalette from "@/components/SearchPalette";
 import SearchTrigger from "@/components/SearchTrigger";
 import { DensityStop, DENSITY_THRESHOLDS } from "@/components/EdgeDensitySlider";
 import { BibleBook, Canon, LiturgicalSeason, ReadingLocation, ViewMode, VerseCrossRef } from "@/lib/types";
+import { ArcDiagramHandle } from "@/components/ArcDiagram";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
 import { getMajorFeast } from "@/lib/liturgical";
@@ -52,7 +53,7 @@ export default function Home() {
     y: number;
   } | null>(null);
   const [constellationReady, setConstellationReady] = useState(false);
-  const arcRef = useRef<{ zoomIn: () => void; zoomOut: () => void; resetZoom: () => void } | null>(null);
+  const arcRef = useRef<ArcDiagramHandle | null>(null);
   const [arcZoomLevel, setArcZoomLevel] = useState(100);
   const [viewTransitionBook, setViewTransitionBook] = useState<string | null>(null);
   const prevViewModeRef = useRef(viewMode);
