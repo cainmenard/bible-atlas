@@ -25,6 +25,7 @@ import { getVerseCrossRefs, getTargetBookCounts } from "@/lib/crossref-utils";
 import { bookMap } from "@/data/books";
 import ArcZoomControls from "@/components/ArcZoomControls";
 import ResetViewButton from "@/components/ResetViewButton";
+import WelcomeCard from "@/components/WelcomeCard";
 import Link from "next/link";
 
 const ForceGraph = dynamic(() => import("@/components/ForceGraph"), {
@@ -94,6 +95,10 @@ export default function Home() {
   // Feast-day pulse target: only computed on first load, only if today is a
   // major feast. Cleared after a single pulse cycle so it doesn't retrigger.
   const [feastPulseBookId, setFeastPulseBookId] = useState<string | null>(null);
+
+  // Welcome card visibility — true for first-time visitors who land outside
+  // the 1-hour window. Set once during first-load; cleared by either CTA.
+  const [showWelcomeCard, setShowWelcomeCard] = useState(false);
 
   // ─── READING PANE STATE ───
   const [activeReading, setActiveReading] = useState<{
@@ -174,6 +179,37 @@ export default function Home() {
     if (savedTranslation) setTranslation(savedTranslation);
     if (savedCanon) setCanon(savedCanon);
     if (savedDensity) setEdgeDensity(savedDensity);
+
+    // ── 1-hour rule + welcome card ──
+    // Within 60 minutes of last view: restore the last passage (treat as
+    // session continuity). Outside: universal default state, plus welcome
+    // card for true first-time visitors (welcome-choice unset).
+    const lastViewRaw = getPreference<string>("last-view-date");
+    const lastViewMs = lastViewRaw ? new Date(lastViewRaw).getTime() : NaN;
+    const withinHour =
+      Number.isFinite(lastViewMs) && Date.now() - lastViewMs < 3_600_000;
+
+    if (withinHour) {
+      const persistedBook = getPreference<string>("last-book");
+      if (persistedBook) {
+        const persistedChapter = getPreference<number>("last-chapter");
+        const persistedVerse = getPreference<number>("last-verse");
+        setSelectedBookId(persistedBook);
+        if (persistedChapter !== null) {
+          const navKey =
+            typeof performance !== "undefined" ? performance.now() : Date.now();
+          setPendingNavigation({
+            bookId: persistedBook,
+            chapter: persistedChapter,
+            verse: persistedVerse ?? 1,
+            key: navKey,
+          });
+        }
+      }
+    } else {
+      const welcomeChoice = getPreference<"gospel" | "explore">("welcome-choice");
+      if (welcomeChoice == null) setShowWelcomeCard(true);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -217,9 +253,11 @@ export default function Home() {
     if (!drillState?.bookId) return;
     if (navWriteTimerRef.current) clearTimeout(navWriteTimerRef.current);
     navWriteTimerRef.current = setTimeout(() => {
-      const today = new Date().toISOString().slice(0, 10);
+      // Full ISO timestamp (not date-only): the 1-hour first-load rule reads
+      // this with minute-level precision. Existing date-only values still
+      // parse via new Date(), producing conservative under-restoration.
       setPreference<string>("last-book", drillState.bookId!);
-      setPreference<string>("last-view-date", today);
+      setPreference<string>("last-view-date", new Date().toISOString());
       setPreference<number | null>("last-chapter", drillState.chapter ?? null);
       setPreference<number | null>("last-verse", drillState.verse ?? null);
     }, 500);
@@ -353,6 +391,34 @@ export default function Home() {
     // Palette verse previews are translation-scoped; drop cached text so
     // subsequent lookups refetch in the new translation.
     clearVerseTextCache();
+  }, []);
+
+  // ─── WELCOME CARD HANDLERS ───
+  const handleChooseGospel = useCallback(() => {
+    setShowWelcomeCard(false);
+    setPreference<string>("welcome-choice", "gospel");
+    if (!readings || readings.readings.length === 0) return;
+    const gospel = readings.readings.find((r) => r.type === "Gospel");
+    if (!gospel?.bookId) return;
+    setSelectedBookId(gospel.bookId);
+    // Fallback chain: parsed startVerse → first verse of parsed chapter →
+    // book-level (no pendingNavigation, just the selected book).
+    const parsed = parseReadingReference(gospel.reference);
+    if (parsed) {
+      const navKey =
+        typeof performance !== "undefined" ? performance.now() : Date.now();
+      setPendingNavigation({
+        bookId: gospel.bookId,
+        chapter: parsed.chapter,
+        verse: parsed.startVerse ?? 1,
+        key: navKey,
+      });
+    }
+  }, [readings]);
+
+  const handleChooseExplore = useCallback(() => {
+    setShowWelcomeCard(false);
+    setPreference<string>("welcome-choice", "explore");
   }, []);
 
   // ─── DISMISSAL HANDLERS ───
@@ -867,6 +933,13 @@ export default function Home() {
         isSearchOpen={searchOpen}
         hoveredBook={hoveredBook?.book ?? null}
       />
+
+      {showWelcomeCard && (
+        <WelcomeCard
+          onChooseGospel={handleChooseGospel}
+          onChooseExplore={handleChooseExplore}
+        />
+      )}
 
       <DetailPanel
         isOpen={selectedBookId !== null}
