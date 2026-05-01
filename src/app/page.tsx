@@ -19,6 +19,7 @@ import { BibleBook, Canon, LiturgicalSeason, ReadingLocation, ViewMode, VerseCro
 import { ArcDiagramHandle } from "@/components/ArcDiagram";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
+import { getMajorFeast } from "@/lib/liturgical";
 import { parseReadingReference } from "@/lib/bible-api";
 import { clearVerseTextCache } from "@/lib/search-index";
 import { buildVerseNavigation } from "@/lib/verse-navigation";
@@ -443,6 +444,12 @@ export default function Home() {
         verse: parsed.startVerse ?? 1,
         key: navKey,
       });
+    }
+    // Major-feast pulse — only fires on first-time visitors who pick "Read
+    // today's Gospel" on a major General Roman Calendar feast.
+    if (getMajorFeast() !== null) {
+      setFeastPulseBookId(gospel.bookId);
+      setTimeout(() => setFeastPulseBookId(null), 3000);
     }
   }, [readings]);
 
