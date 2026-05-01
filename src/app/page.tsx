@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useReducedMotion } from "motion/react";
 import { getPreference, setPreference, addRecentPassage } from "@/lib/preferences";
 import dynamic from "next/dynamic";
 import StarBackground from "@/components/StarBackground";
@@ -100,6 +101,19 @@ export default function Home() {
   // the 1-hour window. Set once during first-load; cleared by either CTA.
   const [showWelcomeCard, setShowWelcomeCard] = useState(false);
 
+  // Reveal animation phase. 'pre' = arcs at full vibrance (held 1500ms);
+  // 'dimming' = 300ms CSS transition to dimProgress=1; 'done' = settled.
+  // Welcome card and ReadingsPill peek wait for 'done'. Within-hour returnees
+  // and reduced-motion users start at 'done' so nothing animates.
+  const [revealPhase, setRevealPhase] = useState<"pre" | "dimming" | "done">("pre");
+
+  // CursorHints suppression on welcome-card sessions. Set true in first-load
+  // when welcome-choice is already on record (or returning within the hour).
+  // Suppression is per-session; CursorHints is unmounted entirely until then.
+  const [cursorHintsAllowed, setCursorHintsAllowed] = useState(false);
+
+  const reduceMotion = useReducedMotion();
+
   // ─── READING PANE STATE ───
   const [activeReading, setActiveReading] = useState<{
     index: number;
@@ -189,6 +203,8 @@ export default function Home() {
     const withinHour =
       Number.isFinite(lastViewMs) && Date.now() - lastViewMs < 3_600_000;
 
+    const welcomeChoice = getPreference<"gospel" | "explore">("welcome-choice");
+
     if (withinHour) {
       const persistedBook = getPreference<string>("last-book");
       if (persistedBook) {
@@ -206,9 +222,23 @@ export default function Home() {
           });
         }
       }
+      // Skip the reveal entirely; returnees land in their last passage.
+      setRevealPhase("done");
+      setCursorHintsAllowed(true);
     } else {
-      const welcomeChoice = getPreference<"gospel" | "explore">("welcome-choice");
       if (welcomeChoice == null) setShowWelcomeCard(true);
+      else setCursorHintsAllowed(true);
+
+      if (reduceMotion) {
+        setRevealPhase("done");
+      } else {
+        const dimTimer = setTimeout(() => setRevealPhase("dimming"), 1500);
+        const doneTimer = setTimeout(() => setRevealPhase("done"), 1800);
+        return () => {
+          clearTimeout(dimTimer);
+          clearTimeout(doneTimer);
+        };
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -722,6 +752,7 @@ export default function Home() {
             todayBookIds={todayBookIds}
             focusMode={arcFocusMode}
             onFocusModeChange={handleArcFocusModeChange}
+            dimProgress={revealPhase === "pre" ? 0 : 1}
             onOpenReader={(bookId, chapter, verse) => {
               setSelectedBookId(bookId);
               setDrillState(null);
@@ -926,15 +957,17 @@ export default function Home() {
         context={tooltipContext}
       />
 
-      <CursorHints
-        viewMode={viewMode}
-        isDetailPanelOpen={selectedBookId !== null}
-        isReadingPaneOpen={activeReading !== null}
-        isSearchOpen={searchOpen}
-        hoveredBook={hoveredBook?.book ?? null}
-      />
+      {cursorHintsAllowed && (
+        <CursorHints
+          viewMode={viewMode}
+          isDetailPanelOpen={selectedBookId !== null}
+          isReadingPaneOpen={activeReading !== null}
+          isSearchOpen={searchOpen}
+          hoveredBook={hoveredBook?.book ?? null}
+        />
+      )}
 
-      {showWelcomeCard && (
+      {showWelcomeCard && revealPhase === "done" && (
         <WelcomeCard
           onChooseGospel={handleChooseGospel}
           onChooseExplore={handleChooseExplore}
@@ -1066,6 +1099,7 @@ export default function Home() {
             collapseSignal={readingsPillCollapseSignal}
             onExpandedChange={setReadingsPillExpanded}
             onDismiss={handleDismissReadings}
+            revealComplete={revealPhase === "done"}
           />
         )}
       </div>
