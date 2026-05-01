@@ -18,6 +18,13 @@ interface Props {
   onExpandedChange?: (expanded: boolean) => void;
   /** Called when the user clicks "Dismiss for today". */
   onDismiss?: () => void;
+  /**
+   * Gates the first-session peek auto-expand. When false, the component
+   * starts in 'pill' regardless of SESSION_SHOWN_KEY; the peek decision
+   * runs once when this flips to true. Defaults to true so callers that
+   * don't opt in see the unchanged eager-peek behavior.
+   */
+  revealComplete?: boolean;
 }
 
 const SESSION_SHOWN_KEY = "bible-atlas-readings-shown-this-session";
@@ -35,11 +42,14 @@ const NOISE_SVG = `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/sv
 
 type DisplayState = "peek" | "pill" | "expanded";
 
-export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading, onReadAll, openSignal, collapseSignal, onExpandedChange, onDismiss }: Props) {
+export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOpenReading, onReadAll, openSignal, collapseSignal, onExpandedChange, onDismiss, revealComplete = true }: Props) {
   // First-session auto-expand: peek only on the first load of the session.
   // Subsequent re-mounts (e.g. navigating back from /about) start collapsed.
+  // When revealComplete is false, defer the peek decision until it flips true
+  // (handled in the effect below) so peek doesn't fight the reveal animation.
   const [displayState, setDisplayState] = useState<DisplayState>(() => {
     if (typeof window === "undefined") return "peek";
+    if (!revealComplete) return "pill";
     try {
       if (sessionStorage.getItem(SESSION_SHOWN_KEY) === "1") return "pill";
       sessionStorage.setItem(SESSION_SHOWN_KEY, "1");
@@ -48,6 +58,21 @@ export default function ReadingsPill({ data, onSelectBook, onSelectChapter, onOp
     }
     return "peek";
   });
+  const peekResolvedRef = useRef(revealComplete);
+
+  useEffect(() => {
+    if (peekResolvedRef.current) return;
+    if (!revealComplete) return;
+    peekResolvedRef.current = true;
+    if (typeof window === "undefined") return;
+    try {
+      if (sessionStorage.getItem(SESSION_SHOWN_KEY) === "1") return;
+      sessionStorage.setItem(SESSION_SHOWN_KEY, "1");
+    } catch {
+      // sessionStorage unavailable — fall back to peek anyway.
+    }
+    setDisplayState((prev) => (prev === "pill" ? "peek" : prev));
+  }, [revealComplete]);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [fading, setFading] = useState(false);
   const [pillVisible, setPillVisible] = useState(false);

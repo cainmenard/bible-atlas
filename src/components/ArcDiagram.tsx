@@ -53,6 +53,12 @@ interface Props {
   focusMode?: "auto" | "off" | "on";
   onFocusModeChange?: (mode: "auto" | "off" | "on") => void;
   onOpenReader?: (bookId: string, chapter: number, verse?: number) => void;
+  /**
+   * Reveal-time arc dim. 0 = full vibrance (default). 1 = dimmed (~0.6 opacity)
+   * to focus attention on the today's-books markers drawn into the overlay
+   * canvas, which stay at full opacity. Transition is CSS-driven (300ms).
+   */
+  dimProgress?: number;
 }
 
 export interface ArcDiagramHandle {
@@ -282,6 +288,7 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
   focusMode = "auto",
   onFocusModeChange,
   onOpenReader,
+  dimProgress = 0,
 }: Props, ref) {
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -1751,6 +1758,8 @@ const ArcDiagram = forwardRef<ArcDiagramHandle, Props>(function ArcDiagram({
           width: "100%",
           height: "100%",
           pointerEvents: "none",
+          opacity: 1 - Math.max(0, Math.min(1, dimProgress)) * 0.4,
+          transition: "opacity 300ms ease-out",
         }}
       />
       <canvas
