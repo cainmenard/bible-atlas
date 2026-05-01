@@ -500,15 +500,26 @@ export default function Home() {
   }, []);
 
   const handleOpenReading = useCallback((bookId: string, reference: string, type: string, index: number) => {
+    const parsed = parseReadingReference(reference);
+    const openPane = () => {
+      setActiveReading({ index, reading: { type, reference, bookId } });
+      // Route the reading's book through arcHighlightBookId so the arc's
+      // visibility mask engages (it's gated on a non-null selectedBookId prop)
+      // without opening DetailPanel.
+      setArcHighlightBookId(bookId);
+      setDrillState(
+        parsed
+          ? { bookId, chapter: parsed.chapter, verse: parsed.startVerse ?? null }
+          : { bookId, chapter: null, verse: null },
+      );
+    };
     // If detail panel is open, close it first and delay opening reading pane
     if (selectedBookId !== null) {
       setSelectedBookId(null);
       setDrillState(null);
-      setTimeout(() => {
-        setActiveReading({ index, reading: { type, reference, bookId } });
-      }, 250); // wait for DetailPanel exit animation
+      setTimeout(openPane, 250); // wait for DetailPanel exit animation
     } else {
-      setActiveReading({ index, reading: { type, reference, bookId } });
+      openPane();
     }
   }, [selectedBookId]);
 
@@ -524,14 +535,24 @@ export default function Home() {
     if (!readings) return;
     const r = readings.readings[index];
     if (!r || !r.bookId) return;
+    const bookId = r.bookId;
     setActiveReading({
       index,
-      reading: { type: r.type, reference: r.reference, bookId: r.bookId },
+      reading: { type: r.type, reference: r.reference, bookId },
     });
+    const parsed = parseReadingReference(r.reference);
+    setArcHighlightBookId(bookId);
+    setDrillState(
+      parsed
+        ? { bookId, chapter: parsed.chapter, verse: parsed.startVerse ?? null }
+        : { bookId, chapter: null, verse: null },
+    );
   }, [readings]);
 
   const handleCloseReading = useCallback(() => {
     setActiveReading(null);
+    setDrillState(null);
+    setArcHighlightBookId(null);
   }, []);
 
   const handleExploreFromReading = useCallback((bookId: string) => {
