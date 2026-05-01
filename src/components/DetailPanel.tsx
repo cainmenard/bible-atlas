@@ -41,8 +41,6 @@ interface DetailPanelProps {
     verse: number;
     key: number;
   } | null;
-  continueChipLabel?: string | null;
-  onDismissContinue?: () => void;
   readingHistory?: ReadingLocation[];
   onReadingHistoryBack?: () => void;
 }
@@ -132,8 +130,6 @@ export default function DetailPanel({
   onCrossRefNavigate,
   onOpenReadingsCard,
   pendingNavigation,
-  continueChipLabel,
-  onDismissContinue,
   readingHistory,
   onReadingHistoryBack,
 }: DetailPanelProps) {
@@ -584,40 +580,6 @@ export default function DetailPanel({
               if (bookEntry) addRecentPassage({ book: bookEntry.name, chapter, verse: null });
             }}
           />
-
-          {/* Continue-reading chip — shown when session was restored from persisted state */}
-          {continueChipLabel && (
-            <div style={{ padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-              <button
-                onClick={onDismissContinue}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '5px 10px',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '10px',
-                  color: 'var(--color-accent)',
-                  background: 'rgba(212, 160, 74, 0.06)',
-                  border: '1px solid rgba(212, 160, 74, 0.4)',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  letterSpacing: '0.02em',
-                  transition: 'all 200ms ease-out',
-                  lineHeight: 1.4,
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(212, 160, 74, 0.14)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(212, 160, 74, 0.06)';
-                }}
-              >
-                Continue reading → {continueChipLabel}
-              </button>
-            </div>
-          )}
 
           {/* Scrollable content area */}
           <div

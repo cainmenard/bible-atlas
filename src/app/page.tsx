@@ -18,7 +18,6 @@ import { BibleBook, Canon, LiturgicalSeason, ReadingLocation, ViewMode, VerseCro
 import { ArcDiagramHandle } from "@/components/ArcDiagram";
 import { LITURGICAL_COLORS } from "@/lib/colors";
 import { getDailyReadings } from "@/lib/readings";
-import { getMajorFeast } from "@/lib/liturgical";
 import { parseReadingReference } from "@/lib/bible-api";
 import { clearVerseTextCache } from "@/lib/search-index";
 import { buildVerseNavigation } from "@/lib/verse-navigation";
@@ -95,13 +94,6 @@ export default function Home() {
   // Feast-day pulse target: only computed on first load, only if today is a
   // major feast. Cleared after a single pulse cycle so it doesn't retrigger.
   const [feastPulseBookId, setFeastPulseBookId] = useState<string | null>(null);
-
-  // Tracks whether the current session was restored from persisted navigation.
-  // Non-null → show "Continue reading" chip with the stored book/chapter label.
-  const [restoredChip, setRestoredChip] = useState<{
-    bookId: string;
-    chapter: number | null;
-  } | null>(null);
 
   // ─── READING PANE STATE ───
   const [activeReading, setActiveReading] = useState<{
@@ -182,68 +174,6 @@ export default function Home() {
     if (savedTranslation) setTranslation(savedTranslation);
     if (savedCanon) setCanon(savedCanon);
     if (savedDensity) setEdgeDensity(savedDensity);
-
-    // Check for persisted navigation (stale if older than 14 days)
-    const persistedBook = getPreference<string>("last-book");
-    const persistedDate = getPreference<string>("last-view-date");
-    if (persistedBook && persistedDate) {
-      const daysSince =
-        (Date.now() - new Date(persistedDate).getTime()) / 86_400_000;
-      if (daysSince <= 14) {
-        const persistedChapter = getPreference<number>("last-chapter");
-        const persistedVerse = getPreference<number>("last-verse");
-        const navKey =
-          typeof performance !== "undefined" ? performance.now() : Date.now();
-        setSelectedBookId(persistedBook);
-        if (persistedChapter !== null) {
-          setPendingNavigation({
-            bookId: persistedBook,
-            chapter: persistedChapter,
-            verse: persistedVerse ?? 1,
-            key: navKey,
-          });
-        }
-        setRestoredChip({ bookId: persistedBook, chapter: persistedChapter });
-        return;
-      }
-    }
-
-    // No valid persisted state → fall through to today's Gospel (liturgical landing)
-    if (!readings || readings.readings.length === 0) {
-      console.warn("[bible-atlas] No readings available for first-load state");
-      return;
-    }
-
-    const gospel = readings.readings.find((r) => r.type === "Gospel");
-    if (!gospel || !gospel.bookId) {
-      console.warn("[bible-atlas] No Gospel reading found for first-load state");
-      return;
-    }
-
-    const parsed = parseReadingReference(gospel.reference);
-    if (!parsed) {
-      console.warn(
-        "[bible-atlas] Unable to parse Gospel reference:",
-        gospel.reference,
-      );
-      return;
-    }
-
-    const key =
-      typeof performance !== "undefined" ? performance.now() : Date.now();
-    setSelectedBookId(gospel.bookId);
-    setPendingNavigation({
-      bookId: gospel.bookId,
-      chapter: parsed.chapter,
-      verse: parsed.startVerse,
-      key,
-    });
-
-    // Feast-day pulse — only on major General Roman Calendar feasts.
-    if (getMajorFeast() !== null) {
-      setFeastPulseBookId(gospel.bookId);
-      setTimeout(() => setFeastPulseBookId(null), 3000);
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -335,7 +265,6 @@ export default function Home() {
     setArcHighlightBookId(null);
     setPendingNavigation(null);
     setReadingsFilterActive(false);
-    setRestoredChip(null);
     setReadingHistory([]);
   }, []);
 
@@ -366,7 +295,6 @@ export default function Home() {
     setSelectedBookId(null);
     setDrillState(null);
     setPendingNavigation(null);
-    setRestoredChip(null);
     setReadingHistory([]);
   }, []);
 
@@ -395,7 +323,6 @@ export default function Home() {
         typeof performance !== "undefined" ? performance.now() : Date.now();
       setSelectedBookId(bookId);
       setPendingNavigation({ bookId, chapter, verse, key });
-      setRestoredChip(null);
       const book = bookMap.get(bookId);
       if (book) addRecentPassage({ book: book.name, chapter, verse });
     },
@@ -416,7 +343,6 @@ export default function Home() {
         verse: target.verse,
         key,
       });
-      setRestoredChip(null);
       return next;
     });
   }, []);
@@ -428,29 +354,6 @@ export default function Home() {
     // subsequent lookups refetch in the new translation.
     clearVerseTextCache();
   }, []);
-
-  const handleDismissContinue = useCallback(() => {
-    setPreference<string>("last-book", null);
-    setPreference<number>("last-chapter", null);
-    setPreference<number>("last-verse", null);
-    setPreference<string>("last-view-date", null);
-    setRestoredChip(null);
-    // Return to today's Gospel
-    if (!readings || readings.readings.length === 0) return;
-    const gospel = readings.readings.find((r) => r.type === "Gospel");
-    if (!gospel || !gospel.bookId) return;
-    const parsed = parseReadingReference(gospel.reference);
-    if (!parsed) return;
-    const key =
-      typeof performance !== "undefined" ? performance.now() : Date.now();
-    setSelectedBookId(gospel.bookId);
-    setPendingNavigation({
-      bookId: gospel.bookId,
-      chapter: parsed.chapter,
-      verse: parsed.startVerse,
-      key,
-    });
-  }, [readings]);
 
   // ─── DISMISSAL HANDLERS ───
   const handleDismissReadings = useCallback(() => {
@@ -491,7 +394,6 @@ export default function Home() {
     const key = typeof performance !== "undefined" ? performance.now() : Date.now();
     setSelectedBookId(bookId);
     setPendingNavigation({ bookId, chapter, verse: 1, key });
-    setRestoredChip(null);
   }, []);
 
   const handleOpenReading = useCallback((bookId: string, reference: string, type: string, index: number) => {
@@ -603,7 +505,6 @@ export default function Home() {
     setArcHighlightBookId(null);
     setPendingNavigation(null);
     setReadingsFilterActive(false);
-    setRestoredChip(null);
     setReadingHistory([]);
   }, []);
 
@@ -614,7 +515,6 @@ export default function Home() {
       setArcHighlightBookId(null);
       setPendingNavigation(buildVerseNavigation(bookId, chapter, 1));
       setReadingsFilterActive(false);
-      setRestoredChip(null);
       setReadingHistory([]);
     },
     [],
@@ -627,7 +527,6 @@ export default function Home() {
       setArcHighlightBookId(null);
       setPendingNavigation(buildVerseNavigation(bookId, chapter, verse));
       setReadingsFilterActive(false);
-      setRestoredChip(null);
       setReadingHistory([]);
     },
     [],
@@ -699,16 +598,6 @@ export default function Home() {
   const season = readings?.season as LiturgicalSeason | undefined;
   const seasonColor = season ? LITURGICAL_COLORS[season] : undefined;
 
-  // Label for the "Continue reading" chip, computed from restored persistence state.
-  const continueChipLabel = useMemo(() => {
-    if (!restoredChip) return null;
-    const book = bookMap.get(restoredChip.bookId);
-    if (!book) return null;
-    return restoredChip.chapter != null
-      ? `${book.name} ${restoredChip.chapter}`
-      : book.name;
-  }, [restoredChip]);
-
   // Tooltip context — which variant renders is driven by these signals.
   // Canon mode fires when the user has picked a non-default canon; otherwise
   // readings mode or plain (no filter) mode.
@@ -775,7 +664,6 @@ export default function Home() {
                 buildVerseNavigation(bookId, chapter, verse ?? 1),
               );
               setReadingsFilterActive(false);
-              setRestoredChip(null);
               setReadingHistory([]);
             }}
           />
@@ -992,8 +880,6 @@ export default function Home() {
         onCrossRefNavigate={handleCrossRefNavigate}
         onOpenReadingsCard={handleOpenReadingsCard}
         pendingNavigation={pendingNavigation}
-        continueChipLabel={continueChipLabel}
-        onDismissContinue={handleDismissContinue}
         readingHistory={readingHistory}
         onReadingHistoryBack={handleReadingHistoryBack}
       />
